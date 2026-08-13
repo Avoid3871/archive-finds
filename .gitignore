@@ -34,3 +34,5 @@ next-env.d.ts
 
 # temp storage (large xlsx unzipped files)
 storage/temp/
+
+.vercel

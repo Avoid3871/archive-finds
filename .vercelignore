@@ -1,0 +1,10 @@
+node_modules
+.next
+storage
+python
+scripts
+.git
+coverage
+*.log
+*.pem
+storage/temp/
