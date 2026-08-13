@@ -1,0 +1,466 @@
+[
+  {
+    "product": {
+      "id": "item-1",
+      "name": "ERD Punk T Shirt",
+      "slug": "erd-erd-punk-t-shirt",
+      "brand": "Enfants Riches Déprimés",
+      "brandSlug": "erd",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 20.39,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Enfants Riches Déprimés archive piece (ERD Punk T Shirt). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=793984570128",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D793984570128&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r03_c02_image34.png",
+      "tags": [
+        "erd",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": true,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_01_erd-erd-punk-t-shirt.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-2",
+      "name": "Vetements Heavy Metal Skull Shirt",
+      "slug": "vetements-vetements-heavy-metal-skull-shirt",
+      "brand": "Vetements",
+      "brandSlug": "vetements",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 69.82,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Vetements archive piece (Vetements Heavy Metal Skull Shirt). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=587487280119",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D587487280119&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r03_c05_image6.png",
+      "tags": [
+        "vetements",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_02_vetements-vetements-heavy-metal-skull-shirt.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-3",
+      "name": "ERD Cavalary Tee",
+      "slug": "erd-erd-cavalary-tee",
+      "brand": "Enfants Riches Déprimés",
+      "brandSlug": "erd",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 23.9,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Enfants Riches Déprimés archive piece (ERD Cavalary Tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://weidian.com/item.html?itemID=7227858093",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//weidian.com/item.html%3FitemID%3D7227858093&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r04_c02_image31.png",
+      "tags": [
+        "erd",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": true,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_03_erd-erd-cavalary-tee.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-4",
+      "name": "Gosha Adidas Jersey",
+      "slug": "gosha-rubchinskiy-gosha-adidas-jersey",
+      "brand": "Gosha Rubchinskiy",
+      "brandSlug": "gosha-rubchinskiy",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 24.67,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Gosha Rubchinskiy archive piece (Gosha Adidas Jersey). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=708522181357",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D708522181357&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r04_c05_image33.png",
+      "tags": [
+        "gosha-rubchinskiy",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-5",
+      "name": "Rick Owens Gimp tee",
+      "slug": "rick-owens-rick-owens-gimp-tee",
+      "brand": "Rick Owens",
+      "brandSlug": "rick-owens",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 28.7,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Rick Owens archive piece (Rick Owens Gimp tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=717969370305",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D717969370305&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r05_c02_image76.png",
+      "tags": [
+        "rick-owens",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": true,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_05_rick-owens-rick-owens-gimp-tee.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-6",
+      "name": "Raf Simons S/S 2020 Reanimator Tee",
+      "slug": "raf-simons-raf-simons-s-s-2020-reanimator-tee",
+      "brand": "Raf Simons",
+      "brandSlug": "raf-simons",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 25.27,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Raf Simons archive piece (Raf Simons S/S 2020 Reanimator Tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=619337770201",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D619337770201&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r05_c05_image123.jpg",
+      "tags": [
+        "raf-simons",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-7",
+      "name": "ERD La Passion De Guerir Tee",
+      "slug": "erd-erd-la-passion-de-guerir-tee",
+      "brand": "Enfants Riches Déprimés",
+      "brandSlug": "erd",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 19.05,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Enfants Riches Déprimés archive piece (ERD La Passion De Guerir Tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=660746151758",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D660746151758&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r06_c02_image7.png",
+      "tags": [
+        "erd",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_07_erd-erd-la-passion-de-guerir-tee.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-8",
+      "name": "Rick Owens Spliced Shirt",
+      "slug": "rick-owens-rick-owens-spliced-shirt",
+      "brand": "Rick Owens",
+      "brandSlug": "rick-owens",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 25.76,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Rick Owens archive piece (Rick Owens Spliced Shirt). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://detail.1688.com/offer/722950396364.html",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//detail.1688.com/offer/722950396364.html&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r06_c05_image51.png",
+      "tags": [
+        "rick-owens",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_08_rick-owens-rick-owens-spliced-shirt.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-9",
+      "name": "ERD Punk T Shirt",
+      "slug": "erd-erd-punk-t-shirt",
+      "brand": "Enfants Riches Déprimés",
+      "brandSlug": "erd",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 20.39,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Enfants Riches Déprimés archive piece (ERD Punk T Shirt). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=793984570128",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D793984570128&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r07_c02_image34.png",
+      "tags": [
+        "erd",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_09_erd-erd-punk-t-shirt.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-10",
+      "name": "Boris Bidjan Saberi Black Layered Tee",
+      "slug": "boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee",
+      "brand": "Boris Bidjan Saberi",
+      "brandSlug": "boris-bidjan-saberi",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 60.94,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Boris Bidjan Saberi archive piece (Boris Bidjan Saberi Black Layered Tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=535330827241",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D535330827241&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r07_c05_image38.png",
+      "tags": [
+        "boris-bidjan-saberi",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-11",
+      "name": "ERD Cavalary Tee",
+      "slug": "erd-erd-cavalary-tee",
+      "brand": "Enfants Riches Déprimés",
+      "brandSlug": "erd",
+      "category": "Tops",
+      "categorySlug": "tops",
+      "price": 23.9,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Enfants Riches Déprimés archive piece (ERD Cavalary Tee). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://weidian.com/item.html?itemID=7227858093",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//weidian.com/item.html%3FitemID%3D7227858093&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r08_c02_image31.png",
+      "tags": [
+        "erd",
+        "tops",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_11_erd-erd-cavalary-tee.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-12",
+      "name": "No/faith Studio Pants",
+      "slug": "nofaithstudios-no-faith-studio-pants",
+      "brand": "No/Faith Studios",
+      "brandSlug": "nofaithstudios",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 53.05,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic No/Faith Studios archive piece (No/faith Studio Pants). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=711835600365",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D711835600365&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r10_c02_image42.png",
+      "tags": [
+        "nofaithstudios",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_12_nofaithstudios-no-faith-studio-pants.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-13",
+      "name": "No Faith Studios Black Wave Denim",
+      "slug": "nofaithstudios-no-faith-studios-black-wave-denim",
+      "brand": "No/Faith Studios",
+      "brandSlug": "nofaithstudios",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 49.18,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic No/Faith Studios archive piece (No Faith Studios Black Wave Denim). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=725133715586",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D725133715586&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r10_c05_image26.png",
+      "tags": [
+        "nofaithstudios",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-14",
+      "name": "Maison Margiela Flared Pants",
+      "slug": "maison-margiela-maison-margiela-flared-pants",
+      "brand": "Maison Margiela",
+      "brandSlug": "maison-margiela",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 48.41,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Maison Margiela archive piece (Maison Margiela Flared Pants). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=718406302167",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D718406302167&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r11_c02_image25.png",
+      "tags": [
+        "maison-margiela",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_14_maison-margiela-maison-margiela-flared-pants.jpg",
+    "theme": "light"
+  },
+  {
+    "product": {
+      "id": "item-15",
+      "name": "Lemaire Twisted Belted Jeans",
+      "slug": "lemaire-lemaire-twisted-belted-jeans",
+      "brand": "Lemaire",
+      "brandSlug": "lemaire",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 34.55,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Lemaire archive piece (Lemaire Twisted Belted Jeans). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=741066674823",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D741066674823&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r11_c05_image30.png",
+      "tags": [
+        "lemaire",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_15_lemaire-lemaire-twisted-belted-jeans.jpg",
+    "theme": "dark"
+  },
+  {
+    "product": {
+      "id": "item-16",
+      "name": "Raf Simons - Slim Fit Destroyed Jean",
+      "slug": "raf-simons-raf-simons-slim-fit-destroyed-jean",
+      "brand": "Raf Simons",
+      "brandSlug": "raf-simons",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 51.08,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Raf Simons archive piece (Raf Simons - Slim Fit Destroyed Jean). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=606885829110",
+      "affiliateUrl": "https://www.sugargoo.com/#/home/productDetail?productLink=https%3A//item.taobao.com/item.htm%3Fid%3D606885829110&memberId=archivefinds",
+      "imageUrl": "/products/sheet/grid_r12_c02_image47.png",
+      "tags": [
+        "raf-simons",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/slide_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+    "theme": "light"
+  }
+]
