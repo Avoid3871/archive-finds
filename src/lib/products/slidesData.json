@@ -25,8 +25,12 @@
       "isFeatured": true,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_01_erd-erd-punk-t-shirt.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_01_erd-erd-punk-t-shirt.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_01_erd-erd-punk-t-shirt.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_01_erd-erd-punk-t-shirt.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_01_erd-erd-punk-t-shirt.jpg"
+    }
   },
   {
     "product": {
@@ -54,8 +58,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_02_vetements-vetements-heavy-metal-skull-shirt.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_02_vetements-vetements-heavy-metal-skull-shirt.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_02_vetements-vetements-heavy-metal-skull-shirt.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_02_vetements-vetements-heavy-metal-skull-shirt.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_02_vetements-vetements-heavy-metal-skull-shirt.jpg"
+    }
   },
   {
     "product": {
@@ -83,8 +91,12 @@
       "isFeatured": true,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_03_erd-erd-cavalary-tee.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_03_erd-erd-cavalary-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_03_erd-erd-cavalary-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_03_erd-erd-cavalary-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_03_erd-erd-cavalary-tee.jpg"
+    }
   },
   {
     "product": {
@@ -112,8 +124,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_04_gosha-rubchinskiy-gosha-adidas-jersey.jpg"
+    }
   },
   {
     "product": {
@@ -141,8 +157,12 @@
       "isFeatured": true,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_05_rick-owens-rick-owens-gimp-tee.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_05_rick-owens-rick-owens-gimp-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_05_rick-owens-rick-owens-gimp-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_05_rick-owens-rick-owens-gimp-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_05_rick-owens-rick-owens-gimp-tee.jpg"
+    }
   },
   {
     "product": {
@@ -170,8 +190,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_06_raf-simons-raf-simons-s-s-2020-reanimator-tee.jpg"
+    }
   },
   {
     "product": {
@@ -199,8 +223,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_07_erd-erd-la-passion-de-guerir-tee.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_07_erd-erd-la-passion-de-guerir-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_07_erd-erd-la-passion-de-guerir-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_07_erd-erd-la-passion-de-guerir-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_07_erd-erd-la-passion-de-guerir-tee.jpg"
+    }
   },
   {
     "product": {
@@ -228,8 +256,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_08_rick-owens-rick-owens-spliced-shirt.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_08_rick-owens-rick-owens-spliced-shirt.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_08_rick-owens-rick-owens-spliced-shirt.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_08_rick-owens-rick-owens-spliced-shirt.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_08_rick-owens-rick-owens-spliced-shirt.jpg"
+    }
   },
   {
     "product": {
@@ -257,8 +289,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_09_erd-erd-punk-t-shirt.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_09_erd-erd-punk-t-shirt.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_09_erd-erd-punk-t-shirt.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_09_erd-erd-punk-t-shirt.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_09_erd-erd-punk-t-shirt.jpg"
+    }
   },
   {
     "product": {
@@ -286,8 +322,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_10_boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee.jpg"
+    }
   },
   {
     "product": {
@@ -315,8 +355,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_11_erd-erd-cavalary-tee.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_11_erd-erd-cavalary-tee.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_11_erd-erd-cavalary-tee.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_11_erd-erd-cavalary-tee.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_11_erd-erd-cavalary-tee.jpg"
+    }
   },
   {
     "product": {
@@ -344,8 +388,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_12_nofaithstudios-no-faith-studio-pants.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_12_nofaithstudios-no-faith-studio-pants.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_12_nofaithstudios-no-faith-studio-pants.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_12_nofaithstudios-no-faith-studio-pants.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_12_nofaithstudios-no-faith-studio-pants.jpg"
+    }
   },
   {
     "product": {
@@ -373,8 +421,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_13_nofaithstudios-no-faith-studios-black-wave-denim.jpg"
+    }
   },
   {
     "product": {
@@ -402,8 +454,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_14_maison-margiela-maison-margiela-flared-pants.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_14_maison-margiela-maison-margiela-flared-pants.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_14_maison-margiela-maison-margiela-flared-pants.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_14_maison-margiela-maison-margiela-flared-pants.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_14_maison-margiela-maison-margiela-flared-pants.jpg"
+    }
   },
   {
     "product": {
@@ -431,8 +487,12 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_15_lemaire-lemaire-twisted-belted-jeans.jpg",
-    "theme": "dark"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_15_lemaire-lemaire-twisted-belted-jeans.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_15_lemaire-lemaire-twisted-belted-jeans.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_15_lemaire-lemaire-twisted-belted-jeans.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_15_lemaire-lemaire-twisted-belted-jeans.jpg"
+    }
   },
   {
     "product": {
@@ -460,7 +520,143 @@
       "isFeatured": false,
       "isRare": false
     },
-    "slideUrl": "/slides/slide_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
-    "theme": "light"
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_16_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg"
+    }
+  },
+  {
+    "product": {
+      "id": "item-17",
+      "name": "Heliot Emil Liquid Metal Pants",
+      "slug": "heliot-emil-heliot-emil-liquid-metal-pants",
+      "brand": "Heliot Emil",
+      "brandSlug": "heliot-emil",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 74.09,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Heliot Emil archive piece (Heliot Emil Liquid Metal Pants). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=624869882208",
+      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D624869882208&memberId=1325437696506389977",
+      "imageUrl": "/products/sheet/grid_r12_c05_image14.png",
+      "tags": [
+        "heliot-emil",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_17_heliot-emil-heliot-emil-liquid-metal-pants.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_17_heliot-emil-heliot-emil-liquid-metal-pants.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_17_heliot-emil-heliot-emil-liquid-metal-pants.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_17_heliot-emil-heliot-emil-liquid-metal-pants.jpg"
+    }
+  },
+  {
+    "product": {
+      "id": "item-18",
+      "name": "Acne Studios ss24 digital jeans",
+      "slug": "acne-studios-acne-studios-ss24-digital-jeans",
+      "brand": "Acne Studios",
+      "brandSlug": "acne-studios",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 36.98,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Acne Studios archive piece (Acne Studios ss24 digital jeans). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=757756955257",
+      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D757756955257&memberId=1325437696506389977",
+      "imageUrl": "/products/sheet/grid_r13_c02_image10.png",
+      "tags": [
+        "acne-studios",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_18_acne-studios-acne-studios-ss24-digital-jeans.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_18_acne-studios-acne-studios-ss24-digital-jeans.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_18_acne-studios-acne-studios-ss24-digital-jeans.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_18_acne-studios-acne-studios-ss24-digital-jeans.jpg"
+    }
+  },
+  {
+    "product": {
+      "id": "item-19",
+      "name": "Raf Simons Disheveled Double Layered Denim",
+      "slug": "raf-simons-raf-simons-disheveled-double-layered-denim",
+      "brand": "Raf Simons",
+      "brandSlug": "raf-simons",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 45.57,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Raf Simons archive piece (Raf Simons Disheveled Double Layered Denim). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=606885829110",
+      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D606885829110&memberId=1325437696506389977",
+      "imageUrl": "/products/sheet/grid_r13_c05_image59.png",
+      "tags": [
+        "raf-simons",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_19_raf-simons-raf-simons-disheveled-double-layered-denim.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_19_raf-simons-raf-simons-disheveled-double-layered-denim.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_19_raf-simons-raf-simons-disheveled-double-layered-denim.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_19_raf-simons-raf-simons-disheveled-double-layered-denim.jpg"
+    }
+  },
+  {
+    "product": {
+      "id": "item-20",
+      "name": "Raf Simons - Slim Fit Destroyed Jean",
+      "slug": "raf-simons-raf-simons-slim-fit-destroyed-jean",
+      "brand": "Raf Simons",
+      "brandSlug": "raf-simons",
+      "category": "Denim & Bottoms",
+      "categorySlug": "denim",
+      "price": 51.08,
+      "currency": "USD",
+      "era": "2000s",
+      "style": "Avant-Garde",
+      "description": "Authentic Raf Simons archive piece (Raf Simons - Slim Fit Destroyed Jean). Sourced directly from collector archive spreadsheets.",
+      "directStoreLink": "https://item.taobao.com/item.htm?id=606885829110",
+      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D606885829110&memberId=1325437696506389977",
+      "imageUrl": "/products/sheet/grid_r14_c02_image47.png",
+      "tags": [
+        "raf-simons",
+        "denim",
+        "archive",
+        "grail"
+      ],
+      "isFeatured": false,
+      "isRare": false
+    },
+    "slideUrl": "/slides/packs/viral_minimal/pack_single_20_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+    "styles": {
+      "viral_minimal": "/slides/packs/viral_minimal/pack_single_20_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+      "editorial_dark": "/slides/packs/editorial_dark/pack_single_20_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg",
+      "minimal_dark": "/slides/packs/minimal_dark/pack_single_20_raf-simons-raf-simons-slim-fit-destroyed-jean.jpg"
+    }
   }
 ]

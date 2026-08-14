@@ -12,7 +12,7 @@
     "db:studio": "drizzle-kit studio",
     "worker:start": "node --loader ts-node/esm src/worker/index.ts",
     "worker:scan": "node scripts/parse_published_csv.js",
-    "worker:slides": "node scripts/generate_slides.js"
+    "worker:slides": "node scripts/generate_all_slide_styles.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
