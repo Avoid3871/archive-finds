@@ -5,10 +5,10 @@ import json
 import time
 import asyncio
 import urllib.parse
-import urllib.request
 from PIL import Image
 import rembg
 from playwright.async_api import async_playwright
+from product_identifier import identify_product_metadata
 
 # Ensure UTF-8 output on Windows
 if sys.platform == "win32":
@@ -218,17 +218,17 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 body_el = await post_page.query_selector("shreddit-post, div[data-testid='post-container']")
                 body_text = (await body_el.inner_text()) if body_el else ""
                 
-                # Fetch comments safely
-                comments_text = await post_page.eval_on_selector_all(
-                    "shreddit-comment, div[data-testid='comment']",
-                    "els => els.map(e => e.innerText || '').join(' ')"
+                # Extract comments list for model identification
+                comments_list = await post_page.eval_on_selector_all(
+                    "shreddit-comment p, div[data-testid='comment'] p",
+                    "els => els.map(e => e.innerText || '').filter(t => t.length > 5)"
                 )
                 
                 # Fetch all hrefs
                 all_hrefs = await post_page.eval_on_selector_all("a", "els => els.map(e => e.href)")
                 
                 # Combine full text to extract market links
-                full_text = f"{title} {body_text} {comments_text} " + " ".join(all_hrefs)
+                full_text = f"{title} {body_text} " + " ".join(comments_list) + " " + " ".join(all_hrefs)
                 extracted_links = clean_text_and_extract_links(full_text)
                 
                 # Extract post images
@@ -241,9 +241,16 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     print(f"No market links detected for '{title}'.", flush=True)
                     continue
                     
-                brand = detect_brand(title + " " + body_text)
-                category = detect_category(title + " " + body_text)
+                # Run AI Fashion Lens / Archive Model Identifier
+                identified = identify_product_metadata(title, comments=comments_list)
+                brand = identified.get("brand") or detect_brand(title + " " + body_text)
+                canonical_title = identified.get("canonicalTitle") or title
+                canonical_title = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C', '', canonical_title).strip()
+                
+                category = detect_category(canonical_title + " " + title + " " + body_text)
                 price = estimate_price(brand, category, full_text)
+                estimated_retail = identified.get("estimatedRetail") or round(price * 8.5, 0)
+                season = identified.get("season", "")
                 
                 for link_idx, market_link in enumerate(extracted_links[:2]):
                     affiliate_link = convert_to_sugargoo_affiliate(market_link)
@@ -252,23 +259,20 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                         print(f"Item already in catalog: {market_link}", flush=True)
                         continue
                         
-                    clean_name = title
-                    clean_name = re.sub(r'\[.*?\]|\(.*?\)', '', clean_name).strip()
-                    if not clean_name or len(clean_name) < 3:
-                        clean_name = f"{brand} {category}"
-                        
-                    slug = slugify(f"{brand}-{clean_name}-{int(time.time()) % 10000 + link_idx}")
+                    slug = slugify(f"{brand}-{canonical_title}-{int(time.time()) % 10000 + link_idx}")
                     item_id = str(len(existing_products) + len(discovered_items) + 1)
                     
-                    img_src = post_images[0] if post_images else ""
+                    # Prefer high-res studio image if available, else post image
+                    img_src = identified.get("studioImageUrl") or (post_images[0] if post_images else "")
                     
                     item = {
                         "id": item_id,
-                        "title": f"{brand} - {clean_name}",
+                        "title": canonical_title,
                         "brand": brand,
                         "category": category,
+                        "season": season,
                         "sourcePrice": price,
-                        "estimatedRetail": round(price * 8.5, 0),
+                        "estimatedRetail": estimated_retail,
                         "sugargooUrl": affiliate_link,
                         "affiliateLink": affiliate_link,
                         "rawMarketUrl": market_link,
@@ -281,7 +285,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     
                     discovered_items.append(item)
                     valid_count += 1
-                    print(f"[FOUND] {item['title']} | ${price} | {market_link}", flush=True)
+                    print(f"[FOUND] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
                     
                     if auto_add and img_src:
                         out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")

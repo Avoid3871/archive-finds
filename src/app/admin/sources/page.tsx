@@ -40,6 +40,7 @@ interface DiscoveredItem {
   slug: string;
   status: string;
   rawImageSrc: string;
+  season?: string;
 }
 
 interface SheetSource {
@@ -104,6 +105,7 @@ export default function AdminSourcesPage() {
   const [ingestPrice, setIngestPrice] = useState("65");
   const [ingestImage, setIngestImage] = useState("");
   const [isIngesting, setIsIngesting] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
   const [ingestMessage, setIngestMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Link Health States
@@ -294,6 +296,30 @@ export default function AdminSourcesPage() {
       setIngestMessage({ type: "error", text: err.message });
     } finally {
       setIsIngesting(false);
+    }
+  };
+
+  const handleIdentifyModel = async () => {
+    const query = ingestTitle.trim() || ingestBrand.trim();
+    if (!query) return;
+    setIsIdentifying(true);
+    try {
+      const res = await fetch("/api/admin/identify-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        if (data.data.canonicalTitle) setIngestTitle(data.data.canonicalTitle);
+        if (data.data.brand && data.data.brand !== "Archive Collection") setIngestBrand(data.data.brand);
+        if (data.data.category) setIngestCategory(data.data.category);
+        if (data.data.studioImageUrl) setIngestImage(data.data.studioImageUrl);
+      }
+    } catch (e) {
+      console.error("AI Lens identification failed:", e);
+    } finally {
+      setIsIdentifying(false);
     }
   };
 
@@ -630,14 +656,25 @@ export default function AdminSourcesPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Piece Name / Title
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-mono uppercase text-neutral-400">
+                    Piece Name / Title
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleIdentifyModel}
+                    disabled={isIdentifying || (!ingestTitle && !ingestBrand)}
+                    className="text-[9px] font-mono uppercase text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <Search className="w-2.5 h-2.5" />
+                    <span>{isIdentifying ? "Identifying..." : "AI Lens Identify"}</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={ingestTitle}
                   onChange={(e) => setIngestTitle(e.target.value)}
-                  placeholder="e.g. Vintage Jumbo Cargo Pants"
+                  placeholder="e.g. Vintage Jumbo Cargo Pants or RO V-ns"
                   className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
                 />
               </div>
