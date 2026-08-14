@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MockProduct } from "@/lib/products/mockData";
@@ -15,6 +16,7 @@ interface ProductCardProps {
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { isSaved, toggleSave } = useWishlist();
   const saved = isSaved(product.id);
+  const [imgSrc, setImgSrc] = useState(product.imageUrl || "/placeholder-fashion.svg");
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -30,14 +32,15 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         className="flex flex-col flex-grow"
       >
         {/* Visual Image Container */}
-        <div className="relative aspect-[3/4] w-full bg-neutral-50 overflow-hidden">
+        <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
           <Image
-            src={product.imageUrl}
+            src={imgSrc}
             alt={`${product.brand} - ${product.name}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={priority}
-            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+            onError={() => setImgSrc("/placeholder-fashion.svg")}
+            className="object-contain p-2 transition-transform duration-700 ease-out group-hover:scale-105"
           />
 
           {/* Top Floating Badges */}
