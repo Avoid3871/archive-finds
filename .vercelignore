@@ -1,10 +1,7 @@
-node_modules
-.next
-storage
-python
-scripts
+/storage/
+/python/
+/scripts/
 .git
 coverage
 *.log
 *.pem
-storage/temp/
