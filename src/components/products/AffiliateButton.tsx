@@ -1,30 +1,43 @@
 "use client";
 
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackAffiliateClick } from "@/lib/analytics";
 
 interface AffiliateButtonProps {
   affiliateUrl: string;
+  productId?: string;
+  productName?: string;
+  brand?: string;
+  category?: string;
   price?: number;
   currency?: string;
+  source?: string;
   className?: string;
 }
 
 export function AffiliateButton({
   affiliateUrl,
+  productId,
+  productName,
+  brand,
+  category,
   price,
   currency = "EUR",
+  source = "product_detail",
   className,
 }: AffiliateButtonProps) {
   const handleClick = () => {
-    // Analytics tracking hook (e.g. TikTok pixel / event tracking)
-    try {
-      if (typeof window !== "undefined") {
-        console.log(`[Affiliate Click] Redirecting to: ${affiliateUrl}`);
-      }
-    } catch {
-      // ignore
-    }
+    trackAffiliateClick({
+      affiliateUrl,
+      productId,
+      productName,
+      brand,
+      category,
+      price,
+      currency,
+      source,
+    });
   };
 
   return (
@@ -51,3 +64,4 @@ export function AffiliateButton({
     </a>
   );
 }
+

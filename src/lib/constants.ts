@@ -2,7 +2,7 @@ export const SITE_CONFIG = {
   name: "ARCHIVE FINDS",
   tagline: "Curated Archive & Designer Fashion",
   description: "A premier editorial discovery platform for curated archive pieces, rare garments, and designer fashion.",
-  url: "https://archivefinds.vercel.app",
+  url: "https://archive-finds.vercel.app",
   socials: {
     tiktok: "https://tiktok.com/@archivefinds",
     instagram: "https://instagram.com/archivefinds",

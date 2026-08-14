@@ -126,8 +126,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="space-y-2 pt-2">
               <AffiliateButton
                 affiliateUrl={product.affiliateUrl}
+                productId={product.id}
+                productName={product.name}
+                brand={product.brand}
+                category={product.category}
                 price={product.price}
                 currency={product.currency}
+                source="product_detail_main"
               />
               <p className="text-[11px] font-mono text-neutral-600 text-center uppercase tracking-wider">
                 Direct procurement via Sugargoo Agent
@@ -204,6 +209,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="flex-grow max-w-[220px]">
           <AffiliateButton
             affiliateUrl={product.affiliateUrl}
+            productId={product.id}
+            productName={product.name}
+            brand={product.brand}
+            category={product.category}
+            price={product.price}
+            currency={product.currency}
+            source="product_detail_mobile_bar"
             className="py-2.5 px-4 text-xs"
           />
         </div>

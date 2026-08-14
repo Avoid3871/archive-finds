@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SITE_CONFIG } from "@/lib/constants";
 
@@ -63,7 +65,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white pb-16 md:pb-0">
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
 }
+
