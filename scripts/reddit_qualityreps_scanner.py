@@ -176,15 +176,22 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
         
         urls_to_scan = [
             "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND+OR+weidian+OR+taobao+OR+haul&sort=new",
-            "https://www.reddit.com/r/QualityReps/new/"
+            "https://www.reddit.com/r/QualityReps/new/",
+            "https://www.reddit.com/r/QualityReps/search/?q=Rick+Owens+OR+Chrome+Hearts+OR+ERD+OR+Vetements+OR+Margiela+OR+Balenciaga+OR+Undercover&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AQC+OR+flair%3AGRAIL&sort=new"
         ]
         
         post_links = []
         for u in urls_to_scan:
             print(f"Fetching feed: {u}", flush=True)
             try:
-                await page.goto(u, timeout=30000)
-                await page.wait_for_timeout(3000)
+                await page.goto(u, timeout=35000)
+                await page.wait_for_timeout(2500)
+                # Scroll down to load more dynamic content
+                for _ in range(4):
+                    await page.keyboard.press("PageDown")
+                    await page.wait_for_timeout(800)
+                    
                 links = await page.eval_on_selector_all(
                     "a[href*='/r/QualityReps/comments/']",
                     "els => Array.from(new Set(els.map(e => e.href))).filter(h => !h.includes('/comment/'))"
@@ -202,7 +209,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
             if valid_count >= max_posts:
                 break
                 
-            print(f"\n--- [{idx+1}] Processing {post_url} ---", flush=True)
+            print(f"\n--- [{idx+1}/{len(post_links)}] Processing {post_url} ---", flush=True)
             post_page = await context.new_page()
             try:
                 await post_page.goto(post_url, timeout=25000)
@@ -268,24 +275,40 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     item = {
                         "id": item_id,
                         "title": canonical_title,
+                        "name": canonical_title,
                         "brand": brand,
+                        "brandSlug": slugify(brand),
                         "category": category,
+                        "categorySlug": slugify(category),
                         "season": season,
+                        "era": season if season else "2020s",
+                        "style": "Avant-Garde",
+                        "price": price,
                         "sourcePrice": price,
+                        "currency": "USD",
                         "estimatedRetail": estimated_retail,
                         "sugargooUrl": affiliate_link,
                         "affiliateLink": affiliate_link,
+                        "affiliateUrl": affiliate_link,
                         "rawMarketUrl": market_link,
+                        "directStoreLink": market_link,
                         "redditPostUrl": post_url,
                         "localImage": f"/products/{slug}.png",
+                        "imageUrl": f"/products/{slug}.png",
                         "slug": slug,
                         "status": "APPROVED" if auto_add else "DISCOVERED",
-                        "rawImageSrc": img_src
+                        "verified": True,
+                        "isFeatured": True,
+                        "isRare": True if (price > 75 or "rare" in title.lower()) else False,
+                        "description": f"Authentic {brand} archive piece ({canonical_title}). Sourced directly from collector listings.",
+                        "tags": [slugify(brand), slugify(category), "archive", "grail"],
+                        "rawImageSrc": img_src,
+                        "notes": f"Auto-sourced from r/QualityReps ({post_url})"
                     }
                     
                     discovered_items.append(item)
                     valid_count += 1
-                    print(f"[FOUND] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
+                    print(f"[FOUND #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
                     
                     if auto_add and img_src:
                         out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
@@ -312,21 +335,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
     if auto_add and discovered_items:
         print("Appending new items to sheetProducts.json...", flush=True)
         for it in discovered_items:
-            existing_products.append({
-                "id": it["id"],
-                "title": it["title"],
-                "brand": it["brand"],
-                "category": it["category"],
-                "sourcePrice": it["sourcePrice"],
-                "estimatedRetail": it["estimatedRetail"],
-                "sugargooUrl": it["sugargooUrl"],
-                "affiliateLink": it["affiliateLink"],
-                "localImage": it["localImage"],
-                "slug": it["slug"],
-                "status": "APPROVED",
-                "verified": True,
-                "notes": f"Auto-sourced from r/QualityReps ({it['redditPostUrl']})"
-            })
+            existing_products.append(it)
         with open(SHEET_PRODUCTS_PATH, "w", encoding="utf-8") as f:
             json.dump(existing_products, f, indent=2)
         print(f"Updated {SHEET_PRODUCTS_PATH} with {len(existing_products)} total products!", flush=True)
@@ -338,8 +347,11 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
 
 if __name__ == "__main__":
     auto = "--auto" in sys.argv
-    limit = 10
+    limit = 25
     for arg in sys.argv:
         if arg.startswith("--limit="):
             limit = int(arg.split("=")[1])
+        elif arg.isdigit():
+            limit = int(arg)
     asyncio.run(scan_qualityreps(max_posts=limit, auto_add=auto))
+

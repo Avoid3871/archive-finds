@@ -104,56 +104,52 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None) -
     }
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+        search_query = f"{brand_detected} {expanded} Grailed SSENSE Justin Reed"
+        target_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(search_query)}&form=HDRSC2&first=1"
+        req = urllib.request.Request(
+            target_url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        )
+        html = urllib.request.urlopen(req, timeout=10).read().decode("utf-8", errors="ignore")
+        
+        # Extract metadata from iusc attributes
+        raw_matches = re.findall(r'class="iusc"[^>]*m="([^"]*)"', html)
+        if not raw_matches:
+            raw_matches = re.findall(r'm="(\{.*?\})"', html)
             
-            search_query = f"{brand_detected} {expanded} Grailed SSENSE Justin Reed"
-            target_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(search_query)}&form=HDRSC2&first=1"
-            page.goto(target_url, timeout=20000, wait_until="domcontentloaded")
-            page.wait_for_timeout(1000)
-            
-            elements = page.query_selector_all("a.iusc")
-            candidate_titles = []
-            
-            for el in elements[:10]:
-                m_attr = el.get_attribute("m")
-                if m_attr:
-                    try:
-                        d = json.loads(m_attr)
-                        t = d.get("t", "")
-                        murl = d.get("murl", "")
-                        
-                        # Clean title
-                        t_clean = re.sub(r'\s*[\|\–\-]\s*(Grailed|SSENSE|Farfetch|Justin Reed|eBay|Lyst).*$', '', t, flags=re.IGNORECASE).strip()
-                        t_clean = re.sub(r'^[^\w]+', '', t_clean)
-                        
-                        # Filter out unrelated
-                        if brand_detected.lower() in t_clean.lower() or len(t_clean.split()) >= 3:
-                            if not any(bad in t_clean.lower() for bad in ["meme", "reddit", "qc", "haul", "fake"]):
-                                candidate_titles.append((t_clean, murl))
-                    except Exception:
-                        pass
-                        
-            browser.close()
-            
-            if candidate_titles:
-                # Pick the best canonical title that starts with brand or contains brand
-                best_title, best_img = candidate_titles[0]
-                for ct, cimg in candidate_titles:
-                    if ct.lower().startswith(brand_detected.lower()):
-                        best_title = ct
-                        best_img = cimg
-                        break
-                        
-                res_data["canonicalTitle"] = best_title
-                res_data["studioImageUrl"] = best_img
+        candidate_titles = []
+        for m_str in raw_matches[:12]:
+            try:
+                m_clean = m_str.replace("&quot;", '"').replace("&amp;", "&")
+                d = json.loads(m_clean)
+                t = d.get("t", "")
+                murl = d.get("murl", "")
                 
-                # Check for season in title (e.g. SS22, FW20, 2021)
-                season_match = re.search(r'\b(SS\d{2}|FW\d{2}|AW\d{2}|20[12]\d)\b', best_title, re.IGNORECASE)
-                if season_match:
-                    res_data["season"] = season_match.group(1).upper()
+                # Clean title
+                t_clean = re.sub(r'\s*[\|\–\-]\s*(Grailed|SSENSE|Farfetch|Justin Reed|eBay|Lyst).*$', '', t, flags=re.IGNORECASE).strip()
+                t_clean = re.sub(r'^[^\w]+', '', t_clean)
+                
+                if brand_detected.lower() in t_clean.lower() or len(t_clean.split()) >= 3:
+                    if not any(bad in t_clean.lower() for bad in ["meme", "reddit", "qc", "haul", "fake"]):
+                        candidate_titles.append((t_clean, murl))
+            except Exception:
+                pass
+                
+        if candidate_titles:
+            best_title, best_img = candidate_titles[0]
+            for ct, cimg in candidate_titles:
+                if ct.lower().startswith(brand_detected.lower()):
+                    best_title = ct
+                    best_img = cimg
+                    break
                     
+            res_data["canonicalTitle"] = best_title
+            res_data["studioImageUrl"] = best_img
+            
+            season_match = re.search(r'\b(SS\d{2}|FW\d{2}|AW\d{2}|20[12]\d)\b', best_title, re.IGNORECASE)
+            if season_match:
+                res_data["season"] = season_match.group(1).upper()
+                
     except Exception as e:
         print(f"[IDENTIFIER WARNING] {e}", flush=True)
 
