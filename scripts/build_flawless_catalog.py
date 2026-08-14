@@ -89,9 +89,10 @@ for d in all_available_drawings:
 
 # Function to transform CNFans/Google URL to authentic source + Sugargoo Affiliate URL
 def transform_to_sugargoo(google_url, item_name):
+    MEMBER_ID = "1325437696506389977"
     if not google_url:
-        target = f"https://item.taobao.com/item.htm?id=search&name={urllib.parse.quote(item_name)}"
-        return target, f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(target)}&memberId=archivefinds"
+        target = f"https://item.taobao.com/item.htm?id=search&name={urllib.parse.quote(item_name, safe='')}"
+        return target, f"https://www.sugargoo.com/products?productLink={urllib.parse.quote(target, safe='')}&memberId={MEMBER_ID}"
 
     # Unpack google.com/url?q=...
     actual_url = google_url
@@ -118,8 +119,8 @@ def transform_to_sugargoo(google_url, item_name):
             elif platform in ['ALI_1688', '1688']:
                 direct_link = f"https://detail.1688.com/offer/{item_id}.html"
 
-    # Now encode into Sugargoo Affiliate URL
-    sugargoo_url = f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(direct_link)}&memberId=archivefinds"
+    # Now encode into Sugargoo Referral Affiliate URL
+    sugargoo_url = f"https://www.sugargoo.com/products?productLink={urllib.parse.quote(direct_link, safe='')}&memberId={MEMBER_ID}"
     return direct_link, sugargoo_url
 
 # Parse rows into products

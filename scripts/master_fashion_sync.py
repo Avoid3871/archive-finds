@@ -255,7 +255,7 @@ for row in range(max_row + 1):
         else:
             target_buy_link = raw_link
 
-        sugargoo_affiliate_url = f"https://www.sugargoo.com/#/home/productDetail?productLink={target_buy_link}&memberId=archivefinds"
+        sugargoo_affiliate_url = f"https://www.sugargoo.com/#/home/productDetail?productLink={target_buy_link}&memberId=1325437696506389977"
 
         products.append({
             "id": f"item-{len(products)+1}",

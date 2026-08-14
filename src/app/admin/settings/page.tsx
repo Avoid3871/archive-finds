@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Save, CheckCircle2 } from "lucide-react";
 
 export default function AdminSettingsPage() {
-  const [memberId, setMemberId] = useState("archivefinds");
+  const [memberId, setMemberId] = useState("1325437696506389977");
   const [pythonPath, setPythonPath] = useState("python");
   const [autoScanInterval, setAutoScanInterval] = useState("60");
   const [saved, setSaved] = useState(false);

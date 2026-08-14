@@ -236,7 +236,7 @@ for row in range(max_row + 1):
             if not aff_url:
                 aff_url = f"https://item.taobao.com/item.htm?id=search&name={name0.replace(' ', '%20')}"
             
-            sugargoo_link = f"https://www.sugargoo.com/#/home/productDetail?productLink={aff_url}&memberId=archivefinds"
+            sugargoo_link = f"https://www.sugargoo.com/#/home/productDetail?productLink={aff_url}&memberId=1325437696506389977"
 
             products_list.append({
                 "id": f"item-{len(products_list)+1}",
@@ -322,7 +322,7 @@ for row in range(max_row + 1):
             if not aff_url3:
                 aff_url3 = f"https://item.taobao.com/item.htm?id=search&name={name3.replace(' ', '%20')}"
             
-            sugargoo_link3 = f"https://www.sugargoo.com/#/home/productDetail?productLink={aff_url3}&memberId=archivefinds"
+            sugargoo_link3 = f"https://www.sugargoo.com/#/home/productDetail?productLink={aff_url3}&memberId=1325437696506389977"
 
             products_list.append({
                 "id": f"item-{len(products_list)+1}",

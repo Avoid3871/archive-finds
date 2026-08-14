@@ -5,7 +5,7 @@ export class SugargooAffiliateProvider implements IAffiliateProvider {
   private defaultMemberId: string;
 
   constructor(defaultMemberId?: string) {
-    this.defaultMemberId = defaultMemberId || process.env.SUGARGOO_MEMBER_ID || "archivefinds";
+    this.defaultMemberId = defaultMemberId || process.env.SUGARGOO_MEMBER_ID || "1325437696506389977";
   }
 
   canHandle(url: string): boolean {
@@ -32,13 +32,12 @@ export class SugargooAffiliateProvider implements IAffiliateProvider {
         return urlObj.toString();
       }
 
-      // If it is a TaoBao / Weidian / 1688 / Tmall raw URL:
-      // Sugargoo standard web format: https://www.sugargoo.com/#/home/productDetail?productLink={encodedUrl}&memberId={memberId}
+      // Modern Sugargoo referral sharing format: https://www.sugargoo.com/products?productLink={encodedUrl}&memberId={memberId}
       const encodedProduct = encodeURIComponent(sourceUrl);
-      return `https://www.sugargoo.com/#/home/productDetail?productLink=${encodedProduct}&memberId=${activeMemberId}`;
+      return `https://www.sugargoo.com/products?productLink=${encodedProduct}&memberId=${activeMemberId}`;
     } catch {
       // Fallback
-      return `https://www.sugargoo.com/#/home/productDetail?productLink=${encodeURIComponent(sourceUrl)}&memberId=${activeMemberId}`;
+      return `https://www.sugargoo.com/products?productLink=${encodeURIComponent(sourceUrl)}&memberId=${activeMemberId}`;
     }
   }
 

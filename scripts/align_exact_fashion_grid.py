@@ -90,7 +90,7 @@ def get_image_for_product(sheet_row_idx, col):
 def transform_to_sugargoo(raw_link, item_name):
     if not raw_link:
         target = f"https://item.taobao.com/item.htm?id=search&name={urllib.parse.quote(item_name)}"
-        return target, f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(target)}&memberId=archivefinds"
+        return target, f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(target)}&memberId=1325437696506389977"
 
     direct_link = raw_link
     if "cnfans.com/product" in raw_link:
@@ -107,7 +107,7 @@ def transform_to_sugargoo(raw_link, item_name):
             elif platform in ['ALI_1688', '1688']:
                 direct_link = f"https://detail.1688.com/offer/{item_id}.html"
 
-    sugargoo_url = f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(direct_link)}&memberId=archivefinds"
+    sugargoo_url = f"https://www.sugargoo.com/#/home/productDetail?productLink={urllib.parse.quote(direct_link)}&memberId=1325437696506389977"
     return direct_link, sugargoo_url
 
 # 4. Build Verified Product Catalog
