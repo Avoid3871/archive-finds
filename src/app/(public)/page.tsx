@@ -51,11 +51,29 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Quick Category Carousel on Mobile */}
+          {/* Quick Category & Price Carousel on Mobile */}
           <div className="mt-10 pt-6 border-t border-neutral-100 flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
             <span className="text-[11px] font-mono uppercase tracking-widest text-neutral-600 shrink-0 mr-2">
               QUICK ACCESS:
             </span>
+            <Link
+              href="/discover?maxPrice=30"
+              className="shrink-0 px-3 py-1.5 bg-neutral-100 hover:bg-black hover:text-white border border-neutral-300 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
+            >
+              🏷️ Under $30
+            </Link>
+            <Link
+              href="/discover?maxPrice=60"
+              className="shrink-0 px-3 py-1.5 bg-neutral-100 hover:bg-black hover:text-white border border-neutral-300 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
+            >
+              💸 Under $60
+            </Link>
+            <Link
+              href="/saved"
+              className="shrink-0 px-3 py-1.5 bg-neutral-100 hover:bg-black hover:text-white border border-neutral-300 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
+            >
+              🔖 Saved Vault
+            </Link>
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.slug}

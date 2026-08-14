@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Search, Menu, X, ArrowUpRight } from "lucide-react";
+import { Search, Menu, X, ArrowUpRight, Bookmark } from "lucide-react";
+import { useWishlist } from "@/lib/wishlist/WishlistContext";
 
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { savedCount } = useWishlist();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-neutral-200 transition-all">
@@ -19,7 +21,7 @@ export function PublicHeader() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase">
+        <nav className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-widest uppercase">
           <Link
             href="/discover"
             className="text-neutral-600 hover:text-black transition-colors"
@@ -45,10 +47,22 @@ export function PublicHeader() {
           >
             CATEGORIES
           </Link>
+          <Link
+            href="/saved"
+            className="text-neutral-600 hover:text-black transition-colors flex items-center gap-1.5"
+          >
+            <Bookmark className={`w-3.5 h-3.5 ${savedCount > 0 ? "fill-black text-black" : ""}`} />
+            <span>SAVED</span>
+            {savedCount > 0 && (
+              <span className="px-1.5 py-0.2 bg-black text-white text-[10px] font-mono rounded-full font-bold">
+                {savedCount}
+              </span>
+            )}
+          </Link>
         </nav>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Quick Search Button */}
           <Link
             href="/search"
@@ -60,6 +74,20 @@ export function PublicHeader() {
             <kbd className="hidden sm:inline px-1 bg-neutral-100 border border-neutral-300 rounded text-[10px] text-neutral-500">
               /
             </kbd>
+          </Link>
+
+          {/* Quick Saved Vault Button (Mobile/Tablet Header Icon) */}
+          <Link
+            href="/saved"
+            aria-label="View Saved Pieces"
+            className="relative p-2 rounded border border-neutral-200 text-neutral-700 hover:text-black hover:border-black transition-all md:hidden"
+          >
+            <Bookmark className={`w-4 h-4 ${savedCount > 0 ? "fill-black text-black" : ""}`} />
+            {savedCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-black text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                {savedCount}
+              </span>
+            )}
           </Link>
 
           {/* Admin Direct Entry */}
@@ -103,6 +131,21 @@ export function PublicHeader() {
               <span className="text-[10px] px-1.5 py-0.5 bg-black text-white font-mono rounded">
                 LATEST
               </span>
+            </Link>
+            <Link
+              href="/saved"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2 border-b border-neutral-100 flex items-center justify-between text-neutral-800"
+            >
+              <span className="flex items-center gap-2">
+                <Bookmark className="w-4 h-4" />
+                Saved Grail Vault
+              </span>
+              {savedCount > 0 && (
+                <span className="text-[10px] px-2 py-0.5 bg-black text-white font-mono rounded-full font-bold">
+                  {savedCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/brands"

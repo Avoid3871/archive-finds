@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { MOCK_PRODUCTS } from "@/lib/products/mockData";
 import { formatPrice } from "@/lib/utils";
 import { AffiliateButton } from "@/components/products/AffiliateButton";
+import { SavePieceButton } from "@/components/products/SavePieceButton";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ArrowLeft, ShieldCheck, Truck, RefreshCw, Sparkles, ExternalLink } from "lucide-react";
 
@@ -123,7 +124,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Primary Action Button (Desktop/Tablet) */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-3 pt-2">
               <AffiliateButton
                 affiliateUrl={product.affiliateUrl}
                 productId={product.id}
@@ -134,6 +135,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 currency={product.currency}
                 source="product_detail_main"
               />
+              <SavePieceButton product={product} />
               <p className="text-[11px] font-mono text-neutral-600 text-center uppercase tracking-wider">
                 Direct procurement via Sugargoo Agent
               </p>

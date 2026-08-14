@@ -1,7 +1,7 @@
 "use client";
 
 import { BRANDS, CATEGORIES, ERAS, STYLES } from "@/lib/constants";
-import { SlidersHorizontal, X, Check } from "lucide-react";
+import { SlidersHorizontal, X, DollarSign, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,9 @@ export interface FilterState {
   category?: string;
   era?: string;
   style?: string;
+  maxPrice?: number;
+  minPrice?: number;
+  rareOnly?: boolean;
 }
 
 interface FilterDrawerProps {
@@ -18,6 +21,14 @@ interface FilterDrawerProps {
   onReset: () => void;
 }
 
+const PRICE_PRESETS = [
+  { label: "All Prices", min: undefined, max: undefined },
+  { label: "Under $30", min: undefined, max: 30 },
+  { label: "$30 – $60", min: 30, max: 60 },
+  { label: "$60 – $100", min: 60, max: 100 },
+  { label: "Over $100", min: 100, max: undefined },
+];
+
 export function FilterDrawer({
   filters,
   onFilterChange,
@@ -25,7 +36,13 @@ export function FilterDrawer({
 }: FilterDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const activeCount = Object.values(filters).filter(Boolean).length;
+  const activeCount =
+    (filters.brand ? 1 : 0) +
+    (filters.category ? 1 : 0) +
+    (filters.era ? 1 : 0) +
+    (filters.style ? 1 : 0) +
+    (filters.maxPrice !== undefined || filters.minPrice !== undefined ? 1 : 0) +
+    (filters.rareOnly ? 1 : 0);
 
   const toggleBrand = (slug: string) => {
     onFilterChange({
@@ -52,6 +69,21 @@ export function FilterDrawer({
     onFilterChange({
       ...filters,
       style: filters.style === slug ? undefined : slug,
+    });
+  };
+
+  const setPriceRange = (min?: number, max?: number) => {
+    onFilterChange({
+      ...filters,
+      minPrice: min,
+      maxPrice: max,
+    });
+  };
+
+  const toggleRareOnly = () => {
+    onFilterChange({
+      ...filters,
+      rareOnly: !filters.rareOnly,
     });
   };
 
@@ -101,6 +133,58 @@ export function FilterDrawer({
 
             {/* Scrollable Filter Sections */}
             <div className="p-6 overflow-y-auto space-y-8 flex-grow">
+              {/* Price Range Filter */}
+              <div>
+                <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400 mb-3 flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-black" />
+                  Estimated Sourcing Price
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {PRICE_PRESETS.map((p) => {
+                    const isSelected =
+                      filters.minPrice === p.min && filters.maxPrice === p.max;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => setPriceRange(p.min, p.max)}
+                        className={cn(
+                          "px-3 py-2 text-xs font-mono border text-left transition-all",
+                          isSelected
+                            ? "bg-black text-white border-black font-bold"
+                            : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:border-black"
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Rare Grails Toggle */}
+              <div>
+                <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400 mb-3">
+                  Archive Rarity
+                </h3>
+                <button
+                  onClick={toggleRareOnly}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-xs font-mono border flex items-center justify-between transition-all",
+                    filters.rareOnly
+                      ? "bg-black text-white border-black font-bold"
+                      : "bg-neutral-50 text-neutral-700 border-neutral-200 hover:border-black"
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    SHOW ONLY RARE RUNWAY GRAILS
+                  </span>
+                  <span className="text-[10px] font-bold">
+                    {filters.rareOnly ? "ON" : "OFF"}
+                  </span>
+                </button>
+              </div>
+
               {/* Brands */}
               <div>
                 <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400 mb-3">
