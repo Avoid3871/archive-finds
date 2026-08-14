@@ -32,7 +32,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         className="flex flex-col flex-grow"
       >
         {/* Visual Image Container */}
-        <div className="relative aspect-[3/4] w-full bg-neutral-900 overflow-hidden">
+        <div className="relative aspect-[3/4] w-full bg-neutral-50 overflow-hidden">
           <Image
             src={imgSrc}
             alt={`${product.brand} - ${product.name}`}

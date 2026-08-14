@@ -78,7 +78,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Left Col: High-Res Image Display */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-[3/4] w-full bg-neutral-900 border border-neutral-800 overflow-hidden">
+          <div className="relative aspect-[3/4] w-full bg-neutral-50 border border-neutral-200 overflow-hidden">
             <Image
               src={product.imageUrl || "/placeholder-fashion.svg"}
               alt={`${product.brand} - ${product.name}`}

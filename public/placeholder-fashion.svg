@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="100%" height="100%">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a0a0a"/>
-      <stop offset="100%" stop-color="#171717"/>
+    <linearGradient id="bgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#f0f0f0"/>
     </linearGradient>
   </defs>
-  <rect width="400" height="500" fill="url(#bg)"/>
-  <rect x="20" y="20" width="360" height="460" fill="none" stroke="#262626" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect width="400" height="500" fill="url(#bgLight)"/>
+  <rect x="20" y="20" width="360" height="460" fill="none" stroke="#e5e5e5" stroke-width="1" stroke-dasharray="4 4"/>
   <g transform="translate(200, 230)" text-anchor="middle">
-    <circle cx="0" cy="-20" r="32" fill="none" stroke="#404040" stroke-width="1.5"/>
-    <path d="M-12 -20 L12 -20 M0 -32 L0 -8" stroke="#737373" stroke-width="1.5"/>
-    <text y="35" font-family="monospace" font-size="11" fill="#737373" letter-spacing="3" text-transform="uppercase">ARCHIVE GRAIL</text>
-    <text y="52" font-family="monospace" font-size="9" fill="#525252" letter-spacing="2">PIECE CATALOG</text>
+    <circle cx="0" cy="-20" r="32" fill="none" stroke="#d4d4d4" stroke-width="1.5"/>
+    <path d="M-12 -20 L12 -20 M0 -32 L0 -8" stroke="#a3a3a3" stroke-width="1.5"/>
+    <text y="35" font-family="monospace" font-size="11" fill="#737373" letter-spacing="3" text-transform="uppercase" font-weight="bold">ARCHIVE GRAIL</text>
+    <text y="52" font-family="monospace" font-size="9" fill="#a3a3a3" letter-spacing="2">PIECE CATALOG</text>
   </g>
 </svg>
