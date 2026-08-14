@@ -51,6 +51,35 @@ def search_clean_garment_image_playwright(query: str) -> str:
         
     return ""
 
+def clean_ui_artifacts(img: Image.Image) -> Image.Image:
+    """
+    Detects and crops out screenshot UI artifacts like bottom red/orange scrub bars,
+    video player controls, and status bars from mobile screenshots.
+    """
+    try:
+        w, h = img.size
+        # Check bottom 12% for bright red/orange scrubber bar
+        bottom_h = int(h * 0.12)
+        bottom_strip = img.crop((0, h - bottom_h, w, h)).convert("RGB")
+        
+        # Check if bottom has intense red horizontal bar (R > 180, G < 70, B < 70)
+        pixels = list(bottom_strip.getdata())
+        red_count = sum(1 for r, g, b in pixels if r > 180 and g < 70 and b < 70)
+        
+        if red_count > (len(pixels) * 0.03): # More than 3% red pixels in bottom strip
+            print("[IMAGE CLEANER] Detected and removed red scrubber UI bar from bottom.")
+            return img.crop((0, 0, w, h - bottom_h))
+    except Exception:
+        pass
+    return img
+
+def is_badge_or_icon(img: Image.Image) -> bool:
+    """Detects if an image is a tiny icon, badge, emoji, or non-garment graphic."""
+    w, h = img.size
+    if w < 180 or h < 180:
+        return True
+    return False
+
 def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", target_size=(1000, 1000)) -> bool:
     """
     Takes an image URL, local path, or fallback search query.
@@ -58,33 +87,51 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
     """
     try:
         input_image = None
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         
-        # If input is empty or query fallback requested
-        if not img_input and query_fallback:
-            img_input = search_clean_garment_image_playwright(query_fallback)
-            
-        if isinstance(img_input, str):
-            if img_input.startswith("http"):
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        # Priority 1: If query_fallback is provided (e.g. 'Rick Owens Vintage Low Vans'), try to find a pristine studio flat-lay first!
+        if query_fallback and not any(bad in query_fallback.lower() for bad in ["haul", "blindbox", "unknown", "qc"]):
+            clean_url = search_clean_garment_image_playwright(query_fallback)
+            if clean_url:
                 try:
+                    req = urllib.request.Request(clean_url, headers=headers)
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        img_data = resp.read()
+                    temp_img = Image.open(io.BytesIO(img_data)).convert("RGBA")
+                    if not is_badge_or_icon(temp_img):
+                        input_image = temp_img
+                        print("[STUDIO MATCH] Successfully retrieved pristine archive flat-lay.")
+                except Exception:
+                    pass
+
+        # Priority 2: Use provided img_input if no studio match was found
+        if input_image is None and img_input:
+            if isinstance(img_input, str) and img_input.startswith("http"):
+                # Reject known avatar / sticker / icon domains and patterns
+                if any(bad in img_input.lower() for bad in ["snoovatar", "avatar", "badge", "emoji", "award", "lookaside.instagram"]):
+                    print(f"[REJECT] Rejected avatar/icon URL: {img_input[:60]}")
+                    if query_fallback:
+                        clean_url = search_clean_garment_image_playwright(query_fallback)
+                        if clean_url:
+                            req = urllib.request.Request(clean_url, headers=headers)
+                            with urllib.request.urlopen(req, timeout=10) as resp:
+                                img_data = resp.read()
+                            input_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
+                else:
                     req = urllib.request.Request(img_input, headers=headers)
                     with urllib.request.urlopen(req, timeout=15) as resp:
                         img_data = resp.read()
                     input_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
-                except Exception as e:
-                    print(f"Failed to load image from {img_input}: {e}")
-                    if query_fallback:
-                        fallback_url = search_clean_garment_image_playwright(query_fallback)
-                        if fallback_url:
-                            req = urllib.request.Request(fallback_url, headers=headers)
-                            with urllib.request.urlopen(req, timeout=15) as resp:
-                                img_data = resp.read()
-                            input_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
-            else:
+            elif isinstance(img_input, str):
                 input_image = Image.open(img_input).convert("RGBA")
-                
-        if input_image is None:
-            raise ValueError("No valid image data could be retrieved")
+            elif isinstance(img_input, Image.Image):
+                input_image = img_input.convert("RGBA")
+
+        if input_image is None or is_badge_or_icon(input_image):
+            raise ValueError("No valid garment image could be retrieved (rejected icons/avatars)")
+
+        # Strip red scrub bar / mobile screenshot artifacts
+        input_image = clean_ui_artifacts(input_image)
 
         # 1. AI background removal
         print("Executing AI background removal with rembg...")

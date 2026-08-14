@@ -276,13 +276,28 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 if brand in ["Archive Collection", "Archive Finds", "General"] or "Archive Piece" in canonical_title:
                     print(f"Skipping unverified generic item: '{canonical_title}'", flush=True)
                     continue
+                    
+                # REJECT haul / bulk posts without single isolated piece
+                if any(hkw in title.lower() for hkw in ["haul", "10kg", "5kg", "7kg", "4kg", "megathread", "giveaway", "discussion"]):
+                    print(f"Skipping multi-item haul/announcement thread: '{title}'", flush=True)
+                    continue
+
+                # DEDUPLICATION: Check if product with identical brand & title already exists
+                existing_titles = {
+                    (p.get("brand", "").lower().strip(), p.get("name", "").lower().strip())
+                    for p in existing_products + discovered_items
+                }
+                if (brand.lower().strip(), canonical_title.lower().strip()) in existing_titles:
+                    print(f"Skipping duplicate product in catalog: {brand} - {canonical_title}", flush=True)
+                    continue
                 
                 category = detect_category(canonical_title + " " + title + " " + body_text)
                 price = estimate_price(brand, category, full_text)
                 estimated_retail = identified.get("estimatedRetail") or round(price * 8.5, 0)
                 season = identified.get("season", "")
                 
-                for link_idx, market_link in enumerate(extracted_links[:2]):
+                # Ingest only the primary single piece link to avoid duplicate variants
+                for link_idx, market_link in enumerate(extracted_links[:1]):
                     # Check for valid marketplace product ID
                     is_valid_market_link = (
                         ("weidian.com" in market_link and ("itemid" in market_link.lower() or "item.html?id=" in market_link.lower())) or
@@ -342,14 +357,17 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                         "notes": f"Auto-sourced from r/QualityReps ({post_url})"
                     }
                     
+                    out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
+                    print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
+                    success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}")
+                    
+                    if not success or not os.path.exists(out_png):
+                        print(f"[REJECTED] Cutout failed or image invalid for: '{canonical_title}'", flush=True)
+                        continue
+
                     discovered_items.append(item)
                     valid_count += 1
                     print(f"[VERIFIED #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
-                    
-                    if auto_add and img_src:
-                        out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
-                        print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
-                        create_image_cutout_from_url(img_src, out_png, query_fallback=item["title"])
                         
             except Exception as e:
                 print(f"Error scraping {post_url}: {e}", flush=True)
