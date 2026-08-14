@@ -238,11 +238,15 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 full_text = f"{title} {body_text} " + " ".join(comments_list) + " " + " ".join(all_hrefs)
                 extracted_links = clean_text_and_extract_links(full_text)
                 
-                # Extract post images
-                post_images = await post_page.eval_on_selector_all(
+                # Extract post images - filter out avatars/stickers
+                raw_post_images = await post_page.eval_on_selector_all(
                     "img[src*='preview.redd.it'], img[src*='i.redd.it']",
                     "els => els.map(e => e.src)"
                 )
+                post_images = [
+                    img for img in raw_post_images 
+                    if not any(bad in img.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "award", "marketing", "icon"])
+                ]
                 
                 if not extracted_links:
                     print(f"No market links detected for '{title}'.", flush=True)
@@ -252,7 +256,12 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 identified = identify_product_metadata(title, comments=comments_list)
                 brand = identified.get("brand") or detect_brand(title + " " + body_text)
                 canonical_title = identified.get("canonicalTitle") or title
-                canonical_title = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C', '', canonical_title).strip()
+                canonical_title = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C|LC', '', canonical_title).strip()
+                
+                # REJECT generic garbage and non-designer titles
+                if brand in ["Archive Collection", "Archive Finds", "General"] or "Archive Piece" in canonical_title:
+                    print(f"Skipping unverified generic item: '{canonical_title}'", flush=True)
+                    continue
                 
                 category = detect_category(canonical_title + " " + title + " " + body_text)
                 price = estimate_price(brand, category, full_text)
@@ -260,6 +269,16 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 season = identified.get("season", "")
                 
                 for link_idx, market_link in enumerate(extracted_links[:2]):
+                    # Check for valid marketplace product ID
+                    is_valid_market_link = (
+                        ("weidian.com" in market_link and ("itemid" in market_link.lower() or "item.html?id=" in market_link.lower())) or
+                        ("taobao.com" in market_link and "id=" in market_link.lower()) or
+                        ("1688.com" in market_link and ("offer/" in market_link.lower() or "detail/" in market_link.lower()))
+                    )
+                    if not is_valid_market_link:
+                        print(f"Skipping invalid store link (missing product ID): {market_link}", flush=True)
+                        continue
+
                     affiliate_link = convert_to_sugargoo_affiliate(market_link)
                     
                     if affiliate_link.lower() in existing_urls:
@@ -271,6 +290,9 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     
                     # Prefer high-res studio image if available, else post image
                     img_src = identified.get("studioImageUrl") or (post_images[0] if post_images else "")
+                    if not img_src or any(bad in img_src.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "marketing"]):
+                        print(f"Skipping item with no valid product image: '{canonical_title}'", flush=True)
+                        continue
                     
                     item = {
                         "id": item_id,
@@ -308,7 +330,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     
                     discovered_items.append(item)
                     valid_count += 1
-                    print(f"[FOUND #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
+                    print(f"[VERIFIED #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
                     
                     if auto_add and img_src:
                         out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
