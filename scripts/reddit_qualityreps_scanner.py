@@ -98,10 +98,12 @@ def clean_text_and_extract_links(text: str) -> list[str]:
             
     return list(dict.fromkeys(links))
 
+from image_cutout_pipeline import process_and_cutout_image
+
 def convert_to_sugargoo_affiliate(raw_url: str) -> str:
     clean_target = raw_url.strip()
     encoded = urllib.parse.quote(clean_target, safe="")
-    return f"https://www.sugargoo.com/#/home/productDetail?productUrl={encoded}&memberId={AFFILIATE_MEMBER_ID}"
+    return f"https://www.sugargoo.com/products?productLink={encoded}&memberId={AFFILIATE_MEMBER_ID}"
 
 def detect_brand(text: str) -> str:
     text_lower = text.lower()
@@ -149,41 +151,8 @@ def slugify(text: str) -> str:
     s = re.sub(r'[^a-z0-9]+', '-', s).strip('-')
     return s[:60]
 
-def create_image_cutout_from_url(img_url: str, output_path: str) -> bool:
-    try:
-        req = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = resp.read()
-            
-        img = Image.open(urllib.request.io.BytesIO(data)).convert("RGBA")
-        
-        # Background removal
-        cutout = rembg.remove(img)
-        
-        bbox = cutout.getbbox()
-        if bbox:
-            cutout = cutout.crop(bbox)
-            
-        target_size = (1000, 1000)
-        margin = 60
-        max_w = target_size[0] - 2 * margin
-        max_h = target_size[1] - 2 * margin
-        
-        w, h = cutout.size
-        ratio = min(max_w / w, max_h / h)
-        new_w, new_h = max(1, int(w * ratio)), max(1, int(h * ratio))
-        resized = cutout.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
-        final = Image.new("RGBA", target_size, (0, 0, 0, 0))
-        offset = ((target_size[0] - new_w) // 2, (target_size[1] - new_h) // 2)
-        final.paste(resized, offset, resized)
-        
-        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-        final.save(output_path, "PNG", optimize=True)
-        return True
-    except Exception as e:
-        print(f"Error creating cutout: {e}", flush=True)
-        return False
+def create_image_cutout_from_url(img_url: str, output_path: str, query_fallback: str = "") -> bool:
+    return process_and_cutout_image(img_url, output_path, query_fallback=query_fallback)
 
 async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
     print(f"=== STARTING r/QualityReps AUTO-SCAN (Limit: {max_posts}) ===", flush=True)
@@ -316,8 +285,8 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     
                     if auto_add and img_src:
                         out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
-                        print(f"Generating AI cutout for {slug}...", flush=True)
-                        create_image_cutout_from_url(img_src, out_png)
+                        print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
+                        create_image_cutout_from_url(img_src, out_png, query_fallback=item["title"])
                         
             except Exception as e:
                 print(f"Error scraping {post_url}: {e}", flush=True)

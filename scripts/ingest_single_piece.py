@@ -7,6 +7,7 @@ import urllib.parse
 import urllib.request
 from PIL import Image
 import rembg
+from image_cutout_pipeline import process_and_cutout_image
 
 if sys.platform == "win32":
     try:
@@ -33,45 +34,12 @@ def clean_url(raw: str) -> str:
 def convert_to_sugargoo_affiliate(raw_url: str) -> str:
     c_url = clean_url(raw_url)
     encoded = urllib.parse.quote(c_url, safe="")
-    return f"https://www.sugargoo.com/#/home/productDetail?productUrl={encoded}&memberId={AFFILIATE_MEMBER_ID}"
+    return f"https://www.sugargoo.com/products?productLink={encoded}&memberId={AFFILIATE_MEMBER_ID}"
 
 def slugify(text: str) -> str:
     s = text.lower()
     s = re.sub(r'[^a-z0-9]+', '-', s).strip('-')
     return s[:60]
-
-def create_image_cutout(img_url: str, output_path: str) -> bool:
-    try:
-        req = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = resp.read()
-            
-        img = Image.open(urllib.request.io.BytesIO(data)).convert("RGBA")
-        cutout = rembg.remove(img)
-        bbox = cutout.getbbox()
-        if bbox:
-            cutout = cutout.crop(bbox)
-            
-        target_size = (1000, 1000)
-        margin = 60
-        max_w = target_size[0] - 2 * margin
-        max_h = target_size[1] - 2 * margin
-        w, h = cutout.size
-        ratio = min(max_w / w, max_h / h)
-        new_w, new_h = max(1, int(w * ratio)), max(1, int(h * ratio))
-        resized = cutout.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
-        final = Image.new("RGBA", target_size, (0, 0, 0, 0))
-        offset = ((target_size[0] - new_w) // 2, (target_size[1] - new_h) // 2)
-        final.paste(resized, offset, resized)
-        
-        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-        final.save(output_path, "PNG", optimize=True)
-        print(f"[OK] Saved cutout to {output_path}", flush=True)
-        return True
-    except Exception as e:
-        print(f"Error creating cutout: {e}", flush=True)
-        return False
 
 def ingest(payload_file: str):
     with open(payload_file, "r", encoding="utf-8") as f:
@@ -94,34 +62,38 @@ def ingest(payload_file: str):
     local_img = f"/products/{slug}.png"
     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
 
-    if raw_img:
-        print(f"Generating AI cutout from {raw_img}...", flush=True)
-        create_image_cutout(raw_img, out_png)
-    else:
-        # Fallback: copy placeholder or generate blank transparent
-        img = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
-        os.makedirs(os.path.dirname(out_png), exist_ok=True)
-        img.save(out_png, "PNG")
+    search_query = f"{brand} {title}"
+    print(f"Generating AI cutout (with studio search fallback '{search_query}')...", flush=True)
+    process_and_cutout_image(raw_img, out_png, query_fallback=search_query)
 
     new_piece = {
         "id": item_id,
         "title": f"{brand} - {title}" if brand not in title else title,
+        "name": f"{brand} - {title}" if brand not in title else title,
         "brand": brand,
+        "brandSlug": slugify(brand),
         "category": category,
+        "categorySlug": slugify(category),
+        "price": price,
         "sourcePrice": price,
         "estimatedRetail": round(price * 8.5, 0),
+        "directStoreLink": clean_url(raw_url),
         "sugargooUrl": affiliate_url,
         "affiliateLink": affiliate_url,
+        "affiliateUrl": affiliate_url,
+        "imageUrl": local_img,
         "localImage": local_img,
         "slug": slug,
         "status": "APPROVED",
         "verified": True,
+        "isFeatured": True,
+        "isRare": price > 80,
         "notes": "1-Click Admin Ingest"
     }
 
     products.append(new_piece)
     with open(SHEET_PRODUCTS_PATH, "w", encoding="utf-8") as f:
-        json.dump(products, f, indent=2)
+        json.dump(products, f, indent=2, ensure_ascii=False)
 
     print(f"Added new product #{item_id}: {new_piece['title']}", flush=True)
     print("Regenerating all 3 slide styles...", flush=True)

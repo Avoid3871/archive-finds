@@ -17,6 +17,11 @@ import {
   Link as LinkIcon,
   ShieldCheck,
   SlidersHorizontal,
+  AlertTriangle,
+  AlertOctagon,
+  Edit3,
+  Trash2,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -47,6 +52,27 @@ interface SheetSource {
   status: "ACTIVE" | "IDLE" | "SCANNING";
 }
 
+interface HealthItem {
+  id: string;
+  title: string;
+  brand: string;
+  sugargooUrl: string;
+  directStoreLink: string;
+  status: "HEALTHY" | "DEAD" | "FLAGGED";
+  httpStatus: number | null;
+  delistedReason: string | null;
+  note: string;
+}
+
+interface HealthReport {
+  timestamp: string;
+  totalChecked: number;
+  healthyCount: number;
+  deadCount: number;
+  flaggedCount: number;
+  items: HealthItem[];
+}
+
 const INITIAL_SOURCES: SheetSource[] = [
   {
     id: "src-1",
@@ -60,7 +86,7 @@ const INITIAL_SOURCES: SheetSource[] = [
 ];
 
 export default function AdminSourcesPage() {
-  const [activeTab, setActiveTab] = useState<"reddit" | "quick-ingest" | "sheets">("reddit");
+  const [activeTab, setActiveTab] = useState<"reddit" | "quick-ingest" | "health" | "sheets">("reddit");
   
   // Reddit Scanner States
   const [isScanningReddit, setIsScanningReddit] = useState(false);
@@ -80,15 +106,25 @@ export default function AdminSourcesPage() {
   const [isIngesting, setIsIngesting] = useState(false);
   const [ingestMessage, setIngestMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Link Health States
+  const [healthReport, setHealthReport] = useState<HealthReport | null>(null);
+  const [isAuditingHealth, setIsAuditingHealth] = useState(false);
+  const [healthFilter, setHealthFilter] = useState<"all" | "dead" | "flagged" | "healthy">("all");
+  const [healthSearch, setHealthSearch] = useState("");
+  const [editingUrlId, setEditingUrlId] = useState<string | null>(null);
+  const [newUrlInput, setNewUrlInput] = useState("");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
   // Google Sheets States
   const [sources, setSources] = useState<SheetSource[]>(INITIAL_SOURCES);
   const [newName, setNewName] = useState("");
   const [newSheetId, setNewSheetId] = useState("");
   const [newTab, setNewTab] = useState("Sheet1");
 
-  // Fetch cached discovered items on load
+  // Fetch cached data on load
   useEffect(() => {
     fetchDiscovered();
+    fetchHealthReport();
   }, []);
 
   const fetchDiscovered = async () => {
@@ -100,6 +136,73 @@ export default function AdminSourcesPage() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const fetchHealthReport = async () => {
+    try {
+      const res = await fetch("/api/admin/link-health");
+      const data = await res.json();
+      if (data.report) {
+        setHealthReport(data.report);
+      }
+    } catch (e) {
+      console.error("Failed to load health report:", e);
+    }
+  };
+
+  const handleRunHealthAudit = async () => {
+    setIsAuditingHealth(true);
+    try {
+      const res = await fetch("/api/admin/link-health?action=run-audit");
+      const data = await res.json();
+      if (data.report) {
+        setHealthReport(data.report);
+      }
+    } catch (e) {
+      console.error("Audit error:", e);
+    } finally {
+      setIsAuditingHealth(false);
+    }
+  };
+
+  const handleHealthAction = async (productId: string, action: "approve" | "delist" | "update_url", newUrl?: string) => {
+    setActionLoadingId(productId);
+    try {
+      const res = await fetch("/api/admin/link-health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, action, newUrl }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Refresh local health state
+        if (healthReport) {
+          const updatedItems = healthReport.items.map((it) => {
+            if (it.id === productId) {
+              return {
+                ...it,
+                status: action === "delist" ? ("DEAD" as const) : ("HEALTHY" as const),
+                note: action === "delist" ? "Delisted by admin" : "Approved & verified by admin",
+                directStoreLink: newUrl || it.directStoreLink,
+              };
+            }
+            return it;
+          });
+          setHealthReport({
+            ...healthReport,
+            items: updatedItems,
+          });
+        }
+        setEditingUrlId(null);
+        setNewUrlInput("");
+      } else {
+        alert(`Action failed: ${data.error}`);
+      }
+    } catch (e: any) {
+      alert(`Network error: ${e.message}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -194,6 +297,22 @@ export default function AdminSourcesPage() {
     }
   };
 
+  // Filtered health items
+  const filteredHealthItems = healthReport?.items.filter((item) => {
+    if (healthFilter === "dead" && item.status !== "DEAD") return false;
+    if (healthFilter === "flagged" && item.status !== "FLAGGED") return false;
+    if (healthFilter === "healthy" && item.status !== "HEALTHY") return false;
+    if (healthSearch.trim()) {
+      const q = healthSearch.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.brand.toLowerCase().includes(q) ||
+        (item.directStoreLink && item.directStoreLink.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  }) || [];
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* Header */}
@@ -212,7 +331,7 @@ export default function AdminSourcesPage() {
             GRAIL SOURCING & INGESTION
           </h1>
           <p className="text-xs font-mono text-neutral-400 mt-1">
-            Automated Reddit r/QualityReps crawler, de-obfuscation parser, AI cutout studio, and 1-click affiliate converter.
+            Automated Reddit r/QualityReps crawler, de-obfuscation parser, AI studio cutouts, link health monitor, and 1-click affiliate converter.
           </p>
         </div>
 
@@ -239,6 +358,17 @@ export default function AdminSourcesPage() {
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>1-Click Ingest</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("health")}
+            className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 rounded ${
+              activeTab === "health"
+                ? "bg-white text-black font-bold"
+                : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Link Health & Dead Links</span>
           </button>
           <button
             onClick={() => setActiveTab("sheets")}
@@ -299,29 +429,33 @@ export default function AdminSourcesPage() {
                   disabled={isScanningReddit}
                   className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center gap-2 rounded disabled:opacity-50"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isScanningReddit ? "animate-spin" : ""}`} />
-                  <span>{isScanningReddit ? "SCANNING REDDIT..." : "SCAN r/QualityReps NOW"}</span>
+                  <Play className={`w-3.5 h-3.5 ${isScanningReddit ? "animate-spin" : ""}`} />
+                  <span>{isScanningReddit ? "CRAWLING & PARSING..." : "START REDDIT SCAN"}</span>
                 </button>
               </div>
             </div>
 
             {scanResult && (
-              <div className="p-3.5 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-neutral-300 flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div className="overflow-x-auto whitespace-pre-wrap">{scanResult}</div>
+              <div className="p-3 bg-black border border-neutral-800 rounded font-mono text-xs text-neutral-300">
+                <span className="text-neutral-500 mr-2">[SCAN LOG]</span>
+                {scanResult}
               </div>
             )}
           </div>
 
-          {/* Discovered Items Table */}
-          <div className="space-y-3">
+          {/* Discovered Items Queue */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400">
-                Discovered Grails Queue ({discoveredItems.length})
-              </h3>
+              <h2 className="text-sm font-mono uppercase tracking-widest text-white flex items-center gap-2">
+                <span>Discovered Grails Awaiting Moderation</span>
+                <span className="px-2 py-0.5 bg-neutral-800 text-neutral-300 text-xs rounded-full font-mono">
+                  {discoveredItems.length}
+                </span>
+              </h2>
+
               <button
                 onClick={fetchDiscovered}
-                className="text-[11px] font-mono text-neutral-500 hover:text-white flex items-center gap-1"
+                className="text-xs font-mono text-neutral-400 hover:text-white flex items-center gap-1"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh Queue</span>
@@ -329,93 +463,88 @@ export default function AdminSourcesPage() {
             </div>
 
             {discoveredItems.length === 0 ? (
-              <div className="p-12 text-center bg-neutral-900/40 border border-dashed border-neutral-800 rounded-xl space-y-2">
-                <ShieldCheck className="w-8 h-8 text-neutral-600 mx-auto" />
-                <p className="text-xs font-mono text-neutral-400">No pending pieces in the review queue.</p>
-                <p className="text-[11px] font-mono text-neutral-600">Click &quot;SCAN r/QualityReps NOW&quot; above to search for fresh grails.</p>
+              <div className="p-12 text-center border border-dashed border-neutral-800 rounded-xl space-y-2">
+                <p className="font-mono text-neutral-400 text-sm">No items in the moderation queue.</p>
+                <p className="font-mono text-neutral-600 text-xs">
+                  Run the scanner above to pull fresh finds from r/QualityReps or use 1-Click Ingest.
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {discoveredItems.map((item) => (
                   <div
                     key={item.slug}
-                    className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl flex gap-4 items-start relative group hover:border-neutral-700 transition-colors"
+                    className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 flex flex-col justify-between"
                   >
-                    {/* Image Preview */}
-                    <div className="w-24 h-24 bg-neutral-950 border border-neutral-800 rounded-lg p-2 flex items-center justify-center shrink-0 relative overflow-hidden">
-                      {item.rawImageSrc ? (
-                        <img
-                          src={item.rawImageSrc}
-                          alt={item.title}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <Scissors className="w-6 h-6 text-neutral-700" />
-                      )}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 bg-neutral-800 text-[10px] font-mono font-bold text-white rounded">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="px-2 py-0.5 bg-neutral-800 text-neutral-300 font-mono text-[10px] uppercase rounded">
                           {item.brand}
                         </span>
-                        <span className="text-[10px] font-mono text-neutral-500 uppercase">
-                          {item.category}
-                        </span>
-                        <span className="ml-auto text-xs font-mono font-bold text-emerald-400">
+                        <span className="font-mono text-xs font-bold text-emerald-400">
                           ${item.sourcePrice}
                         </span>
                       </div>
 
-                      <h4 className="text-xs font-mono text-white truncate font-medium">
+                      <h3 className="font-mono text-sm font-bold text-white line-clamp-2">
                         {item.title}
-                      </h4>
+                      </h3>
 
-                      <div className="flex items-center gap-3 pt-1 text-[10px] font-mono text-neutral-400">
-                        {item.redditPostUrl && (
+                      {item.rawImageSrc && (
+                        <div className="w-full h-36 bg-black rounded border border-neutral-800 overflow-hidden relative">
+                          <img
+                            src={item.rawImageSrc}
+                            alt={item.title}
+                            className="w-full h-full object-contain p-2"
+                          />
+                        </div>
+                      )}
+
+                      <div className="text-[10px] font-mono text-neutral-500 space-y-1 pt-1">
+                        <div className="truncate">
+                          <span className="text-neutral-400">Source: </span>
+                          <a
+                            href={item.rawMarketUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline"
+                          >
+                            {item.rawMarketUrl}
+                          </a>
+                        </div>
+                        <div className="truncate">
+                          <span className="text-neutral-400">Reddit: </span>
                           <a
                             href={item.redditPostUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:text-white flex items-center gap-1"
+                            className="text-orange-400 hover:underline"
                           >
-                            <ExternalLink className="w-2.5 h-2.5" />
-                            <span>Reddit Thread</span>
+                            r/QualityReps Post
                           </a>
-                        )}
-                        {item.sugargooUrl && (
-                          <a
-                            href={item.sugargooUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-emerald-400 flex items-center gap-1 text-emerald-500/80"
-                          >
-                            <LinkIcon className="w-2.5 h-2.5" />
-                            <span>Sugargoo Link</span>
-                          </a>
-                        )}
+                        </div>
                       </div>
+                    </div>
 
-                      {/* Action Buttons */}
-                      <div className="pt-2 flex items-center gap-2">
-                        <button
-                          onClick={() => handleApprovePiece(item)}
-                          disabled={approvingSlug === item.slug}
-                          className="px-3 py-1.5 bg-white text-black font-mono text-[11px] font-bold uppercase rounded hover:bg-neutral-200 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Check className="w-3 h-3" />
-                          <span>{approvingSlug === item.slug ? "Importing & Generating..." : "Approve & Ingest"}</span>
-                        </button>
-                        <button
-                          onClick={() =>
-                            setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug))
-                          }
-                          className="px-2.5 py-1.5 bg-neutral-800 text-neutral-400 font-mono text-[11px] rounded hover:bg-neutral-700 hover:text-white transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
+                    <div className="pt-3 border-t border-neutral-800 flex items-center gap-2">
+                      <button
+                        onClick={() => handleApprovePiece(item)}
+                        disabled={approvingSlug === item.slug}
+                        className="flex-1 py-2 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center justify-center gap-1.5 rounded disabled:opacity-50"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>{approvingSlug === item.slug ? "INGESTING..." : "APPROVE & INGEST"}</span>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug))
+                        }
+                        className="p-2 text-neutral-400 hover:text-red-400 hover:bg-neutral-800 rounded transition-colors"
+                        title="Dismiss"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -425,47 +554,42 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* TAB 2: 1-Click Rapid Ingestion */}
+      {/* TAB 2: 1-Click Ingest */}
       {activeTab === "quick-ingest" && (
         <div className="max-w-2xl bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-6">
           <div>
-            <h2 className="text-base font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+            <h2 className="text-base font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
               <span>1-Click Grail Ingestion Studio</span>
             </h2>
             <p className="text-xs font-mono text-neutral-400 mt-1">
-              Paste any raw Taobao, Weidian, 1688, or Reddit URL. The pipeline will automatically create your Sugargoo affiliate link, generate a transparent AI cutout, add it to the vault, and render all 3 slide styles.
+              Enter any Taobao, Weidian, 1688 or Yupoo link. The system will automatically convert it into a Sugargoo affiliate link, extract clean flat-lay photos, isolate transparent cutouts, and render all 3 slide styles (`viral_minimal`, `editorial_dark`, `minimal_dark`).
             </p>
           </div>
 
           {ingestMessage && (
             <div
-              className={`p-3.5 border rounded text-xs font-mono flex items-center gap-2 ${
+              className={`p-3 rounded font-mono text-xs ${
                 ingestMessage.type === "success"
-                  ? "bg-emerald-950/40 border-emerald-800 text-emerald-400"
-                  : "bg-red-950/40 border-red-800 text-red-400"
+                  ? "bg-emerald-950/60 border border-emerald-800 text-emerald-300"
+                  : "bg-red-950/60 border border-red-800 text-red-300"
               }`}
             >
-              {ingestMessage.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0" />
-              )}
-              <span>{ingestMessage.text}</span>
+              {ingestMessage.text}
             </div>
           )}
 
           <form onSubmit={handleQuickIngest} className="space-y-4">
             <div>
               <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                Market URL or Obfuscated Link (Taobao / Weidian / 1688) *
+                Direct Product / Marketplace URL (Taobao, Weidian, 1688) *
               </label>
               <input
                 type="text"
                 required
                 value={ingestUrl}
                 onChange={(e) => setIngestUrl(e.target.value)}
-                placeholder="https://item.taobao.com/item.htm?id=... or https://weidian(dot)com/..."
+                placeholder="https://item.taobao.com/item.htm?id=... or https://weidian.com/item.html?itemID=..."
                 className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
               />
             </div>
@@ -473,21 +597,20 @@ export default function AdminSourcesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Designer Brand *
+                  Brand / Designer
                 </label>
                 <input
                   type="text"
-                  required
                   value={ingestBrand}
                   onChange={(e) => setIngestBrand(e.target.value)}
-                  placeholder="e.g. Enfants Riches Déprimés"
+                  placeholder="Rick Owens"
                   className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Category *
+                  Category
                 </label>
                 <select
                   value={ingestCategory}
@@ -514,7 +637,7 @@ export default function AdminSourcesPage() {
                   type="text"
                   value={ingestTitle}
                   onChange={(e) => setIngestTitle(e.target.value)}
-                  placeholder="e.g. Teenage Nostalgia Hoodie"
+                  placeholder="e.g. Vintage Jumbo Cargo Pants"
                   className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
                 />
               </div>
@@ -535,7 +658,7 @@ export default function AdminSourcesPage() {
 
             <div>
               <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                Source Image URL (Optional - will auto AI-cutout)
+                Source Image URL (Optional - leave blank to auto-fetch studio flat lay)
               </label>
               <input
                 type="text"
@@ -558,7 +681,251 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* TAB 3: Google Sheets */}
+      {/* TAB 3: Link Health & Dead Links Inspector */}
+      {activeTab === "health" && (
+        <div className="space-y-6">
+          {/* Health Overview Banner */}
+          <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-xl space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Link Health & Dead Link Moderation Station</span>
+                </h2>
+                <p className="text-xs font-mono text-neutral-400 mt-1 max-w-2xl">
+                  Automatically tests marketplace URLs (Taobao, Weidian, 1688) & Sugargoo affiliate routes. Flags delisted items ("商品已下架", 404s, missing items) so you can review, keep, replace, or delist them with 1-click.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleRunHealthAudit}
+                  disabled={isAuditingHealth}
+                  className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center gap-2 rounded disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isAuditingHealth ? "animate-spin" : ""}`} />
+                  <span>{isAuditingHealth ? "AUDITING CATALOG..." : "RUN FULL HEALTH AUDIT"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Health Stats Grid */}
+            {healthReport && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="p-3 bg-neutral-950 border border-neutral-800 rounded">
+                  <span className="text-[10px] font-mono uppercase text-neutral-500 block">Total Audited</span>
+                  <span className="text-lg font-mono font-bold text-white">{healthReport.totalChecked} Pieces</span>
+                </div>
+                <div className="p-3 bg-neutral-950 border border-emerald-900/40 rounded">
+                  <span className="text-[10px] font-mono uppercase text-emerald-400 block">🟢 Healthy Active</span>
+                  <span className="text-lg font-mono font-bold text-emerald-400">{healthReport.healthyCount} Pieces</span>
+                </div>
+                <div className="p-3 bg-neutral-950 border border-amber-900/40 rounded">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 block">🟡 Flagged Review</span>
+                  <span className="text-lg font-mono font-bold text-amber-400">{healthReport.flaggedCount} Pieces</span>
+                </div>
+                <div className="p-3 bg-neutral-950 border border-red-900/40 rounded">
+                  <span className="text-[10px] font-mono uppercase text-red-400 block">🔴 Dead / Delisted</span>
+                  <span className="text-lg font-mono font-bold text-red-400">{healthReport.deadCount} Pieces</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filter & Search Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-900/50 p-3 border border-neutral-800 rounded-lg">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setHealthFilter("all")}
+                className={`px-3 py-1 text-xs font-mono rounded uppercase transition-colors ${
+                  healthFilter === "all" ? "bg-white text-black font-bold" : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                All ({healthReport?.items.length || 0})
+              </button>
+              <button
+                onClick={() => setHealthFilter("dead")}
+                className={`px-3 py-1 text-xs font-mono rounded uppercase transition-colors ${
+                  healthFilter === "dead" ? "bg-red-500 text-white font-bold" : "text-red-400 hover:text-red-300"
+                }`}
+              >
+                Dead ({healthReport?.deadCount || 0})
+              </button>
+              <button
+                onClick={() => setHealthFilter("flagged")}
+                className={`px-3 py-1 text-xs font-mono rounded uppercase transition-colors ${
+                  healthFilter === "flagged" ? "bg-amber-500 text-black font-bold" : "text-amber-400 hover:text-amber-300"
+                }`}
+              >
+                Flagged ({healthReport?.flaggedCount || 0})
+              </button>
+              <button
+                onClick={() => setHealthFilter("healthy")}
+                className={`px-3 py-1 text-xs font-mono rounded uppercase transition-colors ${
+                  healthFilter === "healthy" ? "bg-emerald-500 text-black font-bold" : "text-emerald-400 hover:text-emerald-300"
+                }`}
+              >
+                Healthy ({healthReport?.healthyCount || 0})
+              </button>
+            </div>
+
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <input
+                type="text"
+                placeholder="Search pieces or links..."
+                value={healthSearch}
+                onChange={(e) => setHealthSearch(e.target.value)}
+                className="pl-8 pr-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600 w-full sm:w-64"
+              />
+            </div>
+          </div>
+
+          {/* Items Table / Cards */}
+          <div className="space-y-3">
+            {filteredHealthItems.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-neutral-800 rounded-xl">
+                <p className="font-mono text-neutral-500 text-xs">No pieces found matching this filter.</p>
+              </div>
+            ) : (
+              filteredHealthItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1.5 max-w-2xl">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-neutral-500 font-bold">#{item.id}</span>
+                      <span className="px-2 py-0.5 bg-neutral-800 text-neutral-300 font-mono text-[10px] uppercase rounded">
+                        {item.brand}
+                      </span>
+                      {item.status === "HEALTHY" && (
+                        <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-mono rounded flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>HEALTHY</span>
+                        </span>
+                      )}
+                      {item.status === "FLAGGED" && (
+                        <span className="px-2 py-0.5 bg-amber-950 text-amber-400 border border-amber-800 text-[10px] font-mono rounded flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>FLAGGED FOR REVIEW</span>
+                        </span>
+                      )}
+                      {item.status === "DEAD" && (
+                        <span className="px-2 py-0.5 bg-red-950 text-red-400 border border-red-800 text-[10px] font-mono rounded flex items-center gap-1">
+                          <AlertOctagon className="w-3 h-3" />
+                          <span>DELISTED / 404</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-mono text-sm font-bold text-white">
+                      {item.title}
+                    </h3>
+
+                    <div className="text-[11px] font-mono text-neutral-400 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-neutral-500">Note:</span>
+                        <span>{item.note || "No audit notes"}</span>
+                      </div>
+                      {item.directStoreLink && (
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="text-neutral-500">Marketplace:</span>
+                          <a
+                            href={item.directStoreLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline truncate"
+                          >
+                            {item.directStoreLink}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Inline Edit URL Form */}
+                    {editingUrlId === item.id && (
+                      <div className="pt-2 flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Paste new Taobao / Weidian link..."
+                          value={newUrlInput}
+                          onChange={(e) => setNewUrlInput(e.target.value)}
+                          className="px-3 py-1.5 bg-neutral-950 border border-neutral-700 rounded text-xs font-mono text-white flex-1 focus:outline-none focus:border-white"
+                        />
+                        <button
+                          onClick={() => handleHealthAction(item.id, "update_url", newUrlInput)}
+                          disabled={!newUrlInput.trim() || actionLoadingId === item.id}
+                          className="px-3 py-1.5 bg-white text-black font-mono text-xs font-bold uppercase rounded hover:bg-neutral-200"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingUrlId(null);
+                            setNewUrlInput("");
+                          }}
+                          className="px-2 py-1.5 text-neutral-400 hover:text-white font-mono text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                    <a
+                      href={item.sugargooUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Test Sugargoo</span>
+                    </a>
+
+                    <button
+                      onClick={() => {
+                        setEditingUrlId(item.id);
+                        setNewUrlInput(item.directStoreLink || "");
+                      }}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Update URL</span>
+                    </button>
+
+                    {item.status !== "HEALTHY" && (
+                      <button
+                        onClick={() => handleHealthAction(item.id, "approve")}
+                        disabled={actionLoadingId === item.id}
+                        className="px-3 py-1.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Keep / Approve</span>
+                      </button>
+                    )}
+
+                    {item.status !== "DEAD" && (
+                      <button
+                        onClick={() => handleHealthAction(item.id, "delist")}
+                        disabled={actionLoadingId === item.id}
+                        className="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delist Piece</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: Google Sheets */}
       {activeTab === "sheets" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
