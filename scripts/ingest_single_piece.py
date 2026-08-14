@@ -31,9 +31,21 @@ def clean_url(raw: str) -> str:
         cleaned = "https://" + cleaned
     return cleaned
 
-def convert_to_sugargoo_affiliate(raw_url: str) -> str:
+def resolve_and_clean_market_url(raw_url: str) -> str:
     c_url = clean_url(raw_url)
-    encoded = urllib.parse.quote(c_url, safe="")
+    # Resolve Weidian short-links if needed
+    if "k.youshop10.com" in c_url:
+        try:
+            req = urllib.request.Request(c_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                c_url = response.geturl()
+        except Exception:
+            pass
+    return c_url
+
+def convert_to_sugargoo_affiliate(raw_url: str) -> str:
+    resolved_url = resolve_and_clean_market_url(raw_url)
+    encoded = urllib.parse.quote(resolved_url, safe="")
     return f"https://www.sugargoo.com/products?productLink={encoded}&memberId={AFFILIATE_MEMBER_ID}"
 
 def slugify(text: str) -> str:

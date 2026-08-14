@@ -100,8 +100,22 @@ def clean_text_and_extract_links(text: str) -> list[str]:
 
 from image_cutout_pipeline import process_and_cutout_image
 
+def resolve_and_clean_market_url(raw_url: str) -> str:
+    cleaned = raw_url.strip()
+    if not cleaned.startswith("http"):
+        cleaned = "https://" + cleaned
+    # Expand Weidian short links
+    if "k.youshop10.com" in cleaned:
+        try:
+            req = urllib.request.Request(cleaned, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                cleaned = response.geturl()
+        except Exception:
+            pass
+    return cleaned
+
 def convert_to_sugargoo_affiliate(raw_url: str) -> str:
-    clean_target = raw_url.strip()
+    clean_target = resolve_and_clean_market_url(raw_url)
     encoded = urllib.parse.quote(clean_target, safe="")
     return f"https://www.sugargoo.com/products?productLink={encoded}&memberId={AFFILIATE_MEMBER_ID}"
 
