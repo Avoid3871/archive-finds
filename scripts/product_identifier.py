@@ -117,8 +117,11 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None) -
         if not raw_matches:
             raw_matches = re.findall(r'm="(\{.*?\})"', html)
             
+        SPAM_KEYWORDS = ["chat", "kate middleton", "voice", "free & safe", "bot", "apk", "app", "download", "login", "vpn", "movie", "generator", "dating", "quiz", "game", "mod", "hack", "review", "forum"]
+        FASHION_KEYWORDS = ["sneaker", "shoe", "boot", "hoodie", "tee", "shirt", "jacket", "denim", "jean", "pant", "short", "coat", "blazer", "cardigan", "sweater", "vest", "bag", "leather", "zip", "low", "high", "slip", "runner", "vintage", "derby", "creeper", "track", "cross", "floral", "distressed"]
+
         candidate_titles = []
-        for m_str in raw_matches[:12]:
+        for m_str in raw_matches[:15]:
             try:
                 m_clean = m_str.replace("&quot;", '"').replace("&amp;", "&")
                 d = json.loads(m_clean)
@@ -126,12 +129,19 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None) -
                 murl = d.get("murl", "")
                 
                 # Clean title
-                t_clean = re.sub(r'\s*[\|\–\-]\s*(Grailed|SSENSE|Farfetch|Justin Reed|eBay|Lyst).*$', '', t, flags=re.IGNORECASE).strip()
+                t_clean = re.sub(r'\s*[\|\–\-]\s*(Grailed|SSENSE|Farfetch|Justin Reed|eBay|Lyst|StockX|GOAT).*$', '', t, flags=re.IGNORECASE).strip()
                 t_clean = re.sub(r'^[^\w]+', '', t_clean)
                 
-                if brand_detected.lower() in t_clean.lower() or len(t_clean.split()) >= 3:
-                    if not any(bad in t_clean.lower() for bad in ["meme", "reddit", "qc", "haul", "fake"]):
-                        candidate_titles.append((t_clean, murl))
+                # Filter out spam / non-fashion
+                t_lower = t_clean.lower()
+                if any(bad in t_lower for bad in SPAM_KEYWORDS):
+                    continue
+                    
+                has_brand = brand_detected.lower() in t_lower
+                has_fashion_kw = any(fkw in t_lower for fkw in FASHION_KEYWORDS)
+                
+                if (has_brand or has_fashion_kw) and len(t_clean.split()) >= 2 and len(t_clean) <= 90:
+                    candidate_titles.append((t_clean, murl))
             except Exception:
                 pass
                 
@@ -149,7 +159,12 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None) -
             season_match = re.search(r'\b(SS\d{2}|FW\d{2}|AW\d{2}|20[12]\d)\b', best_title, re.IGNORECASE)
             if season_match:
                 res_data["season"] = season_match.group(1).upper()
-                
+        else:
+            # Fallback to cleaned de-obfuscated query
+            clean_fallback = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C|LC', '', expanded).strip()
+            if brand_detected.lower() not in clean_fallback.lower():
+                clean_fallback = f"{brand_detected} {clean_fallback}"
+            res_data["canonicalTitle"] = clean_fallback.strip()
     except Exception as e:
         print(f"[IDENTIFIER WARNING] {e}", flush=True)
 

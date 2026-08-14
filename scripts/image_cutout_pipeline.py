@@ -19,38 +19,33 @@ if sys.platform == "win32":
 
 def search_clean_garment_image_playwright(query: str) -> str:
     """
-    Uses headless Playwright to find pristine high-res studio/flat-lay product images from Bing Images.
+    Finds pristine high-res studio/flat-lay product images from Bing Images.
     Filters out low-res thumbnails, reddit QC shots, and watermarked warehouse photos.
     """
     print(f"[IMAGE SEARCH] Querying web for clean studio flat-lay: '{query}'...")
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            )
-            page = context.new_page()
+        search_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query + ' product studio white background flat lay')}&form=HDRSC2&first=1"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        }
+        req = urllib.request.Request(search_url, headers=headers)
+        html = urllib.request.urlopen(req, timeout=8).read().decode("utf-8", errors="ignore")
+        
+        matches = re.findall(r'class="iusc"[^>]*m="([^"]*)"', html)
+        if not matches:
+            matches = re.findall(r'm="(\{.*?\})"', html)
             
-            search_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query + ' product studio white background flat lay')}&form=HDRSC2&first=1"
-            page.goto(search_url, timeout=20000, wait_until="domcontentloaded")
-            page.wait_for_timeout(1500)
-            
-            elements = page.query_selector_all("a.iusc")
-            for el in elements[:10]:
-                m_attr = el.get_attribute("m")
-                if m_attr:
-                    try:
-                        data = json.loads(m_attr)
-                        murl = data.get("murl")
-                        if murl and (murl.startswith("http://") or murl.startswith("https://")):
-                            # Ignore reddit/imgur QC photos
-                            if not any(bad in murl.lower() for bad in ["preview.redd.it", "i.redd.it", "imgur", "cssbuy", "pandabuy"]):
-                                browser.close()
-                                print(f"[IMAGE SEARCH SUCCESS] Found: {murl[:80]}...")
-                                return murl
-                    except Exception:
-                        pass
-            browser.close()
+        for m_str in matches[:15]:
+            try:
+                m_clean = m_str.replace("&quot;", '"').replace("&amp;", "&")
+                data = json.loads(m_clean)
+                murl = data.get("murl")
+                if murl and (murl.startswith("http://") or murl.startswith("https://")):
+                    if not any(bad in murl.lower() for bad in ["preview.redd.it", "i.redd.it", "imgur", "cssbuy", "pandabuy", "snoovatar", "avatar"]):
+                        print(f"[IMAGE SEARCH SUCCESS] Found: {murl[:80]}...")
+                        return murl
+            except Exception:
+                pass
     except Exception as e:
         print(f"[IMAGE SEARCH WARNING] {e}")
         
