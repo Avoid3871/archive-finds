@@ -99,14 +99,14 @@ export default function HomePage() {
               SPOTLIGHT GRAIL
             </span>
             <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tight">
-              1998 HELMUT LANG PAINTER DENIM
+              2001 RAF SIMONS RIOT RIOT RIOT! ARCHIVE
             </h3>
             <p className="text-neutral-400 text-sm sm:text-base font-light leading-relaxed">
-              The foundational archetype of modern artisanal streetwear. Individually splattered raw Japanese denim trousers from Helmut Lang's seminal late 90s era.
+              The foundational archetype of modern subcultural fashion. Seminal Autumn/Winter 2001 layered archive piece from Raf Simons' most coveted historical runway collection.
             </p>
             <div className="pt-2">
               <Link
-                href="/product/helmut-lang-1998-painter-denim-jeans"
+                href="/product/raf-simons-raf-simons-a-w-2001-riot-riot-riot-striped-l-s"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-mono text-xs uppercase tracking-widest hover:bg-neutral-200 transition-colors"
               >
                 VIEW GRAIL DETAILS <ArrowUpRight className="w-4 h-4" />
