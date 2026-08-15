@@ -148,7 +148,26 @@ export default function AdminSourcesPage() {
     logs: [],
   });
 
-  const [successToast, setSuccessToast] = useState<{ title: string; slug: string } | null>(null);
+  const [successToast, setSuccessToast] = useState<{ title: string; slug: string; imageUrl?: string } | null>(null);
+
+  // Restore success toast across Fast Refresh / page reloads
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("last_ingested_grail");
+      if (saved) {
+        setSuccessToast(JSON.parse(saved));
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, []);
+
+  const handleDismissToast = () => {
+    setSuccessToast(null);
+    try {
+      sessionStorage.removeItem("last_ingested_grail");
+    } catch (e) {}
+  };
 
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -254,7 +273,16 @@ export default function AdminSourcesPage() {
 
         // Optimistically remove from state
         setDiscoveredItems((prev) => prev.filter((i) => i.slug !== editingItem.slug));
-        setSuccessToast({ title: editFormData.title, slug: editingItem.slug });
+        
+        const toastItem = {
+          title: `${editFormData.brand} - ${editFormData.title}`,
+          slug: editingItem.slug,
+          imageUrl: editingItem.localImage || editingItem.imageUrl,
+        };
+        setSuccessToast(toastItem);
+        try {
+          sessionStorage.setItem("last_ingested_grail", JSON.stringify(toastItem));
+        } catch (e) {}
 
         setIngestModalProgress((prev) => ({
           ...prev,
@@ -268,6 +296,7 @@ export default function AdminSourcesPage() {
           ],
           ingestedSlug: editingItem.slug,
         }));
+
       } else {
         setIngestModalProgress((prev) => ({
           ...prev,
@@ -643,39 +672,58 @@ export default function AdminSourcesPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Global Ingestion Success Toast */}
+      {/* Global Ingestion Success Toast (Persists across Fast Refresh) */}
       {successToast && (
-        <div className="fixed top-6 right-6 z-50 p-4 bg-neutral-900/95 border border-emerald-500/50 rounded-xl shadow-2xl backdrop-blur-md flex items-center gap-4 animate-in slide-in-from-top-4 duration-300">
-          <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div className="space-y-0.5">
-            <p className="font-mono text-xs font-bold text-white uppercase tracking-wider">
-              Grail Successfully Ingested!
+        <div className="fixed top-6 right-6 z-50 p-4 bg-neutral-900/95 border border-emerald-500/60 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-300 max-w-lg">
+          {successToast.imageUrl ? (
+            <div className="w-12 h-12 bg-neutral-950 rounded-xl border border-neutral-800 p-1 flex-shrink-0 flex items-center justify-center">
+              <img
+                src={successToast.imageUrl}
+                alt={successToast.title}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+          )}
+          <div className="space-y-0.5 min-w-0 pr-2">
+            <p className="font-mono text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Grail Ingested to Store!
             </p>
-            <p className="font-mono text-[11px] text-neutral-400">
-              {successToast.title} is now active in the store catalog.
+            <p className="font-mono text-[11px] text-neutral-300 truncate max-w-[220px]">
+              {successToast.title}
             </p>
           </div>
-          <div className="flex items-center gap-2 pl-2">
+          <div className="flex items-center gap-2 pl-2 border-l border-neutral-800 flex-shrink-0">
             <a
               href="/products"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-emerald-500 text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded hover:bg-emerald-400 transition-colors flex items-center gap-1"
+              className="px-3 py-2 bg-emerald-500 text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-emerald-400 transition-colors flex items-center gap-1 shadow-lg shadow-emerald-500/20"
             >
               <ExternalLink className="w-3 h-3" />
-              <span>View</span>
+              <span>Store</span>
+            </a>
+            <a
+              href="/admin/slides"
+              className="px-3 py-2 bg-neutral-800 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-neutral-700 transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span>Slides</span>
             </a>
             <button
-              onClick={() => setSuccessToast(null)}
-              className="p-1.5 text-neutral-500 hover:text-white rounded"
+              onClick={handleDismissToast}
+              className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
+
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
