@@ -6,14 +6,23 @@ import fs from "fs";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { url, title, brand, category, price, rawImageSrc } = body;
+    const { url, title, brand, category, price, rawImageSrc, localImage, imageUrl, rotation } = body;
 
     if (!url) {
       return NextResponse.json({ success: false, error: "Market or Reddit URL is required" }, { status: 400 });
     }
 
     const scriptPath = path.join(process.cwd(), "scripts", "ingest_single_piece.py");
-    const payload = JSON.stringify({ url, title, brand, category, price, rawImageSrc });
+    const payload = JSON.stringify({
+      url,
+      title,
+      brand,
+      category,
+      price,
+      rawImageSrc,
+      localImage: localImage || imageUrl,
+      rotation: rotation || 0,
+    });
 
     // Write temp payload
     const tempPayloadFile = path.join(process.cwd(), "scratch", `temp_ingest_${Date.now()}.json`);

@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { ArrowLeft, LayoutDashboard, Layers, FileSpreadsheet, Activity, Settings, ExternalLink, Smartphone } from "lucide-react";
-
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
+import { getAllProducts } from "@/lib/products/mockData";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const allProds = getAllProducts();
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans flex flex-col md:flex-row">
       {/* Sidebar Navigation */}
@@ -25,51 +28,8 @@ export default function AdminLayout({
             </p>
           </div>
 
-          {/* Links */}
-          <nav className="space-y-1 text-xs font-mono uppercase tracking-wider">
-            <Link
-              href="/admin"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Overview</span>
-            </Link>
-            <Link
-              href="/admin/products"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <Layers className="w-4 h-4" />
-              <span>Products (95)</span>
-            </Link>
-            <Link
-              href="/admin/slides"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>9:16 Slide Studio</span>
-            </Link>
-            <Link
-              href="/admin/sources"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Sheet Sources</span>
-            </Link>
-            <Link
-              href="/admin/jobs"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <Activity className="w-4 h-4" />
-              <span>Job Queue</span>
-            </Link>
-            <Link
-              href="/admin/settings"
-              className="flex items-center gap-2.5 px-3 py-2 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Link>
-          </nav>
+          {/* Dynamic Links with real-time product count */}
+          <AdminSidebarNav initialProductCount={allProds.length} />
         </div>
 
         {/* Back to Public Web Store */}

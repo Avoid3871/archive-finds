@@ -86,6 +86,17 @@ def ingest(payload_file: str):
         print(f"Generating AI cutout from market source...", flush=True)
         process_and_cutout_image(raw_img, out_png, query_fallback=search_query, market_url=raw_url)
 
+    rotation = int(data.get("rotation", 0))
+    if rotation % 360 != 0 and os.path.exists(out_png):
+        try:
+            from PIL import Image
+            img = Image.open(out_png)
+            rotated = img.rotate((360 - rotation) % 360, expand=True)
+            rotated.save(out_png)
+            print(f"[ROTATION] Rotated studio cutout by {rotation}° clockwise.", flush=True)
+        except Exception as e:
+            print(f"[ROTATION ERROR] Could not rotate image: {e}", flush=True)
+
 
     new_piece = {
         "id": item_id,

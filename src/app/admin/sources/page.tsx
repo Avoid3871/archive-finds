@@ -124,6 +124,7 @@ export default function AdminSourcesPage() {
 
   // Review & Edit Ingest Modal State
   const [editingItem, setEditingItem] = useState<DiscoveredItem | null>(null);
+  const [editRotation, setEditRotation] = useState<number>(0);
   const [editFormData, setEditFormData] = useState({
     title: "",
     brand: "Rick Owens",
@@ -182,6 +183,7 @@ export default function AdminSourcesPage() {
 
   const openReviewModal = (item: DiscoveredItem) => {
     setEditingItem(item);
+    setEditRotation(0);
     const cleanTitle = item.title.replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "").trim();
     setEditFormData({
       title: cleanTitle || item.title,
@@ -212,6 +214,7 @@ export default function AdminSourcesPage() {
       logs: [
         `[1/4] Preparing product: "${editFormData.brand} - ${editFormData.title}"`,
         `[1/4] Category: ${editFormData.category} | Price: $${editFormData.price}`,
+        editRotation !== 0 ? `[1/4] Applying ${editRotation}° studio image rotation...` : `[1/4] Image orientation: Standard (0°)`,
       ],
     });
 
@@ -255,6 +258,7 @@ export default function AdminSourcesPage() {
           price: editFormData.price,
           rawImageSrc: editingItem.rawImageSrc,
           localImage: editingItem.localImage || editingItem.imageUrl,
+          rotation: editRotation,
         }),
       });
 
@@ -1636,14 +1640,50 @@ export default function AdminSourcesPage() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 {/* Left Preview Column (5 cols) */}
                 <div className="md:col-span-5 space-y-3">
-                  <label className="text-[10px] font-mono uppercase text-neutral-400 block">
-                    Freigestelltes Studiofoto
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono uppercase text-neutral-400">
+                      Studiofoto Cutout
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditRotation((prev) => (prev - 90 + 360) % 360)}
+                        title="Rotate -90° (Counter-Clockwise)"
+                        className="px-2 py-0.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 text-[10px] font-mono rounded flex items-center gap-1 transition-colors"
+                      >
+                        <span>↶</span>
+                        <span>-90°</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditRotation((prev) => (prev + 90) % 360)}
+                        title="Rotate +90° (Clockwise)"
+                        className="px-2 py-0.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 text-[10px] font-mono rounded flex items-center gap-1 transition-colors"
+                      >
+                        <span>↷</span>
+                        <span>+90°</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditRotation((prev) => (prev + 180) % 360)}
+                        title="Rotate 180°"
+                        className="px-2 py-0.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 text-[10px] font-mono rounded flex items-center gap-1 transition-colors"
+                      >
+                        <span>🔄</span>
+                        <span>180°</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="w-full h-64 bg-neutral-950 rounded-xl border border-neutral-800 relative flex items-center justify-center p-4 overflow-hidden group">
                     <img
                       src={editingItem.imageUrl || editingItem.localImage || editingItem.rawImageSrc}
                       alt={editingItem.title}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
+                      style={{
+                        transform: `rotate(${editRotation}deg)`,
+                        transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-xl"
                       onError={(e) => {
                         if (editingItem.rawImageSrc && e.currentTarget.src !== editingItem.rawImageSrc) {
                           e.currentTarget.src = editingItem.rawImageSrc;
@@ -1653,6 +1693,24 @@ export default function AdminSourcesPage() {
                     <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] uppercase rounded">
                       Studio Cutout
                     </div>
+                    {editRotation !== 0 && (
+                      <div className="absolute top-2 right-2 px-2 py-0.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] uppercase rounded flex items-center gap-1">
+                        <span>Rotated: {editRotation}°</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Direct Test Sugargoo Link Button */}
+                  <div>
+                    <a
+                      href={`https://www.sugargoo.com/products?productLink=${encodeURIComponent(editFormData.rawMarketUrl || editingItem.rawMarketUrl)}&memberId=1325437696506389977`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2 px-3 bg-neutral-900 hover:bg-neutral-800 border border-amber-500/40 hover:border-amber-500 text-amber-400 hover:text-amber-300 font-mono text-[11px] font-bold uppercase rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Test Sugargoo Link ↗</span>
+                    </a>
                   </div>
 
                   <div className="space-y-1 pt-1 text-[11px] font-mono text-neutral-400">
