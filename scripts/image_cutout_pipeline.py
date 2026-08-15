@@ -17,14 +17,54 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+BAD_IMAGE_DOMAINS = [
+    "vecteezy", "shutterstock", "alamy", "istockphoto", "gettyimages", "stock.adobe", "freepik", "dreamstime", "123rf",
+    "ytimg", "youtube", "tiktok", "instagram", "facebook", "pinterest", "tripadvisor", "wikipedia", "wikimedia",
+    "preview.redd.it", "i.redd.it", "snoovatar", "avatar", "badge", "emoji", "award", "lookaside", "icon"
+]
+
+def fetch_marketplace_store_photos(market_url: str) -> list[str]:
+    """
+    Directly extracts high-resolution seller studio photos from Weidian, Taobao, and 1688 item pages.
+    """
+    if not market_url or not any(k in market_url for k in ["weidian.com", "taobao.com", "1688.com"]):
+        return []
+        
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        }
+        req = urllib.request.Request(market_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+            
+        imgs = re.findall(r'https?://[^\s"\'<>]+\.(?:jpg|jpeg|png|webp)', html)
+        valid = []
+        for img in imgs:
+            if any(cdn in img for cdn in ["geilicdn", "wdvdimg", "alicdn", "taobaocdn", "cbu01", "img.alicdn.com"]):
+                if not any(bad in img.lower() for bad in ["icon", "logo", "avatar", "badge", "banner", "head", "footer", "unadjust_550_200", "96_52", "42_42"]):
+                    # Clean query strings if needed
+                    valid.append(img)
+        
+        valid = list(dict.fromkeys(valid))
+        if valid:
+            print(f"[STORE SCRAPER] Extracted {len(valid)} seller studio photos directly from store page!")
+            return valid
+    except Exception as e:
+        print(f"[STORE SCRAPER WARNING] Could not fetch marketplace photos: {e}")
+        
+    return []
+
 def search_clean_garment_image_playwright(query: str) -> str:
     """
     Finds pristine high-res studio/flat-lay product images from Bing Images.
-    Filters out low-res thumbnails, reddit QC shots, and watermarked warehouse photos.
+    Filters out stock photo sites, thumbnails, fitpics, and non-garment graphics.
     """
     print(f"[IMAGE SEARCH] Querying web for clean studio flat-lay: '{query}'...")
     try:
-        search_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query + ' product studio white background flat lay')}&form=HDRSC2&first=1"
+        # Search specifically on fashion retailers / archive platforms
+        search_term = f"{query} (grailed OR ssense OR farfetch OR lyst OR endclothing OR modesens OR stockx) product studio flat lay"
+        search_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(search_term)}&form=HDRSC2&first=1"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         }
@@ -35,15 +75,22 @@ def search_clean_garment_image_playwright(query: str) -> str:
         if not matches:
             matches = re.findall(r'm="(\{.*?\})"', html)
             
-        for m_str in matches[:15]:
+        for m_str in matches[:20]:
             try:
                 m_clean = m_str.replace("&quot;", '"').replace("&amp;", "&")
                 data = json.loads(m_clean)
                 murl = data.get("murl")
+                title = (data.get("t") or "").lower()
+                
                 if murl and (murl.startswith("http://") or murl.startswith("https://")):
-                    if not any(bad in murl.lower() for bad in ["preview.redd.it", "i.redd.it", "imgur", "cssbuy", "pandabuy", "snoovatar", "avatar"]):
-                        print(f"[IMAGE SEARCH SUCCESS] Found: {murl[:80]}...")
-                        return murl
+                    # Reject stock photo domains & non-fashion sites
+                    if any(bad in murl.lower() for bad in BAD_IMAGE_DOMAINS):
+                        continue
+                    if any(bad in title for bad in ["stock photo", "vecteezy", "shutterstock", "getty", "alamy", "nature", "landscape", "park"]):
+                        continue
+                        
+                    print(f"[IMAGE SEARCH SUCCESS] Found pristine studio shot: {murl[:80]}...")
+                    return murl
             except Exception:
                 pass
     except Exception as e:
@@ -74,23 +121,49 @@ def clean_ui_artifacts(img: Image.Image) -> Image.Image:
     return img
 
 def is_badge_or_icon(img: Image.Image) -> bool:
-    """Detects if an image is a tiny icon, badge, emoji, or non-garment graphic."""
+    """Detects if an image is a tiny icon, badge, emoji, mobile screenshot or non-garment graphic."""
     w, h = img.size
+    # Reject tiny thumbnails
     if w < 180 or h < 180:
+        return True
+    # Reject vertical mobile phone screenshots (tall aspect ratio with app UI)
+    if h / max(1, w) > 1.45:
+        print("[IMAGE FILTER] Rejected vertical mobile phone screenshot.")
+        return True
+    # Reject extreme panoramic banners
+    if w / max(1, h) > 2.5:
+        print("[IMAGE FILTER] Rejected extreme banner graphic.")
         return True
     return False
 
-def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", target_size=(1000, 1000)) -> bool:
+
+def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", market_url: str = "", target_size=(1000, 1000)) -> bool:
     """
     Takes an image URL, local path, or fallback search query.
     Extracts garment cleanly via rembg, trims padding, centers on a 1000x1000 square transparent canvas.
     """
     try:
         input_image = None
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"}
         
-        # Priority 1: If query_fallback is provided (e.g. 'Rick Owens Vintage Low Vans'), try to find a pristine studio flat-lay first!
-        if query_fallback and not any(bad in query_fallback.lower() for bad in ["haul", "blindbox", "unknown", "qc"]):
+        # Priority 1: Direct Marketplace Seller Studio Photos (Weidian / Taobao / 1688)
+        if market_url:
+            seller_photos = fetch_marketplace_store_photos(market_url)
+            for sp in seller_photos[:3]:
+                try:
+                    req = urllib.request.Request(sp, headers=headers)
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        img_data = resp.read()
+                    temp_img = Image.open(io.BytesIO(img_data)).convert("RGBA")
+                    if not is_badge_or_icon(temp_img):
+                        input_image = temp_img
+                        print(f"[STORE PHOTO MATCH] Successfully retrieved official seller studio photo: {sp[:70]}...")
+                        break
+                except Exception:
+                    pass
+
+        # Priority 2: High-Fashion Studio Search (SSENSE / Grailed / Farfetch / StockX)
+        if input_image is None and query_fallback and not any(bad in query_fallback.lower() for bad in ["haul", "blindbox", "unknown", "qc"]):
             clean_url = search_clean_garment_image_playwright(query_fallback)
             if clean_url:
                 try:
@@ -104,31 +177,29 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
                 except Exception:
                     pass
 
-        # Priority 2: Use provided img_input if no studio match was found
+        # Priority 3: Use provided img_input if no studio match was found (reject phone screenshots & avatars)
         if input_image is None and img_input:
             if isinstance(img_input, str) and img_input.startswith("http"):
-                # Reject known avatar / sticker / icon domains and patterns
-                if any(bad in img_input.lower() for bad in ["snoovatar", "avatar", "badge", "emoji", "award", "lookaside.instagram"]):
-                    print(f"[REJECT] Rejected avatar/icon URL: {img_input[:60]}")
-                    if query_fallback:
-                        clean_url = search_clean_garment_image_playwright(query_fallback)
-                        if clean_url:
-                            req = urllib.request.Request(clean_url, headers=headers)
-                            with urllib.request.urlopen(req, timeout=10) as resp:
-                                img_data = resp.read()
-                            input_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
-                else:
-                    req = urllib.request.Request(img_input, headers=headers)
-                    with urllib.request.urlopen(req, timeout=15) as resp:
-                        img_data = resp.read()
-                    input_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
-            elif isinstance(img_input, str):
-                input_image = Image.open(img_input).convert("RGBA")
+                if not any(bad in img_input.lower() for bad in BAD_IMAGE_DOMAINS):
+                    try:
+                        req = urllib.request.Request(img_input, headers=headers)
+                        with urllib.request.urlopen(req, timeout=15) as resp:
+                            img_data = resp.read()
+                        temp_img = Image.open(io.BytesIO(img_data)).convert("RGBA")
+                        if not is_badge_or_icon(temp_img):
+                            input_image = temp_img
+                    except Exception:
+                        pass
+            elif isinstance(img_input, str) and os.path.exists(img_input):
+                temp_img = Image.open(img_input).convert("RGBA")
+                if not is_badge_or_icon(temp_img):
+                    input_image = temp_img
             elif isinstance(img_input, Image.Image):
-                input_image = img_input.convert("RGBA")
+                if not is_badge_or_icon(img_input):
+                    input_image = img_input.convert("RGBA")
 
         if input_image is None or is_badge_or_icon(input_image):
-            raise ValueError("No valid garment image could be retrieved (rejected icons/avatars)")
+            raise ValueError("No valid garment image could be retrieved (rejected icons/avatars/screenshots)")
 
         # Strip red scrub bar / mobile screenshot artifacts
         input_image = clean_ui_artifacts(input_image)

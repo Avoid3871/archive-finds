@@ -795,15 +795,21 @@ export default function AdminSourcesPage() {
                         {item.title}
                       </h3>
 
-                      {item.rawImageSrc && (
-                        <div className="w-full h-36 bg-black rounded border border-neutral-800 overflow-hidden relative">
-                          <img
-                            src={item.rawImageSrc}
-                            alt={item.title}
-                            className="w-full h-full object-contain p-2"
-                          />
+                      <div className="w-full h-44 bg-neutral-950/80 rounded-lg border border-neutral-800/80 overflow-hidden relative flex items-center justify-center p-3">
+                        <img
+                          src={item.imageUrl || item.localImage || item.rawImageSrc}
+                          alt={item.title}
+                          className="max-h-full max-w-full object-contain filter drop-shadow-md transition-transform hover:scale-105"
+                          onError={(e) => {
+                            if (item.rawImageSrc && e.currentTarget.src !== item.rawImageSrc) {
+                              e.currentTarget.src = item.rawImageSrc;
+                            }
+                          }}
+                        />
+                        <div className="absolute bottom-1.5 right-2 px-1.5 py-0.5 bg-black/80 border border-neutral-800 rounded text-[9px] font-mono text-neutral-400">
+                          {item.imageUrl ? "STUDIO CUTOUT" : "RAW IMAGE"}
                         </div>
-                      )}
+                      </div>
 
                       <div className="text-[10px] font-mono text-neutral-500 space-y-1 pt-1">
                         <div className="truncate">

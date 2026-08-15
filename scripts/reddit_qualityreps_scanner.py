@@ -457,7 +457,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
                     emit_progress(progress_base + 2, f"Fetching studio flat-lay & AI cutout: {brand} {canonical_title[:30]}", idx+1, max_posts, valid_count, "AI_PROCESSING", canonical_title)
                     print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
-                    success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}")
+                    success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}", market_url=market_link)
                     
                     if not success or not os.path.exists(out_png):
                         print(f"[REJECTED] Cutout failed or image invalid for: '{canonical_title}'", flush=True)
