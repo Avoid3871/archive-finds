@@ -2861,5 +2861,29 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "115",
+    "title": "Yohji Yamamoto - Yoji OOAK Logo Canvas Tote Bag",
+    "name": "Yohji Yamamoto - Yoji OOAK Logo Canvas Tote Bag",
+    "brand": "Yohji Yamamoto",
+    "brandSlug": "yohji-yamamoto",
+    "category": "Bags",
+    "categorySlug": "bags",
+    "price": 57.13,
+    "sourcePrice": 57.13,
+    "estimatedRetail": 450,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=584942972508",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
+    "imageUrl": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png",
+    "localImage": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png",
+    "slug": "yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
