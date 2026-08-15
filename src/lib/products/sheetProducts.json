@@ -1,6 +1,6 @@
 [
   {
-    "id": "item-1",
+    "id": "1",
     "name": "ERD Punk T Shirt",
     "slug": "erd-erd-punk-t-shirt",
     "brand": "Enfants Riches Déprimés",
@@ -25,7 +25,7 @@
     "isRare": false
   },
   {
-    "id": "item-2",
+    "id": "2",
     "name": "Vetements Heavy Metal Skull Shirt",
     "slug": "vetements-vetements-heavy-metal-skull-shirt",
     "brand": "Vetements",
@@ -50,7 +50,7 @@
     "isRare": false
   },
   {
-    "id": "item-3",
+    "id": "3",
     "name": "ERD Cavalary Tee",
     "slug": "erd-erd-cavalary-tee",
     "brand": "Enfants Riches Déprimés",
@@ -75,7 +75,7 @@
     "isRare": false
   },
   {
-    "id": "item-4",
+    "id": "4",
     "name": "Gosha Adidas Jersey",
     "slug": "gosha-rubchinskiy-gosha-adidas-jersey",
     "brand": "Gosha Rubchinskiy",
@@ -100,7 +100,7 @@
     "isRare": false
   },
   {
-    "id": "item-5",
+    "id": "5",
     "name": "Rick Owens Gimp tee",
     "slug": "rick-owens-rick-owens-gimp-tee",
     "brand": "Rick Owens",
@@ -125,7 +125,7 @@
     "isRare": false
   },
   {
-    "id": "item-6",
+    "id": "6",
     "name": "Raf Simons S/S 2020 Reanimator Tee",
     "slug": "raf-simons-raf-simons-s-s-2020-reanimator-tee",
     "brand": "Raf Simons",
@@ -150,7 +150,7 @@
     "isRare": false
   },
   {
-    "id": "item-7",
+    "id": "7",
     "name": "ERD La Passion De Guerir Tee",
     "slug": "erd-erd-la-passion-de-guerir-tee",
     "brand": "Enfants Riches Déprimés",
@@ -175,7 +175,7 @@
     "isRare": false
   },
   {
-    "id": "item-8",
+    "id": "8",
     "name": "Rick Owens Spliced Shirt",
     "slug": "rick-owens-rick-owens-spliced-shirt",
     "brand": "Rick Owens",
@@ -200,32 +200,7 @@
     "isRare": false
   },
   {
-    "id": "item-9",
-    "name": "ERD Punk T Shirt",
-    "slug": "erd-erd-punk-t-shirt",
-    "brand": "Enfants Riches Déprimés",
-    "brandSlug": "erd",
-    "category": "Tops",
-    "categorySlug": "tops",
-    "price": 20.39,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Enfants Riches Déprimés archive piece (ERD Punk T Shirt). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=793984570128",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D793984570128&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r07_c02_image34.png",
-    "tags": [
-      "erd",
-      "tops",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-10",
+    "id": "9",
     "name": "Boris Bidjan Saberi Black Layered Tee",
     "slug": "boris-bidjan-saberi-boris-bidjan-saberi-black-layered-tee",
     "brand": "Boris Bidjan Saberi",
@@ -250,32 +225,7 @@
     "isRare": false
   },
   {
-    "id": "item-11",
-    "name": "ERD Cavalary Tee",
-    "slug": "erd-erd-cavalary-tee",
-    "brand": "Enfants Riches Déprimés",
-    "brandSlug": "erd",
-    "category": "Tops",
-    "categorySlug": "tops",
-    "price": 23.9,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Enfants Riches Déprimés archive piece (ERD Cavalary Tee). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://weidian.com/item.html?itemID=7227858093",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D7227858093&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r08_c02_image31.png",
-    "tags": [
-      "erd",
-      "tops",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-12",
+    "id": "10",
     "name": "No/faith Studio Pants",
     "slug": "nofaithstudios-no-faith-studio-pants",
     "brand": "No/Faith Studios",
@@ -300,7 +250,7 @@
     "isRare": false
   },
   {
-    "id": "item-13",
+    "id": "11",
     "name": "No Faith Studios Black Wave Denim",
     "slug": "nofaithstudios-no-faith-studios-black-wave-denim",
     "brand": "No/Faith Studios",
@@ -325,7 +275,7 @@
     "isRare": false
   },
   {
-    "id": "item-14",
+    "id": "12",
     "name": "Maison Margiela Flared Pants",
     "slug": "maison-margiela-maison-margiela-flared-pants",
     "brand": "Maison Margiela",
@@ -350,7 +300,7 @@
     "isRare": false
   },
   {
-    "id": "item-15",
+    "id": "13",
     "name": "Lemaire Twisted Belted Jeans",
     "slug": "lemaire-lemaire-twisted-belted-jeans",
     "brand": "Lemaire",
@@ -375,7 +325,7 @@
     "isRare": false
   },
   {
-    "id": "item-16",
+    "id": "14",
     "name": "Raf Simons - Slim Fit Destroyed Jean",
     "slug": "raf-simons-raf-simons-slim-fit-destroyed-jean",
     "brand": "Raf Simons",
@@ -400,7 +350,7 @@
     "isRare": false
   },
   {
-    "id": "item-17",
+    "id": "15",
     "name": "Heliot Emil Liquid Metal Pants",
     "slug": "heliot-emil-heliot-emil-liquid-metal-pants",
     "brand": "Heliot Emil",
@@ -425,7 +375,7 @@
     "isRare": false
   },
   {
-    "id": "item-18",
+    "id": "16",
     "name": "Acne Studios ss24 digital jeans",
     "slug": "acne-studios-acne-studios-ss24-digital-jeans",
     "brand": "Acne Studios",
@@ -450,57 +400,7 @@
     "isRare": false
   },
   {
-    "id": "item-19",
-    "name": "Raf Simons Disheveled Double Layered Denim",
-    "slug": "raf-simons-raf-simons-disheveled-double-layered-denim",
-    "brand": "Raf Simons",
-    "brandSlug": "raf-simons",
-    "category": "Denim & Bottoms",
-    "categorySlug": "denim",
-    "price": 45.57,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Raf Simons archive piece (Raf Simons Disheveled Double Layered Denim). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=606885829110",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D606885829110&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r13_c05_image59.png",
-    "tags": [
-      "raf-simons",
-      "denim",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-20",
-    "name": "Raf Simons - Slim Fit Destroyed Jean",
-    "slug": "raf-simons-raf-simons-slim-fit-destroyed-jean",
-    "brand": "Raf Simons",
-    "brandSlug": "raf-simons",
-    "category": "Denim & Bottoms",
-    "categorySlug": "denim",
-    "price": 51.08,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Raf Simons archive piece (Raf Simons - Slim Fit Destroyed Jean). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=606885829110",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D606885829110&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r14_c02_image47.png",
-    "tags": [
-      "raf-simons",
-      "denim",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-21",
+    "id": "17",
     "name": "givenchy white zipper denim",
     "slug": "givenchy-givenchy-white-zipper-denim",
     "brand": "Givenchy",
@@ -525,7 +425,7 @@
     "isRare": true
   },
   {
-    "id": "item-22",
+    "id": "18",
     "name": "Shineluxury \"NEMETHON\" pants",
     "slug": "archive-selection-shineluxury-nemethon-pants",
     "brand": "Archive Selection",
@@ -550,7 +450,7 @@
     "isRare": true
   },
   {
-    "id": "item-23",
+    "id": "19",
     "name": "Acne Studios Mud Jeans",
     "slug": "acne-studios-acne-studios-mud-jeans",
     "brand": "Acne Studios",
@@ -575,7 +475,7 @@
     "isRare": false
   },
   {
-    "id": "item-24",
+    "id": "20",
     "name": "Acne 1981M Trompe L'Oeil Jeans",
     "slug": "acne-studios-acne-1981m-trompe-l-oeil-jeans",
     "brand": "Acne Studios",
@@ -600,7 +500,7 @@
     "isRare": false
   },
   {
-    "id": "item-25",
+    "id": "21",
     "name": "ERD SS/17 Shock Therapy Long Sleeve",
     "slug": "erd-erd-ss-17-shock-therapy-long-sleeve",
     "brand": "Enfants Riches Déprimés",
@@ -625,7 +525,7 @@
     "isRare": false
   },
   {
-    "id": "item-26",
+    "id": "22",
     "name": "Vetements Rammstein Hoodie",
     "slug": "vetements-vetements-rammstein-hoodie",
     "brand": "Vetements",
@@ -650,7 +550,7 @@
     "isRare": true
   },
   {
-    "id": "item-27",
+    "id": "23",
     "name": "Vetements S21 Word Tour Hoodie",
     "slug": "vetements-vetements-s21-word-tour-hoodie",
     "brand": "Vetements",
@@ -675,7 +575,7 @@
     "isRare": true
   },
   {
-    "id": "item-28",
+    "id": "24",
     "name": "Raf Simons A/W 2001 Riot Riot Riot! Striped L/S",
     "slug": "raf-simons-raf-simons-a-w-2001-riot-riot-riot-striped-l-s",
     "brand": "Raf Simons",
@@ -700,7 +600,7 @@
     "isRare": false
   },
   {
-    "id": "item-29",
+    "id": "25",
     "name": "Raf Simons Grande Fete De Nuit Knit",
     "slug": "raf-simons-raf-simons-grande-fete-de-nuit-knit",
     "brand": "Raf Simons",
@@ -725,7 +625,7 @@
     "isRare": false
   },
   {
-    "id": "item-30",
+    "id": "26",
     "name": "Vetements Titanic Zip up",
     "slug": "vetements-vetements-titanic-zip-up",
     "brand": "Vetements",
@@ -750,7 +650,7 @@
     "isRare": false
   },
   {
-    "id": "item-31",
+    "id": "27",
     "name": "Rick Owens Gimp zip Hoodie",
     "slug": "rick-owens-rick-owens-gimp-zip-hoodie",
     "brand": "Rick Owens",
@@ -775,7 +675,7 @@
     "isRare": false
   },
   {
-    "id": "item-32",
+    "id": "28",
     "name": "Vetements F/W 2019 The Pirate Bay Hoodie",
     "slug": "vetements-vetements-f-w-2019-the-pirate-bay-hoodie",
     "brand": "Vetements",
@@ -800,7 +700,7 @@
     "isRare": true
   },
   {
-    "id": "item-33",
+    "id": "29",
     "name": "Vetements Unicorn Hoodie",
     "slug": "vetements-vetements-unicorn-hoodie",
     "brand": "Vetements",
@@ -825,7 +725,7 @@
     "isRare": true
   },
   {
-    "id": "item-34",
+    "id": "30",
     "name": "Raf Simons S/S 2002 Poem Wool L/S",
     "slug": "raf-simons-raf-simons-s-s-2002-poem-wool-l-s",
     "brand": "Raf Simons",
@@ -850,7 +750,7 @@
     "isRare": false
   },
   {
-    "id": "item-35",
+    "id": "31",
     "name": "Raf Simons New Order Hoodie",
     "slug": "raf-simons-raf-simons-new-order-hoodie",
     "brand": "Raf Simons",
@@ -875,32 +775,7 @@
     "isRare": false
   },
   {
-    "id": "item-36",
-    "name": "Yohji Yamamoto Eye Print Japanese Overshirt",
-    "slug": "yohji-yamamoto-yohji-yamamoto-eye-print-japanese-overshirt",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Knitwear & Sweaters",
-    "categorySlug": "knitwear",
-    "price": 256.6,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Eye Print Japanese Overshirt). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=638337985723",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D638337985723&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r23_c05_image67.png",
-    "tags": [
-      "yohji-yamamoto",
-      "knitwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": true
-  },
-  {
-    "id": "item-37",
+    "id": "32",
     "name": "Carol Christian Poel Blank Sweatshirt",
     "slug": "carol-christian-poell-carol-christian-poel-blank-sweatshirt",
     "brand": "Carol Christian Poell",
@@ -925,7 +800,7 @@
     "isRare": false
   },
   {
-    "id": "item-38",
+    "id": "33",
     "name": "Cav Empt Night Vector Crawlneck",
     "slug": "archive-selection-cav-empt-night-vector-crawlneck",
     "brand": "Archive Selection",
@@ -950,7 +825,7 @@
     "isRare": false
   },
   {
-    "id": "item-39",
+    "id": "34",
     "name": "Rick Owens Cropped Hooded Jacket",
     "slug": "rick-owens-rick-owens-cropped-hooded-jacket",
     "brand": "Rick Owens",
@@ -975,7 +850,7 @@
     "isRare": false
   },
   {
-    "id": "item-40",
+    "id": "35",
     "name": "Rick Owens FW14 DRKSHDW Wizard hoodie (Tags)",
     "slug": "rick-owens-rick-owens-fw14-drkshdw-wizard-hoodie-tags",
     "brand": "Rick Owens",
@@ -1000,32 +875,7 @@
     "isRare": false
   },
   {
-    "id": "item-41",
-    "name": "Carol Christian Poell Hemless Cotton Long Sleeve",
-    "slug": "carol-christian-poell-carol-christian-poell-hemless-cotton-long-sleeve",
-    "brand": "Carol Christian Poell",
-    "brandSlug": "carol-christian-poell",
-    "category": "Knitwear & Sweaters",
-    "categorySlug": "knitwear",
-    "price": 38.03,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Carol Christian Poell archive piece (Carol Christian Poell Hemless Cotton Long Sleeve). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=528341243572",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D528341243572&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r26_c02_image94.png",
-    "tags": [
-      "carol-christian-poell",
-      "knitwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-42",
+    "id": "36",
     "name": "Jacquemus Double Collar Sweater",
     "slug": "archive-selection-jacquemus-double-collar-sweater",
     "brand": "Archive Selection",
@@ -1050,7 +900,7 @@
     "isRare": false
   },
   {
-    "id": "item-43",
+    "id": "37",
     "name": "Enfants Riches Deprimes Cry For Help Long-Sleeve Sweater",
     "slug": "erd-enfants-riches-deprimes-cry-for-help-long-sleeve-sweater",
     "brand": "Enfants Riches Déprimés",
@@ -1075,7 +925,7 @@
     "isRare": false
   },
   {
-    "id": "item-44",
+    "id": "38",
     "name": "Kiko Kostadinov S/S 2020 Bow Jacket",
     "slug": "archive-selection-kiko-kostadinov-s-s-2020-bow-jacket",
     "brand": "Archive Selection",
@@ -1100,82 +950,7 @@
     "isRare": false
   },
   {
-    "id": "item-45",
-    "name": "Raf Simons S/S 2002 Poem Wool L/S",
-    "slug": "raf-simons-raf-simons-s-s-2002-poem-wool-l-s",
-    "brand": "Raf Simons",
-    "brandSlug": "raf-simons",
-    "category": "Knitwear & Sweaters",
-    "categorySlug": "knitwear",
-    "price": 39.34,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Raf Simons archive piece (Raf Simons S/S 2002 Poem Wool L/S). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=642637550473",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D642637550473&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r28_c02_image104.png",
-    "tags": [
-      "raf-simons",
-      "knitwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-46",
-    "name": "Yohji Yamamoto S/S 18 Smoking Dress Shirt",
-    "slug": "yohji-yamamoto-yohji-yamamoto-s-s-18-smoking-dress-shirt",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Knitwear & Sweaters",
-    "categorySlug": "knitwear",
-    "price": 60.45,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto S/S 18 Smoking Dress Shirt). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=666099634837",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D666099634837&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r28_c05_image136.png",
-    "tags": [
-      "yohji-yamamoto",
-      "knitwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-47",
-    "name": "Yohji Yamamoto Mylon Floreal Jacket",
-    "slug": "yohji-yamamoto-yohji-yamamoto-mylon-floreal-jacket",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 45.3,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Mylon Floreal Jacket). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=661215415722",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D661215415722&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r29_c02_image171.png",
-    "tags": [
-      "yohji-yamamoto",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-48",
+    "id": "39",
     "name": "Enfant Riche Deprime FW23 Crewneck",
     "slug": "archive-selection-enfant-riche-deprime-fw23-crewneck",
     "brand": "Archive Selection",
@@ -1200,57 +975,7 @@
     "isRare": false
   },
   {
-    "id": "item-49",
-    "name": "Yohji Yamamoto UNIDENTIFIED Strap Shirt",
-    "slug": "yohji-yamamoto-yohji-yamamoto-unidentified-strap-shirt",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 21,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto UNIDENTIFIED Strap Shirt). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=611658258201",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D611658258201&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r30_c02_image113.png",
-    "tags": [
-      "yohji-yamamoto",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-50",
-    "name": "Yohji Yamamoto Kamisama Coat",
-    "slug": "yohji-yamamoto-yohji-yamamoto-kamisama-coat",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 175.08,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Kamisama Coat). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=671309001884",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D671309001884&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r30_c05_image210.png",
-    "tags": [
-      "yohji-yamamoto",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": true
-  },
-  {
-    "id": "item-51",
+    "id": "40",
     "name": "N°21 GIUBBOTTO TESSUTO Bomber Jacket",
     "slug": "archive-selection-n-21-giubbotto-tessuto-bomber-jacket",
     "brand": "Archive Selection",
@@ -1275,7 +1000,7 @@
     "isRare": true
   },
   {
-    "id": "item-52",
+    "id": "41",
     "name": "Vetements x Alpha 2018 FW Tribal Bomber",
     "slug": "vetements-vetements-x-alpha-2018-fw-tribal-bomber",
     "brand": "Vetements",
@@ -1300,7 +1025,7 @@
     "isRare": true
   },
   {
-    "id": "item-53",
+    "id": "42",
     "name": "ERD Fox Head/Fur Hood Army Camo Parka",
     "slug": "erd-erd-fox-head-fur-hood-army-camo-parka",
     "brand": "Enfants Riches Déprimés",
@@ -1325,32 +1050,7 @@
     "isRare": true
   },
   {
-    "id": "item-54",
-    "name": "Rick Owens Gimp zip Hoodie",
-    "slug": "rick-owens-rick-owens-gimp-zip-hoodie",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Knitwear & Sweaters",
-    "categorySlug": "knitwear",
-    "price": 54.22,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Rick Owens archive piece (Rick Owens Gimp zip Hoodie). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=719090541518",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D719090541518&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r34_c02_image64.png",
-    "tags": [
-      "rick-owens",
-      "knitwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-55",
+    "id": "43",
     "name": "Vetements logo-print Raincoat (cheap)",
     "slug": "vetements-vetements-logo-print-raincoat-cheap",
     "brand": "Vetements",
@@ -1375,7 +1075,7 @@
     "isRare": false
   },
   {
-    "id": "item-56",
+    "id": "44",
     "name": "Moncler x Rick Owens Puffer",
     "slug": "rick-owens-moncler-x-rick-owens-puffer",
     "brand": "Rick Owens",
@@ -1400,32 +1100,7 @@
     "isRare": false
   },
   {
-    "id": "item-57",
-    "name": "Rick Owens Cropped Hooded Jacket",
-    "slug": "rick-owens-rick-owens-cropped-hooded-jacket",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 42.77,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Rick Owens archive piece (Rick Owens Cropped Hooded Jacket). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=657462941689",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D657462941689&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r35_c05_image69.png",
-    "tags": [
-      "rick-owens",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-58",
+    "id": "45",
     "name": "Dolce & Gabbana A/W 2003 Google Jacket",
     "slug": "archive-selection-dolce-gabbana-a-w-2003-google-jacket",
     "brand": "Archive Selection",
@@ -1450,7 +1125,7 @@
     "isRare": true
   },
   {
-    "id": "item-59",
+    "id": "46",
     "name": "TNF F/W 22 Supreme Apogee Jacket",
     "slug": "archive-selection-tnf-f-w-22-supreme-apogee-jacket",
     "brand": "Archive Selection",
@@ -1475,7 +1150,7 @@
     "isRare": true
   },
   {
-    "id": "item-60",
+    "id": "47",
     "name": "Rick Owens Leather Zip Lilies Jacket",
     "slug": "rick-owens-rick-owens-leather-zip-lilies-jacket",
     "brand": "Rick Owens",
@@ -1500,32 +1175,7 @@
     "isRare": false
   },
   {
-    "id": "item-61",
-    "name": "Dolce & Gabbana A/W 2003 Google Jacket",
-    "slug": "archive-selection-dolce-gabbana-a-w-2003-google-jacket",
-    "brand": "Archive Selection",
-    "brandSlug": "archive-selection",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 110.59,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Archive Selection archive piece (Dolce & Gabbana A/W 2003 Google Jacket). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=691874354178",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691874354178&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r37_c05_image149.png",
-    "tags": [
-      "archive-selection",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": true
-  },
-  {
-    "id": "item-62",
+    "id": "48",
     "name": "CCP Dystopia Leather Jacket",
     "slug": "carol-christian-poell-ccp-dystopia-leather-jacket",
     "brand": "Carol Christian Poell",
@@ -1550,32 +1200,7 @@
     "isRare": true
   },
   {
-    "id": "item-63",
-    "name": "Carol Christian Poell Scarstitched 2498 kangaroo leather jacket",
-    "slug": "carol-christian-poell-carol-christian-poell-scarstitched-2498-kangaroo-leather-jacket",
-    "brand": "Carol Christian Poell",
-    "brandSlug": "carol-christian-poell",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 589.39,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Carol Christian Poell archive piece (Carol Christian Poell Scarstitched 2498 kangaroo leather jacket). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=692160985484",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D692160985484&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r38_c05_image185.png",
-    "tags": [
-      "carol-christian-poell",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": true
-  },
-  {
-    "id": "item-64",
+    "id": "49",
     "name": "Vetements A/W17 Bro Double Layer Parka",
     "slug": "vetements-vetements-a-w17-bro-double-layer-parka",
     "brand": "Vetements",
@@ -1600,7 +1225,7 @@
     "isRare": true
   },
   {
-    "id": "item-65",
+    "id": "50",
     "name": "Deorart DRT2663 Fireman Buckle Hooded Long Mods Coat",
     "slug": "archive-selection-deorart-drt2663-fireman-buckle-hooded-long-mods-coat",
     "brand": "Archive Selection",
@@ -1625,7 +1250,7 @@
     "isRare": false
   },
   {
-    "id": "item-66",
+    "id": "51",
     "name": "Saint Laurent Paris F/W 17 Slim Leather Biker Jacket",
     "slug": "archive-selection-saint-laurent-paris-f-w-17-slim-leather-biker-jacket",
     "brand": "Archive Selection",
@@ -1650,32 +1275,7 @@
     "isRare": true
   },
   {
-    "id": "item-67",
-    "name": "Yohji Yamamoto Kamisama Coat",
-    "slug": "yohji-yamamoto-yohji-yamamoto-kamisama-coat",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Outerwear & Jackets",
-    "categorySlug": "outerwear",
-    "price": 175.08,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Kamisama Coat). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=671309001884",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D671309001884&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r40_c05_image210.png",
-    "tags": [
-      "yohji-yamamoto",
-      "outerwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": true
-  },
-  {
-    "id": "item-68",
+    "id": "52",
     "name": "Putumayo Shingancrimsonz 2014 spiked Napoleon ‘crow’ Hoodie‎",
     "slug": "archive-selection-putumayo-shingancrimsonz-2014-spiked-napoleon-crow-hoodie",
     "brand": "Archive Selection",
@@ -1700,7 +1300,7 @@
     "isRare": true
   },
   {
-    "id": "item-69",
+    "id": "53",
     "name": "MM Futures",
     "slug": "archive-selection-mm-futures",
     "brand": "Archive Selection",
@@ -1725,7 +1325,7 @@
     "isRare": false
   },
   {
-    "id": "item-70",
+    "id": "54",
     "name": "Prada Snow Boots La France",
     "slug": "archive-selection-prada-snow-boots-la-france",
     "brand": "Archive Selection",
@@ -1750,7 +1350,7 @@
     "isRare": true
   },
   {
-    "id": "item-71",
+    "id": "55",
     "name": "Margiela Square Derby",
     "slug": "maison-margiela-margiela-square-derby",
     "brand": "Maison Margiela",
@@ -1775,7 +1375,7 @@
     "isRare": true
   },
   {
-    "id": "item-72",
+    "id": "56",
     "name": "Margiela Tabi slip-on loafers",
     "slug": "maison-margiela-margiela-tabi-slip-on-loafers",
     "brand": "Maison Margiela",
@@ -1800,7 +1400,7 @@
     "isRare": true
   },
   {
-    "id": "item-73",
+    "id": "57",
     "name": "Prada Cups",
     "slug": "archive-selection-prada-cups",
     "brand": "Archive Selection",
@@ -1825,7 +1425,7 @@
     "isRare": false
   },
   {
-    "id": "item-74",
+    "id": "58",
     "name": "Rick Owens Doule Bumper Sandals",
     "slug": "rick-owens-rick-owens-doule-bumper-sandals",
     "brand": "Rick Owens",
@@ -1850,7 +1450,7 @@
     "isRare": true
   },
   {
-    "id": "item-75",
+    "id": "59",
     "name": "jumbo lace rick owen ramones (best batch)",
     "slug": "rick-owens-jumbo-lace-rick-owen-ramones-best-batch",
     "brand": "Rick Owens",
@@ -1875,7 +1475,7 @@
     "isRare": false
   },
   {
-    "id": "item-76",
+    "id": "60",
     "name": "Dirk bikkembergs steel heel bungee boots",
     "slug": "archive-selection-dirk-bikkembergs-steel-heel-bungee-boots",
     "brand": "Archive Selection",
@@ -1900,7 +1500,7 @@
     "isRare": true
   },
   {
-    "id": "item-77",
+    "id": "61",
     "name": "Boris Bidjan Saberi  Leather Derby 1.1",
     "slug": "boris-bidjan-saberi-boris-bidjan-saberi-leather-derby-1-1",
     "brand": "Boris Bidjan Saberi",
@@ -1925,7 +1525,7 @@
     "isRare": true
   },
   {
-    "id": "item-78",
+    "id": "62",
     "name": "Balenciaga Adidas Knife Sock Heels",
     "slug": "balenciaga-balenciaga-adidas-knife-sock-heels",
     "brand": "Balenciaga",
@@ -1950,7 +1550,7 @@
     "isRare": false
   },
   {
-    "id": "item-79",
+    "id": "63",
     "name": "Maison margiela gat multiple colorways",
     "slug": "maison-margiela-maison-margiela-gat-multiple-colorways",
     "brand": "Maison Margiela",
@@ -1975,7 +1575,7 @@
     "isRare": false
   },
   {
-    "id": "item-80",
+    "id": "64",
     "name": "Accessoires",
     "slug": "archive-selection-accessoires",
     "brand": "Archive Selection",
@@ -2000,57 +1600,7 @@
     "isRare": false
   },
   {
-    "id": "item-81",
-    "name": "Yohji Yamamoto Leather Cropped Wallet",
-    "slug": "yohji-yamamoto-yohji-yamamoto-leather-cropped-wallet",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Footwear & Shoes",
-    "categorySlug": "footwear",
-    "price": 23.58,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Leather Cropped Wallet). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=579595134342",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D579595134342&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r50_c02_image184.png",
-    "tags": [
-      "yohji-yamamoto",
-      "footwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-82",
-    "name": "yohji yamamoto ring",
-    "slug": "yohji-yamamoto-yohji-yamamoto-ring",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Footwear & Shoes",
-    "categorySlug": "footwear",
-    "price": 15.62,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Yohji Yamamoto archive piece (yohji yamamoto ring). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=612768773982",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D612768773982&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r50_c05_image54.png",
-    "tags": [
-      "yohji-yamamoto",
-      "footwear",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-83",
+    "id": "65",
     "name": "Margiela Waxed Leather Wallet",
     "slug": "maison-margiela-margiela-waxed-leather-wallet",
     "brand": "Maison Margiela",
@@ -2075,7 +1625,7 @@
     "isRare": false
   },
   {
-    "id": "item-84",
+    "id": "66",
     "name": "undercover aw02 necklace",
     "slug": "archive-selection-undercover-aw02-necklace",
     "brand": "Archive Selection",
@@ -2100,7 +1650,7 @@
     "isRare": false
   },
   {
-    "id": "item-85",
+    "id": "67",
     "name": "margiela cuff bracelet",
     "slug": "maison-margiela-margiela-cuff-bracelet",
     "brand": "Maison Margiela",
@@ -2125,7 +1675,7 @@
     "isRare": false
   },
   {
-    "id": "item-86",
+    "id": "68",
     "name": "Chrome Hearts Belt",
     "slug": "chrome-hearts-chrome-hearts-belt",
     "brand": "Chrome Hearts",
@@ -2150,7 +1700,7 @@
     "isRare": false
   },
   {
-    "id": "item-87",
+    "id": "69",
     "name": "Raf Simons Beanie",
     "slug": "raf-simons-raf-simons-beanie",
     "brand": "Raf Simons",
@@ -2175,7 +1725,7 @@
     "isRare": false
   },
   {
-    "id": "item-88",
+    "id": "70",
     "name": "Vetements \"I Did Nothing, I Just Got Lucky\" Hat",
     "slug": "vetements-vetements-i-did-nothing-i-just-got-lucky-hat",
     "brand": "Vetements",
@@ -2200,7 +1750,7 @@
     "isRare": false
   },
   {
-    "id": "item-89",
+    "id": "71",
     "name": "Rick Owens Gimp Knitted Balaclava",
     "slug": "rick-owens-rick-owens-gimp-knitted-balaclava",
     "brand": "Rick Owens",
@@ -2225,7 +1775,7 @@
     "isRare": false
   },
   {
-    "id": "item-90",
+    "id": "72",
     "name": "Undercover AW02 Witches Cell Division Cross Rug",
     "slug": "archive-selection-undercover-aw02-witches-cell-division-cross-rug",
     "brand": "Archive Selection",
@@ -2250,7 +1800,7 @@
     "isRare": true
   },
   {
-    "id": "item-91",
+    "id": "73",
     "name": "Raf Simons Denim Tote Bag",
     "slug": "raf-simons-raf-simons-denim-tote-bag",
     "brand": "Raf Simons",
@@ -2275,7 +1825,7 @@
     "isRare": false
   },
   {
-    "id": "item-92",
+    "id": "74",
     "name": "Raf Simons Bag THOG",
     "slug": "raf-simons-raf-simons-bag-thog",
     "brand": "Raf Simons",
@@ -2300,7 +1850,7 @@
     "isRare": false
   },
   {
-    "id": "item-93",
+    "id": "75",
     "name": "Helmut Lang Belt",
     "slug": "helmut-lang-helmut-lang-belt",
     "brand": "Helmut Lang",
@@ -2325,32 +1875,7 @@
     "isRare": false
   },
   {
-    "id": "item-94",
-    "name": "Helmut Lang AW1998 Chain Belt",
-    "slug": "helmut-lang-helmut-lang-aw1998-chain-belt",
-    "brand": "Helmut Lang",
-    "brandSlug": "helmut-lang",
-    "category": "Accessories & Grails",
-    "categorySlug": "accessories",
-    "price": 30,
-    "currency": "USD",
-    "era": "2000s",
-    "style": "Avant-Garde",
-    "description": "Authentic Helmut Lang archive piece (Helmut Lang AW1998 Chain Belt). Sourced directly from collector archive spreadsheets.",
-    "directStoreLink": "https://item.taobao.com/item.htm?id=653292995498",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D653292995498&memberId=1325437696506389977",
-    "imageUrl": "/products/sheet/grid_r56_c05_image249.png",
-    "tags": [
-      "helmut-lang",
-      "accessories",
-      "archive",
-      "grail"
-    ],
-    "isFeatured": false,
-    "isRare": false
-  },
-  {
-    "id": "item-95",
+    "id": "76",
     "name": "Raf Simons A/W 21 Neclace",
     "slug": "raf-simons-raf-simons-a-w-21-neclace",
     "brand": "Raf Simons",
@@ -2375,7 +1900,7 @@
     "isRare": false
   },
   {
-    "id": "item-96",
+    "id": "77",
     "name": "Walter Van Beirendonck Felt Watch",
     "slug": "archive-selection-walter-van-beirendonck-felt-watch",
     "brand": "Archive Selection",
@@ -2400,7 +1925,7 @@
     "isRare": false
   },
   {
-    "id": "item-97",
+    "id": "78",
     "name": "Carol Christian Poel Eye Ring",
     "slug": "carol-christian-poell-carol-christian-poel-eye-ring",
     "brand": "Carol Christian Poell",
@@ -2425,7 +1950,7 @@
     "isRare": true
   },
   {
-    "id": "item-98",
+    "id": "79",
     "name": "Bottega Veneta Leather Clutch Bag",
     "slug": "archive-selection-bottega-veneta-leather-clutch-bag",
     "brand": "Archive Selection",
@@ -2450,7 +1975,7 @@
     "isRare": false
   },
   {
-    "id": "item-99",
+    "id": "80",
     "name": "1017 Alyx Carabiner",
     "slug": "archive-selection-1017-alyx-carabiner",
     "brand": "Archive Selection",
@@ -2475,7 +2000,7 @@
     "isRare": false
   },
   {
-    "id": "item-100",
+    "id": "81",
     "name": "Raf Simons Patch Logo Bucket Hat",
     "slug": "raf-simons-raf-simons-patch-logo-bucket-hat",
     "brand": "Raf Simons",
@@ -2500,7 +2025,7 @@
     "isRare": false
   },
   {
-    "id": "item-101",
+    "id": "82",
     "name": "Oakley Elite x Metal Round Sunglasses",
     "slug": "archive-selection-oakley-elite-x-metal-round-sunglasses",
     "brand": "Archive Selection",
@@ -2525,7 +2050,7 @@
     "isRare": false
   },
   {
-    "id": "item-102",
+    "id": "83",
     "name": "Carol Christian Poell pantograph adjustable ring",
     "slug": "carol-christian-poell-carol-christian-poell-pantograph-adjustable-ring",
     "brand": "Carol Christian Poell",
@@ -2550,7 +2075,7 @@
     "isRare": false
   },
   {
-    "id": "item-103",
+    "id": "84",
     "name": "ERD Studded Cuff Bracelet",
     "slug": "erd-erd-studded-cuff-bracelet",
     "brand": "Enfants Riches Déprimés",
@@ -2575,7 +2100,7 @@
     "isRare": false
   },
   {
-    "id": "item-104",
+    "id": "85",
     "name": "Rick Owens Keychains",
     "slug": "rick-owens-rick-owens-keychains",
     "brand": "Rick Owens",
@@ -2600,7 +2125,7 @@
     "isRare": false
   },
   {
-    "id": "105",
+    "id": "86",
     "title": "Rick Owens DRKSHDW Vintage Low Sneakers \"Vans\"",
     "name": "Rick Owens DRKSHDW Vintage Low Sneakers \"Vans\"",
     "brand": "Rick Owens",
@@ -2636,7 +2161,7 @@
     "notes": "Auto-sourced from r/QualityReps (https://www.reddit.com/r/QualityReps/comments/1vo6fqu/qc_ro_vns_from_hyl/)"
   },
   {
-    "id": "106",
+    "id": "87",
     "title": "Chrome Hearts \"Soap & Water\" Horseshoe Floral Zip Hoodie",
     "name": "Chrome Hearts \"Soap & Water\" Horseshoe Floral Zip Hoodie",
     "brand": "Chrome Hearts",
@@ -2671,95 +2196,23 @@
     "notes": "Auto-sourced from r/QualityReps (https://www.reddit.com/r/QualityReps/comments/1vmzzmz/ch_soap_and_water_hoodie/)"
   },
   {
-    "id": "107",
-    "title": "Rick Owens - Motu Patlu 😃 #funny #memes #real #video #shorts - YouTube",
-    "name": "Rick Owens - Motu Patlu 😃 #funny #memes #real #video #shorts - YouTube",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Denim",
-    "categorySlug": "denim",
-    "price": 10.78,
-    "sourcePrice": 10.78,
-    "estimatedRetail": 92.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "imageUrl": "/products/rick-owens-motu-patlu-funny-memes-real-video-shorts-youtube-.png",
-    "localImage": "/products/rick-owens-motu-patlu-funny-memes-real-video-shorts-youtube-.png",
-    "slug": "rick-owens-motu-patlu-funny-memes-real-video-shorts-youtube-",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "108",
-    "title": "Rick Owens Suede Vintage Low Top Vans",
-    "name": "Rick Owens Suede Vintage Low Top Vans",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Denim",
-    "categorySlug": "denim",
-    "price": 10.78,
-    "sourcePrice": 10.78,
-    "estimatedRetail": 92.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "imageUrl": "/products/rick-owens-rick-owens-suede-vintage-low-top-vans-5681.png",
-    "localImage": "/products/rick-owens-rick-owens-suede-vintage-low-top-vans-5681.png",
-    "slug": "rick-owens-rick-owens-suede-vintage-low-top-vans-5681",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "109",
-    "title": "Rick Owens Suede Vintage Low Top Vans",
-    "name": "Rick Owens Suede Vintage Low Top Vans",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Denim",
-    "categorySlug": "denim",
-    "price": 10.78,
-    "sourcePrice": 10.78,
-    "estimatedRetail": 92.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "imageUrl": "/products/rick-owens-rick-owens-suede-vintage-low-top-vans-5714.png",
-    "localImage": "/products/rick-owens-rick-owens-suede-vintage-low-top-vans-5714.png",
-    "slug": "rick-owens-rick-owens-suede-vintage-low-top-vans-5714",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "110",
-    "title": "Rick Owens - Mainline Ramones Sneakers",
-    "name": "Rick Owens - Mainline Ramones Sneakers",
+    "id": "88",
+    "title": "Rick Owens Mainline Ramones High Top Sneakers",
+    "name": "Rick Owens Mainline Ramones High Top Sneakers",
     "brand": "Rick Owens",
     "brandSlug": "rick-owens",
     "category": "Footwear",
     "categorySlug": "footwear",
-    "price": 10.78,
-    "sourcePrice": 10.78,
-    "estimatedRetail": 92.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488&memberId=1325437696506389977",
+    "price": 65.0,
+    "sourcePrice": 65.0,
+    "estimatedRetail": 890,
+    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
     "imageUrl": "/products/rick-owens-mainline-ramones-sneakers-5727.png",
     "localImage": "/products/rick-owens-mainline-ramones-sneakers-5727.png",
-    "slug": "rick-owens-mainline-ramones-sneakers-5727",
+    "slug": "rick-owens-mainline-ramones-high-top-sneakers",
     "status": "APPROVED",
     "verified": true,
     "isFeatured": true,
@@ -2767,55 +2220,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "111",
-    "title": "Rick Owens Geobasket High Top Leather",
-    "name": "Rick Owens Geobasket High Top Leather",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Denim",
-    "categorySlug": "denim",
-    "price": 10.78,
-    "sourcePrice": 10.78,
-    "estimatedRetail": 92.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "imageUrl": "/products/rick-owens-rick-owens-geobasket-high-top-leather-5753.png",
-    "localImage": "/products/rick-owens-rick-owens-geobasket-high-top-leather-5753.png",
-    "slug": "rick-owens-rick-owens-geobasket-high-top-leather-5753",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "112",
-    "title": "Rick Owens Geobasket High Top Leather",
-    "name": "Rick Owens Geobasket High Top Leather",
-    "brand": "Rick Owens",
-    "brandSlug": "rick-owens",
-    "category": "Outerwear",
-    "categorySlug": "outerwear",
-    "price": 14.0,
-    "sourcePrice": 14.0,
-    "estimatedRetail": 119.0,
-    "directStoreLink": "https://shop1268847658.v.weidian.com/item.html?itemID=6502982488&wfr=c&sfr=app&source=goods_home",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1268847658.v.weidian.com%2Fitem.html%3FitemID%3D6502982488%26wfr%3Dc%26sfr%3Dapp%26source%3Dgoods_home&memberId=1325437696506389977",
-    "imageUrl": "/products/rick-owens-rick-owens-geobasket-high-top-leather-5802.png",
-    "localImage": "/products/rick-owens-rick-owens-geobasket-high-top-leather-5802.png",
-    "slug": "rick-owens-rick-owens-geobasket-high-top-leather-5802",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "113",
+    "id": "89",
     "title": "Rick Owens brown suede vans",
     "name": "Rick Owens brown suede vans",
     "brand": "Rick Owens",
@@ -2839,7 +2244,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "114",
+    "id": "90",
     "title": "Rick Owens Rick Owen vintage low/vans",
     "name": "Rick Owens Rick Owen vintage low/vans",
     "brand": "Rick Owens",
@@ -2863,27 +2268,32 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "115",
-    "title": "Yohji Yamamoto - Yoji OOAK Logo Canvas Tote Bag",
+    "id": "91",
     "name": "Yohji Yamamoto - Yoji OOAK Logo Canvas Tote Bag",
+    "slug": "yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag",
     "brand": "Yohji Yamamoto",
     "brandSlug": "yohji-yamamoto",
     "category": "Bags",
     "categorySlug": "bags",
     "price": 57.13,
+    "currency": "USD",
+    "era": "2000s",
+    "style": "Avant-Garde",
+    "description": "Authentic Yohji Yamamoto archive piece (Yohji Yamamoto Eye Print Japanese Overshirt). Sourced directly from collector archive spreadsheets.",
+    "directStoreLink": "https://item.taobao.com/item.htm?id=638337985723",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D638337985723&memberId=1325437696506389977",
+    "imageUrl": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png",
+    "tags": [
+      "yohji-yamamoto",
+      "knitwear",
+      "archive",
+      "grail"
+    ],
+    "isFeatured": false,
+    "isRare": true,
+    "title": "Yohji Yamamoto - Yoji OOAK Logo Canvas Tote Bag",
     "sourcePrice": 57.13,
     "estimatedRetail": 450,
-    "directStoreLink": "https://item.taobao.com/item.htm?id=584942972508",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584942972508&memberId=1325437696506389977",
-    "imageUrl": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png",
-    "localImage": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png",
-    "slug": "yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": false,
-    "notes": "1-Click Admin Ingest"
+    "localImage": "/products/yohji-yamamoto-yoji-ooak-logo-canvas-tote-bag.png"
   }
 ]

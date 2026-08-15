@@ -112,11 +112,27 @@ def ingest(payload_file: str):
         "notes": "1-Click Admin Ingest"
     }
 
-    products.append(new_piece)
+    # Check for existing product by directStoreLink or URL
+    existing_index = -1
+    normalized_new_url = clean_url(raw_url).split('&')[0]
+    for idx, p in enumerate(products):
+        p_url = (p.get("directStoreLink") or p.get("rawMarketUrl") or "").split('&')[0]
+        if p_url and p_url == normalized_new_url:
+            existing_index = idx
+            break
+
+    if existing_index >= 0:
+        item_id = products[existing_index].get("id", str(existing_index + 1))
+        new_piece["id"] = item_id
+        products[existing_index] = new_piece
+        print(f"[UPDATE] Updated existing product #{item_id}: {new_piece['title']}", flush=True)
+    else:
+        products.append(new_piece)
+        print(f"[NEW] Added new product #{item_id}: {new_piece['title']}", flush=True)
+
     with open(SHEET_PRODUCTS_PATH, "w", encoding="utf-8") as f:
         json.dump(products, f, indent=2, ensure_ascii=False)
 
-    print(f"Added new product #{item_id}: {new_piece['title']}", flush=True)
     print("Ingest process complete! Product live in catalog.", flush=True)
 
 
