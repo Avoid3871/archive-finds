@@ -22,6 +22,19 @@ AFFILIATE_MEMBER_ID = "1325437696506389977"
 SHEET_PRODUCTS_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "lib", "products", "sheetProducts.json")
 PRODUCTS_IMG_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "products")
 
+def emit_progress(percent: int, message: str, current: int, total: int, found_count: int, phase: str = "SCANNING", item: str = ""):
+    data = {
+        "percent": max(0, min(100, int(percent))),
+        "message": message,
+        "current": current,
+        "total": total,
+        "foundCount": found_count,
+        "phase": phase,
+        "item": item
+    }
+    print(f"[AF_PROGRESS] {json.dumps(data)}", flush=True)
+
+
 # Known Designer & Archive Brands Dictionary for accurate tagging
 KNOWN_BRANDS = [
     ("Enfants Riches Déprimés", ["erd", "enfants riches deprimes", "enfants riches déprimés", "enfants"]),
@@ -196,7 +209,10 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
         ]
         
         post_links = []
-        for u in urls_to_scan:
+        emit_progress(3, "Connecting stealth browser to r/QualityReps feeds...", 0, max_posts, 0, "INIT")
+        for u_idx, u in enumerate(urls_to_scan):
+            feed_pct = int(5 + (u_idx / len(urls_to_scan)) * 12)
+            emit_progress(feed_pct, f"Crawling feed ({u_idx+1}/{len(urls_to_scan)}): {u.split('?')[0]}...", 0, max_posts, 0, "FEED_FETCH")
             print(f"Fetching feed: {u}", flush=True)
             try:
                 await page.goto(u, timeout=35000)
@@ -216,13 +232,19 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
             except Exception as e:
                 print(f"Error fetching feed {u}: {e}", flush=True)
                 
+        emit_progress(18, f"Extracted {len(post_links)} candidate posts. Starting Grail analysis...", 0, max_posts, 0, "CANDIDATE_POOL")
         print(f"Found {len(post_links)} total candidate posts. Processing up to {max_posts}...", flush=True)
 
         valid_count = 0
+        total_eval_target = min(len(post_links), max_posts * 3)
         for idx, post_url in enumerate(post_links):
             if valid_count >= max_posts:
                 break
                 
+            progress_base = 20 + int((idx / max(1, total_eval_target)) * 75)
+            progress_base = min(95, progress_base)
+            
+            emit_progress(progress_base, f"Inspecting post [{idx+1}/{len(post_links)}]: resolving threads & comments...", idx+1, max_posts, valid_count, "INSPECT_POST")
             print(f"\n--- [{idx+1}/{len(post_links)}] Processing {post_url} ---", flush=True)
             post_page = await context.new_page()
             try:
@@ -267,6 +289,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     continue
                     
                 # Run AI Fashion Lens / Archive Model Identifier
+                emit_progress(progress_base + 1, f"AI Model Identification for: '{title[:35]}...'", idx+1, max_posts, valid_count, "MODEL_ID")
                 identified = identify_product_metadata(title, comments=comments_list)
                 brand = identified.get("brand") or detect_brand(title + " " + body_text)
                 canonical_title = identified.get("canonicalTitle") or title
@@ -358,6 +381,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     }
                     
                     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
+                    emit_progress(progress_base + 2, f"Fetching studio flat-lay & AI cutout: {brand} {canonical_title[:30]}", idx+1, max_posts, valid_count, "AI_PROCESSING", canonical_title)
                     print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
                     success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}")
                     
@@ -367,6 +391,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
 
                     discovered_items.append(item)
                     valid_count += 1
+                    emit_progress(progress_base + 3, f"✓ Verified Grail added: {brand} - {canonical_title} (${price})", idx+1, max_posts, valid_count, "ITEM_SAVED", canonical_title)
                     print(f"[VERIFIED #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
                         
             except Exception as e:
@@ -376,6 +401,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 
         await browser.close()
 
+    emit_progress(100, f"Scan finished! Discovered {len(discovered_items)} high-quality Grails.", max_posts, max_posts, len(discovered_items), "COMPLETE")
     print(f"\n=== SCAN FINISHED: Discovered {len(discovered_items)} high-quality pieces ===", flush=True)
     
     # Save discovered items to scratch/discovered_qualityreps_finds.json
@@ -398,6 +424,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
         os.system("node scripts/generate_all_slide_styles.js")
 
     return discovered_items
+
 
 if __name__ == "__main__":
     auto = "--auto" in sys.argv

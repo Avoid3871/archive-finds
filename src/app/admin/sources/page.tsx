@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   RefreshCw,
@@ -22,6 +22,13 @@ import {
   Edit3,
   Trash2,
   Search,
+  Terminal,
+  Square,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -89,13 +96,42 @@ const INITIAL_SOURCES: SheetSource[] = [
 export default function AdminSourcesPage() {
   const [activeTab, setActiveTab] = useState<"reddit" | "quick-ingest" | "health" | "sheets">("reddit");
   
-  // Reddit Scanner States
+  // Reddit Scanner Live Progress States
   const [isScanningReddit, setIsScanningReddit] = useState(false);
   const [scanLimit, setScanLimit] = useState(10);
   const [autoApprove, setAutoApprove] = useState(false);
-  const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scanProgress, setScanProgress] = useState<{
+    percent: number;
+    message: string;
+    current: number;
+    total: number;
+    foundCount: number;
+    phase: string;
+    item?: string;
+  }>({
+    percent: 0,
+    message: "Crawler Ready",
+    current: 0,
+    total: 10,
+    foundCount: 0,
+    phase: "IDLE",
+  });
+  const [liveLogs, setLiveLogs] = useState<string[]>([]);
+  const [showLiveTerminal, setShowLiveTerminal] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
   const [discoveredItems, setDiscoveredItems] = useState<DiscoveredItem[]>([]);
   const [approvingSlug, setApprovingSlug] = useState<string | null>(null);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const terminalEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll terminal log to bottom
+  useEffect(() => {
+    if (autoScroll && terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [liveLogs, autoScroll]);
+
 
   // Quick Ingest States
   const [ingestUrl, setIngestUrl] = useState("");
@@ -210,24 +246,110 @@ export default function AdminSourcesPage() {
 
   const handleScanReddit = async () => {
     setIsScanningReddit(true);
-    setScanResult("Initiating Playwright stealth crawler on r/QualityReps & search feeds...");
+    setLiveLogs([]);
+    setScanProgress({
+      percent: 2,
+      message: "Connecting stealth crawler to r/QualityReps feeds...",
+      current: 0,
+      total: scanLimit,
+      foundCount: 0,
+      phase: "INIT",
+    });
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const res = await fetch("/api/admin/reddit-scanner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: scanLimit, autoAdd: autoApprove }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (data.success) {
-        setScanResult(data.message || "Scan finished successfully!");
-        if (data.items) setDiscoveredItems(data.items);
-      } else {
-        setScanResult(`Scan error: ${data.error}`);
+
+      if (!res.body) {
+        throw new Error("ReadableStream not supported on this browser.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const eventBlock of events) {
+          const lines = eventBlock.split("\n");
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+
+            try {
+              const payload = JSON.parse(trimmed.replace(/^data:\s*/, ""));
+
+              if (payload.type === "progress" && payload.data) {
+                setScanProgress((prev) => ({
+                  ...prev,
+                  ...payload.data,
+                }));
+              } else if (payload.type === "log" && payload.text) {
+                setLiveLogs((prev) => [...prev.slice(-200), payload.text]);
+              } else if (payload.type === "stderr" && payload.text) {
+                setLiveLogs((prev) => [...prev.slice(-200), `⚠️ ${payload.text}`]);
+              } else if (payload.type === "done") {
+                setScanProgress((prev) => ({
+                  ...prev,
+                  percent: 100,
+                  message: payload.message || "Scan finished!",
+                  phase: "COMPLETE",
+                }));
+                if (payload.items) {
+                  setDiscoveredItems(payload.items);
+                }
+              } else if (payload.type === "error") {
+                setScanProgress((prev) => ({
+                  ...prev,
+                  message: `Crawler Error: ${payload.error}`,
+                  phase: "ERROR",
+                }));
+              }
+            } catch (err) {
+              // Ignore partial JSON parse errors in stream
+            }
+          }
+        }
       }
     } catch (e: any) {
-      setScanResult(`Network error: ${e.message}`);
+      if (e.name === "AbortError") {
+        setScanProgress((prev) => ({
+          ...prev,
+          message: "Scan aborted by user.",
+          phase: "ABORTED",
+        }));
+        setLiveLogs((prev) => [...prev, "🛑 Scan stopped by user."]);
+      } else {
+        setScanProgress((prev) => ({
+          ...prev,
+          message: `Network error: ${e.message}`,
+          phase: "ERROR",
+        }));
+        setLiveLogs((prev) => [...prev, `❌ Error: ${e.message}`]);
+      }
     } finally {
       setIsScanningReddit(false);
+      abortControllerRef.current = null;
+      fetchDiscovered();
+    }
+  };
+
+  const handleStopScan = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -413,8 +535,8 @@ export default function AdminSourcesPage() {
       {/* TAB 1: r/QualityReps Scanner */}
       {activeTab === "reddit" && (
         <div className="space-y-6">
-          {/* Scanner Control Box */}
-          <div className="p-6 bg-neutral-900/90 border border-neutral-800 rounded-xl space-y-4">
+          {/* Scanner Control Box with Live Progress HUD */}
+          <div className="p-6 bg-neutral-900/90 border border-neutral-800 rounded-xl space-y-5 shadow-2xl">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <h2 className="text-base font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -422,7 +544,7 @@ export default function AdminSourcesPage() {
                   <span>r/QualityReps Automated Ingestion Engine</span>
                 </h2>
                 <p className="text-xs font-mono text-neutral-400 mt-1 max-w-2xl">
-                  Crawls new posts, [FIND] & [QC] flairs, extracts obfuscated Taobao / Weidian links, creates Sugargoo affiliate links, generates transparent AI cutouts (`rembg`), and updates the catalog.
+                  Playwright stealth scraper, auto-extracts Taobao/Weidian links, converts to Sugargoo VIP links, matches pristine studio flat-lays, and generates AI cutouts (`rembg`).
                 </p>
               </div>
 
@@ -432,11 +554,14 @@ export default function AdminSourcesPage() {
                   <select
                     value={scanLimit}
                     onChange={(e) => setScanLimit(Number(e.target.value))}
-                    className="bg-transparent text-xs font-mono text-white focus:outline-none"
+                    disabled={isScanningReddit}
+                    className="bg-transparent text-xs font-mono text-white focus:outline-none disabled:opacity-50"
                   >
                     <option value={5} className="bg-neutral-900">5 Posts</option>
                     <option value={10} className="bg-neutral-900">10 Posts</option>
                     <option value={20} className="bg-neutral-900">20 Posts</option>
+                    <option value={35} className="bg-neutral-900">35 Posts</option>
+                    <option value={50} className="bg-neutral-900">50 Posts</option>
                   </select>
                 </div>
 
@@ -445,28 +570,158 @@ export default function AdminSourcesPage() {
                     type="checkbox"
                     checked={autoApprove}
                     onChange={(e) => setAutoApprove(e.target.checked)}
-                    className="rounded bg-neutral-900 border-neutral-700 text-white focus:ring-0"
+                    disabled={isScanningReddit}
+                    className="rounded bg-neutral-900 border-neutral-700 text-white focus:ring-0 disabled:opacity-50"
                   />
                   <span>Auto-Approve & Save</span>
                 </label>
 
-                <button
-                  onClick={handleScanReddit}
-                  disabled={isScanningReddit}
-                  className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center gap-2 rounded disabled:opacity-50"
-                >
-                  <Play className={`w-3.5 h-3.5 ${isScanningReddit ? "animate-spin" : ""}`} />
-                  <span>{isScanningReddit ? "CRAWLING & PARSING..." : "START REDDIT SCAN"}</span>
-                </button>
+                {isScanningReddit ? (
+                  <button
+                    onClick={handleStopScan}
+                    className="px-5 py-2.5 bg-red-950/60 text-red-300 border border-red-700/60 font-mono text-xs font-bold uppercase tracking-wider hover:bg-red-900/60 transition-colors flex items-center gap-2 rounded"
+                  >
+                    <Square className="w-3.5 h-3.5 fill-red-400" />
+                    <span>STOP SCAN</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleScanReddit}
+                    className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center gap-2 rounded shadow-[0_0_15px_rgba(255,255,255,0.15)]"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-black" />
+                    <span>START REDDIT SCAN</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {scanResult && (
-              <div className="p-3 bg-black border border-neutral-800 rounded font-mono text-xs text-neutral-300">
-                <span className="text-neutral-500 mr-2">[SCAN LOG]</span>
-                {scanResult}
+            {/* LIVE PROGRESS BAR HUD */}
+            <div className="p-4 bg-black/90 border border-neutral-800/90 rounded-lg space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    {isScanningReddit && (
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    )}
+                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isScanningReddit ? "bg-emerald-500" : scanProgress.percent === 100 ? "bg-cyan-400" : "bg-neutral-600"}`}></span>
+                  </span>
+                  
+                  <span className="font-bold text-white uppercase tracking-wider">
+                    {isScanningReddit ? "CRAWLER ACTIVE" : scanProgress.percent === 100 ? "SCAN COMPLETE" : "CRAWLER STANDBY"}
+                  </span>
+
+                  <span className="px-2 py-0.5 bg-neutral-900 text-neutral-400 text-[10px] rounded uppercase border border-neutral-800">
+                    PHASE: {scanProgress.phase || "IDLE"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-neutral-400 text-xs">
+                  {scanProgress.current > 0 && (
+                    <span>Post <strong className="text-white">{scanProgress.current}</strong> of <strong className="text-white">{scanProgress.total}</strong></span>
+                  )}
+                  <span className="text-emerald-400 font-bold">
+                    {scanProgress.foundCount} Verified Grails
+                  </span>
+                  <span className="px-2 py-0.5 bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 font-bold rounded">
+                    {scanProgress.percent}%
+                  </span>
+                </div>
               </div>
-            )}
+
+              {/* Progress Track */}
+              <div className="w-full h-3 bg-neutral-950 rounded-full border border-neutral-800 overflow-hidden relative p-[1px]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 transition-all duration-300 ease-out shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+                  style={{ width: `${scanProgress.percent}%` }}
+                />
+              </div>
+
+              {/* Live Operation Status Subtitle */}
+              <div className="flex items-center justify-between text-xs font-mono pt-1 text-neutral-300">
+                <div className="flex items-center gap-2 truncate">
+                  <Zap className={`w-3.5 h-3.5 flex-shrink-0 ${isScanningReddit ? "text-yellow-400 animate-pulse" : "text-neutral-500"}`} />
+                  <span className="truncate">
+                    {scanProgress.message || "Ready. Click 'Start Reddit Scan' to crawl r/QualityReps."}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setShowLiveTerminal(!showLiveTerminal)}
+                  className="text-[11px] text-neutral-400 hover:text-white flex items-center gap-1 flex-shrink-0 ml-3"
+                >
+                  <Terminal className="w-3 h-3 text-neutral-400" />
+                  <span>{showLiveTerminal ? "Hide Console" : "Show Console"}</span>
+                  {showLiveTerminal ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+
+              {/* Collapsible Live Streaming Terminal Console */}
+              {showLiveTerminal && (
+                <div className="mt-3 border-t border-neutral-800/80 pt-3 space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500 px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-neutral-400 font-bold">TERMINAL OUTPUT STREAM</span>
+                      <span>({liveLogs.length} lines)</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1 cursor-pointer hover:text-neutral-300">
+                        <input
+                          type="checkbox"
+                          checked={autoScroll}
+                          onChange={(e) => setAutoScroll(e.target.checked)}
+                          className="w-3 h-3 rounded bg-neutral-900 border-neutral-700 text-emerald-500 focus:ring-0"
+                        />
+                        <span>Auto-scroll</span>
+                      </label>
+
+                      <button
+                        onClick={() => setLiveLogs([])}
+                        className="hover:text-neutral-300 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="w-full h-44 bg-black/95 border border-neutral-800 rounded p-3 font-mono text-xs overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-neutral-800">
+                    {liveLogs.length === 0 ? (
+                      <p className="text-neutral-600 italic">
+                        Terminal logs will stream here live when a scan is initiated...
+                      </p>
+                    ) : (
+                      liveLogs.map((log, lIdx) => {
+                        const isSuccess = log.includes("✓") || log.includes("[VERIFIED") || log.includes("[STUDIO MATCH]");
+                        const isWarning = log.includes("⚠️") || log.includes("Skipping") || log.includes("[REJECTED]");
+                        const isCutout = log.includes("AI cutout") || log.includes("rembg");
+                        const isSearch = log.includes("[IMAGE SEARCH]");
+
+                        return (
+                          <div
+                            key={lIdx}
+                            className={`font-mono text-[11px] leading-relaxed break-all ${
+                              isSuccess
+                                ? "text-emerald-400 font-semibold"
+                                : isWarning
+                                ? "text-neutral-500"
+                                : isCutout
+                                ? "text-amber-300"
+                                : isSearch
+                                ? "text-cyan-300"
+                                : "text-neutral-300"
+                            }`}
+                          >
+                            {log}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div ref={terminalEndRef} />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Discovered Items Queue */}
