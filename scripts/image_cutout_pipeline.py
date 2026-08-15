@@ -139,8 +139,9 @@ def is_badge_or_icon(img: Image.Image) -> bool:
 
 def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", market_url: str = "", target_size=(1000, 1000)) -> bool:
     """
-    Takes an image URL, local path, or fallback search query.
+    Takes a direct marketplace link (Weidian/Taobao/1688) or a real Reddit QC photo.
     Extracts garment cleanly via rembg, trims padding, centers on a 1000x1000 square transparent canvas.
+    NEVER uses generic web search to prevent fake or unrelated images (tigers, actors, stock photos).
     """
     try:
         input_image = None
@@ -149,7 +150,7 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
         # Priority 1: Direct Marketplace Seller Studio Photos (Weidian / Taobao / 1688)
         if market_url:
             seller_photos = fetch_marketplace_store_photos(market_url)
-            for sp in seller_photos[:3]:
+            for sp in seller_photos[:4]:
                 try:
                     req = urllib.request.Request(sp, headers=headers)
                     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -162,25 +163,12 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
                 except Exception:
                     pass
 
-        # Priority 2: High-Fashion Studio Search (SSENSE / Grailed / Farfetch / StockX)
-        if input_image is None and query_fallback and not any(bad in query_fallback.lower() for bad in ["haul", "blindbox", "unknown", "qc"]):
-            clean_url = search_clean_garment_image_playwright(query_fallback)
-            if clean_url:
-                try:
-                    req = urllib.request.Request(clean_url, headers=headers)
-                    with urllib.request.urlopen(req, timeout=10) as resp:
-                        img_data = resp.read()
-                    temp_img = Image.open(io.BytesIO(img_data)).convert("RGBA")
-                    if not is_badge_or_icon(temp_img):
-                        input_image = temp_img
-                        print("[STUDIO MATCH] Successfully retrieved pristine archive flat-lay.")
-                except Exception:
-                    pass
-
-        # Priority 3: Use provided img_input if no studio match was found (reject phone screenshots & avatars)
+        # Priority 2: Genuine Reddit Post Image (only if from i.redd.it / preview.redd.it and not avatar/icon)
         if input_image is None and img_input:
             if isinstance(img_input, str) and img_input.startswith("http"):
-                if not any(bad in img_input.lower() for bad in BAD_IMAGE_DOMAINS):
+                # Only accept actual post images from Reddit CDN or trusted store CDNs
+                is_trusted_cdn = any(cdn in img_input for cdn in ["i.redd.it", "preview.redd.it", "external-preview.redd.it", "geilicdn", "alicdn", "cbu01"])
+                if is_trusted_cdn and not any(bad in img_input.lower() for bad in BAD_IMAGE_DOMAINS):
                     try:
                         req = urllib.request.Request(img_input, headers=headers)
                         with urllib.request.urlopen(req, timeout=15) as resp:
@@ -188,6 +176,7 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
                         temp_img = Image.open(io.BytesIO(img_data)).convert("RGBA")
                         if not is_badge_or_icon(temp_img):
                             input_image = temp_img
+                            print("[REDDIT QC MATCH] Successfully retrieved real Reddit QC photo.")
                     except Exception:
                         pass
             elif isinstance(img_input, str) and os.path.exists(img_input):
@@ -198,11 +187,14 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
                 if not is_badge_or_icon(img_input):
                     input_image = img_input.convert("RGBA")
 
+        # If no valid seller studio photo or real Reddit QC image exists, REJECT! (Never invent fake images)
         if input_image is None or is_badge_or_icon(input_image):
-            raise ValueError("No valid garment image could be retrieved (rejected icons/avatars/screenshots)")
+            print("[IMAGE REJECT] No authentic seller studio or Reddit QC photo found. Skipping piece.")
+            return False
 
         # Strip red scrub bar / mobile screenshot artifacts
         input_image = clean_ui_artifacts(input_image)
+
 
         # 1. AI background removal
         print("Executing AI background removal with rembg...")

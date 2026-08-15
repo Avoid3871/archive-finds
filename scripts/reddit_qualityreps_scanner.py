@@ -9,6 +9,7 @@ from PIL import Image
 import rembg
 from playwright.async_api import async_playwright
 from product_identifier import identify_product_metadata
+from image_cutout_pipeline import process_and_cutout_image, fetch_marketplace_store_photos
 
 # Ensure UTF-8 output on Windows
 if sys.platform == "win32":
@@ -414,10 +415,12 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     slug = slugify(f"{brand}-{canonical_title}-{int(time.time()) % 10000 + link_idx}")
                     item_id = str(len(existing_products) + len(discovered_items) + 1)
                     
-                    # Prefer high-res studio image if available, else post image
-                    img_src = identified.get("studioImageUrl") or (post_images[0] if post_images else "")
-                    if not img_src or any(bad in img_src.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "marketing"]):
-                        print(f"Skipping item with no valid product image: '{canonical_title}'", flush=True)
+                    # 1. First priority: Direct seller studio photos from Weidian/Taobao/1688
+                    store_photos = fetch_marketplace_store_photos(market_link)
+                    img_src = store_photos[0] if store_photos else (post_images[0] if post_images else "")
+                    
+                    if not img_src or any(bad in img_src.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "marketing", "filesor", "pimpandhost", "tumblr", ".gif"]):
+                        print(f"Skipping item with no authentic store or Reddit QC photo: '{canonical_title}'", flush=True)
                         continue
                     
                     item = {
