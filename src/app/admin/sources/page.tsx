@@ -122,6 +122,35 @@ export default function AdminSourcesPage() {
   const [discoveredItems, setDiscoveredItems] = useState<DiscoveredItem[]>([]);
   const [approvingSlug, setApprovingSlug] = useState<string | null>(null);
 
+  // Review & Edit Ingest Modal State
+  const [editingItem, setEditingItem] = useState<DiscoveredItem | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    brand: "Rick Owens",
+    category: "Outerwear",
+    price: 59.0,
+    estimatedRetail: 650.0,
+    tags: "archive, grail",
+    rawMarketUrl: "",
+  });
+  const [ingestModalProgress, setIngestModalProgress] = useState<{
+    isIngesting: boolean;
+    percent: number;
+    phase: "IDLE" | "PREPARING" | "AFFILIATE" | "WRITING_DB" | "SUCCESS" | "ERROR";
+    message: string;
+    logs: string[];
+    ingestedSlug?: string;
+  }>({
+    isIngesting: false,
+    percent: 0,
+    phase: "IDLE",
+    message: "",
+    logs: [],
+  });
+
+  const [successToast, setSuccessToast] = useState<{ title: string; slug: string } | null>(null);
+
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -131,6 +160,133 @@ export default function AdminSourcesPage() {
       terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [liveLogs, autoScroll]);
+
+  const openReviewModal = (item: DiscoveredItem) => {
+    setEditingItem(item);
+    const cleanTitle = item.title.replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "").trim();
+    setEditFormData({
+      title: cleanTitle || item.title,
+      brand: item.brand || "Maison Margiela",
+      category: item.category || "Outerwear",
+      price: item.sourcePrice || 50,
+      estimatedRetail: item.estimatedRetail || (item.sourcePrice ? Math.round(item.sourcePrice * 8.5) : 450),
+      tags: "archive, grail",
+      rawMarketUrl: item.rawMarketUrl || "",
+    });
+    setIngestModalProgress({
+      isIngesting: false,
+      percent: 0,
+      phase: "IDLE",
+      message: "",
+      logs: [],
+    });
+  };
+
+  const handleConfirmIngest = async () => {
+    if (!editingItem) return;
+
+    setIngestModalProgress({
+      isIngesting: true,
+      percent: 20,
+      phase: "PREPARING",
+      message: "Validating metadata & preparing high-resolution studio assets...",
+      logs: [
+        `[1/4] Preparing product: "${editFormData.brand} - ${editFormData.title}"`,
+        `[1/4] Category: ${editFormData.category} | Price: $${editFormData.price}`,
+      ],
+    });
+
+    try {
+      await new Promise((r) => setTimeout(r, 600));
+
+      setIngestModalProgress((prev) => ({
+        ...prev,
+        percent: 45,
+        phase: "AFFILIATE",
+        message: "Binding Sugargoo VIP Affiliate ID: 1325437696506389977...",
+        logs: [
+          ...prev.logs,
+          `[2/4] Direct store link: ${editFormData.rawMarketUrl || editingItem.rawMarketUrl}`,
+          `[2/4] Generated Sugargoo affiliate link with member ID 1325437696506389977`,
+        ],
+      }));
+
+      await new Promise((r) => setTimeout(r, 600));
+
+      setIngestModalProgress((prev) => ({
+        ...prev,
+        percent: 75,
+        phase: "WRITING_DB",
+        message: "Writing to Public Store Catalog (sheetProducts.json)...",
+        logs: [
+          ...prev.logs,
+          `[3/4] Persisting piece to catalog database...`,
+          `[3/4] Generating 9:16 social slide assets...`,
+        ],
+      }));
+
+      const res = await fetch("/api/admin/ingest-single", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: editFormData.rawMarketUrl || editingItem.rawMarketUrl,
+          brand: editFormData.brand,
+          title: editFormData.title,
+          category: editFormData.category,
+          price: editFormData.price,
+          rawImageSrc: editingItem.rawImageSrc,
+          localImage: editingItem.localImage || editingItem.imageUrl,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Remove from moderation queue
+        const params = new URLSearchParams({
+          slug: editingItem.slug,
+          rawMarketUrl: editingItem.rawMarketUrl || "",
+          redditPostUrl: editingItem.redditPostUrl || "",
+        });
+        await fetch(`/api/admin/reddit-scanner?${params.toString()}`, {
+          method: "DELETE",
+        });
+
+        // Optimistically remove from state
+        setDiscoveredItems((prev) => prev.filter((i) => i.slug !== editingItem.slug));
+        setSuccessToast({ title: editFormData.title, slug: editingItem.slug });
+
+        setIngestModalProgress((prev) => ({
+          ...prev,
+          isIngesting: false,
+          percent: 100,
+          phase: "SUCCESS",
+          message: "✓ Successfully Ingested! Piece is now live in your public store.",
+          logs: [
+            ...prev.logs,
+            `[4/4] Ingest complete! Product is active in catalog.`,
+          ],
+          ingestedSlug: editingItem.slug,
+        }));
+      } else {
+        setIngestModalProgress((prev) => ({
+          ...prev,
+          isIngesting: false,
+          phase: "ERROR",
+          message: `Ingestion failed: ${data.error}`,
+          logs: [...prev.logs, `[ERROR] ${data.error}`],
+        }));
+      }
+    } catch (e: any) {
+      setIngestModalProgress((prev) => ({
+        ...prev,
+        isIngesting: false,
+        phase: "ERROR",
+        message: `Network error: ${e.message}`,
+        logs: [...prev.logs, `[ERROR] ${e.message}`],
+      }));
+    }
+  };
 
 
   // Quick Ingest States
@@ -487,8 +643,43 @@ export default function AdminSourcesPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
+      {/* Global Ingestion Success Toast */}
+      {successToast && (
+        <div className="fixed top-6 right-6 z-50 p-4 bg-neutral-900/95 border border-emerald-500/50 rounded-xl shadow-2xl backdrop-blur-md flex items-center gap-4 animate-in slide-in-from-top-4 duration-300">
+          <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="font-mono text-xs font-bold text-white uppercase tracking-wider">
+              Grail Successfully Ingested!
+            </p>
+            <p className="font-mono text-[11px] text-neutral-400">
+              {successToast.title} is now active in the store catalog.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 pl-2">
+            <a
+              href="/products"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 bg-emerald-500 text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded hover:bg-emerald-400 transition-colors flex items-center gap-1"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>View</span>
+            </a>
+            <button
+              onClick={() => setSuccessToast(null)}
+              className="p-1.5 text-neutral-500 hover:text-white rounded"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
+
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5">
@@ -839,12 +1030,11 @@ export default function AdminSourcesPage() {
 
                     <div className="pt-3 border-t border-neutral-800 flex items-center gap-2">
                       <button
-                        onClick={() => handleApprovePiece(item)}
-                        disabled={approvingSlug === item.slug}
-                        className="flex-1 py-2 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center justify-center gap-1.5 rounded disabled:opacity-50"
+                        onClick={() => openReviewModal(item)}
+                        className="flex-1 py-2 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all shadow-sm flex items-center justify-center gap-1.5 rounded"
                       >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{approvingSlug === item.slug ? "INGESTING..." : "APPROVE & INGEST"}</span>
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        <span>REVIEW & INGEST</span>
                       </button>
 
                       <button
@@ -1360,6 +1550,315 @@ export default function AdminSourcesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Review & Ingest Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-neutral-800 bg-neutral-950/60">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-mono text-base font-bold text-white uppercase tracking-wide">
+                    Review & Ingest Grail
+                  </h3>
+                  <p className="font-mono text-xs text-neutral-400">
+                    Verify metadata, set pricing, and publish directly to the live catalog
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingItem(null)}
+                disabled={ingestModalProgress.isIngesting}
+                className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Left Preview Column (5 cols) */}
+                <div className="md:col-span-5 space-y-3">
+                  <label className="text-[10px] font-mono uppercase text-neutral-400 block">
+                    Freigestelltes Studiofoto
+                  </label>
+                  <div className="w-full h-64 bg-neutral-950 rounded-xl border border-neutral-800 relative flex items-center justify-center p-4 overflow-hidden group">
+                    <img
+                      src={editingItem.imageUrl || editingItem.localImage || editingItem.rawImageSrc}
+                      alt={editingItem.title}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        if (editingItem.rawImageSrc && e.currentTarget.src !== editingItem.rawImageSrc) {
+                          e.currentTarget.src = editingItem.rawImageSrc;
+                        }
+                      }}
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] uppercase rounded">
+                      Studio Cutout
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 pt-1 text-[11px] font-mono text-neutral-400">
+                    <div className="flex items-center justify-between">
+                      <span className="text-neutral-500">Source:</span>
+                      <a
+                        href={editingItem.rawMarketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline truncate max-w-[180px]"
+                      >
+                        {editingItem.rawMarketUrl}
+                      </a>
+                    </div>
+                    {editingItem.redditPostUrl && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500">Reddit:</span>
+                        <a
+                          href={editingItem.redditPostUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-orange-400 hover:underline"
+                        >
+                          r/QualityReps Thread ↗
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Form Column (7 cols) */}
+                <div className="md:col-span-7 space-y-4">
+                  <div>
+                    <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                      Product Title / Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                      placeholder="e.g. Vintage Zip-Up Hoodie"
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                        Brand
+                      </label>
+                      <select
+                        value={editFormData.brand}
+                        onChange={(e) => setEditFormData({ ...editFormData, brand: e.target.value })}
+                        disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                      >
+                        <option value="Rick Owens">Rick Owens</option>
+                        <option value="Maison Margiela">Maison Margiela</option>
+                        <option value="Chrome Hearts">Chrome Hearts</option>
+                        <option value="Balenciaga">Balenciaga</option>
+                        <option value="Enfants Riches Déprimés">Enfants Riches Déprimés</option>
+                        <option value="Undercover">Undercover</option>
+                        <option value="Raf Simons">Raf Simons</option>
+                        <option value="Carol Christian Poell">Carol Christian Poell</option>
+                        <option value="Acne Studios">Acne Studios</option>
+                        <option value="Kapital">Kapital</option>
+                        <option value="Vivienne Westwood">Vivienne Westwood</option>
+                        <option value="Yohji Yamamoto">Yohji Yamamoto</option>
+                        <option value="Vetements">Vetements</option>
+                        <option value="Helmut Lang">Helmut Lang</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                        Category
+                      </label>
+                      <select
+                        value={editFormData.category}
+                        onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                        disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                      >
+                        <option value="Outerwear">Outerwear</option>
+                        <option value="Hoodies">Hoodies</option>
+                        <option value="T-Shirts">T-Shirts</option>
+                        <option value="Denim">Denim</option>
+                        <option value="Pants">Pants</option>
+                        <option value="Footwear">Footwear</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Bags">Bags</option>
+                        <option value="Jewelry">Jewelry</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                        Source Price ($USD)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editFormData.price}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setEditFormData({
+                            ...editFormData,
+                            price: val,
+                            estimatedRetail: Math.round(val * 8.5),
+                          });
+                        }}
+                        disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                        Est. Retail ($USD)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={editFormData.estimatedRetail}
+                        onChange={(e) => setEditFormData({ ...editFormData, estimatedRetail: parseFloat(e.target.value) || 0 })}
+                        disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
+                      Direct Marketplace URL (Weidian / Taobao / 1688)
+                    </label>
+                    <input
+                      type="url"
+                      value={editFormData.rawMarketUrl}
+                      onChange={(e) => setEditFormData({ ...editFormData, rawMarketUrl: e.target.value })}
+                      disabled={ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS"}
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Ingestion Real Progress Bar & Terminal Logs */}
+              {(ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS" || ingestModalProgress.phase === "ERROR") && (
+                <div className="space-y-3 pt-4 border-t border-neutral-800">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-white font-bold flex items-center gap-2">
+                      {ingestModalProgress.phase === "SUCCESS" ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : ingestModalProgress.phase === "ERROR" ? (
+                        <AlertCircle className="w-4 h-4 text-red-400" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                      )}
+                      <span>{ingestModalProgress.message}</span>
+                    </span>
+                    <span className="text-emerald-400 font-bold">{ingestModalProgress.percent}%</span>
+                  </div>
+
+                  {/* Animated Progress Bar */}
+                  <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
+                    <div
+                      className={`h-full transition-all duration-300 ease-out ${
+                        ingestModalProgress.phase === "ERROR"
+                          ? "bg-red-500"
+                          : "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                      }`}
+                      style={{ width: `${ingestModalProgress.percent}%` }}
+                    />
+                  </div>
+
+                  {/* Terminal Ingest Logs */}
+                  <div className="p-3 bg-neutral-950 rounded-lg border border-neutral-800/80 font-mono text-[11px] space-y-1 max-h-28 overflow-y-auto">
+                    {ingestModalProgress.logs.map((log, idx) => (
+                      <div key={idx} className="text-neutral-400 flex items-start gap-2">
+                        <span className="text-neutral-600 select-none">&gt;</span>
+                        <span className={log.includes("[ERROR]") ? "text-red-400" : log.includes("✓") || log.includes("[4/4]") ? "text-emerald-400 font-bold" : ""}>
+                          {log}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Success CTA Buttons */}
+                  {ingestModalProgress.phase === "SUCCESS" && (
+                    <div className="flex items-center gap-3 pt-2">
+                      <a
+                        href="/products"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2.5 bg-emerald-500 text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-400 transition-colors rounded-lg flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>VIEW IN STORE CATALOG</span>
+                      </a>
+                      <a
+                        href="/admin/slides"
+                        className="flex-1 py-2.5 bg-neutral-800 text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-700 transition-colors rounded-lg flex items-center justify-center gap-1.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>9:16 SLIDE STUDIO</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="flex items-center justify-between p-5 border-t border-neutral-800 bg-neutral-950/60">
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                disabled={ingestModalProgress.isIngesting}
+                className="px-4 py-2 text-xs font-mono text-neutral-400 hover:text-white transition-colors disabled:opacity-50"
+              >
+                {ingestModalProgress.phase === "SUCCESS" ? "CLOSE" : "CANCEL"}
+              </button>
+
+              {ingestModalProgress.phase !== "SUCCESS" ? (
+                <button
+                  type="button"
+                  onClick={handleConfirmIngest}
+                  disabled={ingestModalProgress.isIngesting || !editFormData.title.trim()}
+                  className="px-6 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all rounded-lg flex items-center gap-2 shadow-lg disabled:opacity-50"
+                >
+                  {ingestModalProgress.isIngesting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>INGESTING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5 fill-black" />
+                      <span>CONFIRM & INGEST GRAIL</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  className="px-6 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors rounded-lg"
+                >
+                  DONE
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

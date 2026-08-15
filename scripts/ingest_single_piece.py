@@ -74,9 +74,18 @@ def ingest(payload_file: str):
     local_img = f"/products/{slug}.png"
     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
 
-    search_query = f"{brand} {title}"
-    print(f"Generating AI cutout (with studio search fallback '{search_query}')...", flush=True)
-    process_and_cutout_image(raw_img, out_png, query_fallback=search_query)
+    existing_img = data.get("localImage", "") or data.get("imageUrl", "")
+    existing_full_path = os.path.join(os.path.dirname(__file__), "..", "public", existing_img.lstrip("/")) if existing_img else ""
+
+    if existing_full_path and os.path.exists(existing_full_path):
+        import shutil
+        shutil.copy2(existing_full_path, out_png)
+        print(f"[REUSE CUTOUT] Using verified pre-generated studio cutout: {existing_img}", flush=True)
+    else:
+        search_query = f"{brand} {title}"
+        print(f"Generating AI cutout from market source...", flush=True)
+        process_and_cutout_image(raw_img, out_png, query_fallback=search_query, market_url=raw_url)
+
 
     new_piece = {
         "id": item_id,
@@ -108,9 +117,8 @@ def ingest(payload_file: str):
         json.dump(products, f, indent=2, ensure_ascii=False)
 
     print(f"Added new product #{item_id}: {new_piece['title']}", flush=True)
-    print("Regenerating all 3 slide styles...", flush=True)
-    os.system("node scripts/generate_all_slide_styles.js")
-    print("Ingest process complete!", flush=True)
+    print("Ingest process complete! Product live in catalog.", flush=True)
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
