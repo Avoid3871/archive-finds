@@ -93,8 +93,11 @@ CATEGORY_KEYWORDS = {
 }
 
 IGNORE_TITLES = [
-    "megathread", "rules", "discord", "seller ban", "guide", "easter mega", "announcement", "winner", "essential guide"
+    "megathread", "rules", "discord", "seller ban", "guide", "easter mega", "announcement", "winner", "essential guide",
+    "lc", "legit check", "legit-check", "is this real", "real or fake", "authentication", "can i get a lc", "please lc", 
+    "help lc", "pls lc", "fitpic", "fit pic", "discussion", "question", "general question", "w2c", "where to cop", "wtc"
 ]
+
 
 def clean_text_and_extract_links(text: str) -> list[str]:
     """
@@ -227,36 +230,37 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
         )
         page = await context.new_page()
         
-        # Dynamic rotating search queries across designers to ensure fresh results every run
+        # Dynamic high-yield search queries targeting actual store links and verified drops
         all_search_queries = [
-            "flair%3AFIND+OR+weidian+OR+taobao",
-            "flair%3AQC+OR+flair%3AGRAIL",
-            "Rick+Owens+OR+Geobasket+OR+Ramones+OR+Geth+OR+Bolan",
-            "Chrome+Hearts+OR+Matty+Boy+OR+Dagger+OR+Cross",
-            "Enfants+Riches+Deprimes+OR+ERD",
-            "Balenciaga+OR+Defender+OR+3XL+OR+Steroid+OR+Hamptons",
-            "Maison+Margiela+OR+Tabi+OR+GAT",
-            "Undercover+OR+Jun+Takahashi+OR+Scab+OR+85",
-            "Raf+Simons+OR+Consumed+OR+Riot+OR+Virginia+Creeper",
-            "Carol+Christian+Poell+OR+CCP+OR+BBS",
-            "Acne+Studios+OR+1981m+OR+1989",
-            "Kapital+OR+Bone+OR+Damask",
-            "Vivienne+Westwood+OR+Orb",
-            "Yohji+Yamamoto+OR+Number+Nine"
+            "flair%3AFIND+OR+flair%3AGRAIL",
+            "flair%3AQC+OR+flair%3ARELEASE",
+            "Rick+Owens+(weidian+OR+taobao+OR+1688)",
+            "Chrome+Hearts+(weidian+OR+taobao+OR+1688)",
+            "Enfants+Riches+Deprimes+OR+ERD+(weidian+OR+taobao)",
+            "Balenciaga+(weidian+OR+taobao+OR+1688)",
+            "Maison+Margiela+(weidian+OR+taobao)",
+            "Undercover+OR+Scab+OR+85+(weidian+OR+taobao)",
+            "Raf+Simons+OR+Consumed+OR+Riot+(weidian+OR+taobao)",
+            "Carol+Christian+Poell+OR+CCP+(weidian+OR+taobao)",
+            "Acne+Studios+(weidian+OR+taobao)",
+            "Kapital+(weidian+OR+taobao)",
+            "Vivienne+Westwood+(weidian+OR+taobao)",
+            "Yohji+Yamamoto+(weidian+OR+taobao)"
         ]
         import random
         random.shuffle(all_search_queries)
 
         urls_to_scan = [
-            "https://www.reddit.com/r/QualityReps/new/",
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND&sort=new",
             f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[0]}&sort=new",
             f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[1]}&sort=relevance",
-            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[2]}&sort=top&t=month",
+            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[2]}&sort=top&t=year",
             f"https://www.reddit.com/r/DesignerReps/search/?q={all_search_queries[3]}&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND&sort=top&t=all"
         ]
         
         post_links = []
-        emit_progress(3, "Connecting stealth browser to r/QualityReps & rotating designer feeds...", 0, max_posts, 0, "INIT")
+        emit_progress(3, "Connecting stealth browser to high-yield Grail feeds...", 0, max_posts, 0, "INIT")
         for u_idx, u in enumerate(urls_to_scan):
             feed_pct = int(5 + (u_idx / len(urls_to_scan)) * 12)
             feed_name = u.split('?')[0].replace("https://www.reddit.com/r/", "r/")
@@ -270,10 +274,18 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     await page.keyboard.press("PageDown")
                     await page.wait_for_timeout(800)
                     
-                links = await page.eval_on_selector_all(
-                    "a[href*='/comments/']",
-                    "els => Array.from(new Set(els.map(e => e.href))).filter(h => !h.includes('/comment/'))"
-                )
+                links = await page.evaluate('''() => {
+                    const anchors = Array.from(document.querySelectorAll('a[href*="/comments/"]'));
+                    const urls = anchors.map(a => {
+                        try {
+                            const u = new URL(a.href);
+                            return u.origin + u.pathname;
+                        } catch(e) {
+                            return a.href.split('?')[0];
+                        }
+                    }).filter(href => href.includes('/comments/') && !href.includes('/comment/'));
+                    return Array.from(new Set(urls));
+                }''')
                 for l in links:
                     if l not in post_links and l not in scanned_posts_set:
                         post_links.append(l)
@@ -311,8 +323,8 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 title_el = await post_page.query_selector("h1")
                 title = (await title_el.inner_text()).strip() if title_el else ""
                 
-                if any(ig in title.lower() for ig in IGNORE_TITLES):
-                    print(f"Skipping announcement/guide thread: '{title}'", flush=True)
+                if any(ig in title.lower() for ig in IGNORE_TITLES) or title.lower().startswith("lc ") or "[lc]" in title.lower() or "legit check" in title.lower():
+                    print(f"Skipping announcement/guide/LC thread: '{title}'", flush=True)
                     continue
 
                     
@@ -453,6 +465,26 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
 
                     discovered_items.append(item)
                     valid_count += 1
+
+                    # 1. Update scratch/discovered_qualityreps_finds.json immediately so it is safe on disk
+                    cache_dir = os.path.join(os.path.dirname(__file__), "..", "scratch")
+                    os.makedirs(cache_dir, exist_ok=True)
+                    cache_file = os.path.join(cache_dir, "discovered_qualityreps_finds.json")
+                    cached_list = []
+                    if os.path.exists(cache_file):
+                        try:
+                            with open(cache_file, "r", encoding="utf-8") as f:
+                                cached_list = json.load(f)
+                        except Exception:
+                            pass
+                    if not any(c.get("slug") == item["slug"] for c in cached_list):
+                        cached_list.insert(0, item)
+                    with open(cache_file, "w", encoding="utf-8") as f:
+                        json.dump(cached_list, f, indent=2)
+
+                    # 2. Emit Real-Time Discovered Item Event to SSE stream
+                    print(f"[AF_ITEM_DISCOVERED] {json.dumps(item)}", flush=True)
+
                     emit_progress(progress_base + 3, f"✓ Verified Grail added: {brand} - {canonical_title} (${price})", idx+1, max_posts, valid_count, "ITEM_SAVED", canonical_title)
                     print(f"[VERIFIED #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
                         

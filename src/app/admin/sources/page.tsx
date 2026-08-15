@@ -292,7 +292,13 @@ export default function AdminSourcesPage() {
             try {
               const payload = JSON.parse(trimmed.replace(/^data:\s*/, ""));
 
-              if (payload.type === "progress" && payload.data) {
+              if (payload.type === "item_discovered" && payload.item) {
+                // Live real-time discovery insertion!
+                setDiscoveredItems((prev) => {
+                  if (prev.some((it) => it.slug === payload.item.slug)) return prev;
+                  return [payload.item, ...prev];
+                });
+              } else if (payload.type === "progress" && payload.data) {
                 setScanProgress((prev) => ({
                   ...prev,
                   ...payload.data,

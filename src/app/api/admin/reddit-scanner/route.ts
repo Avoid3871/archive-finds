@@ -94,8 +94,18 @@ export async function POST(req: NextRequest) {
           for (const line of lines) {
             if (!line.trim()) continue;
             
-            // Check for progress event
-            if (line.includes("[AF_PROGRESS]")) {
+            // Check for real-time discovered item event
+            if (line.includes("[AF_ITEM_DISCOVERED]")) {
+              try {
+                const jsonStr = line.substring(line.indexOf("[AF_ITEM_DISCOVERED]") + 21).trim();
+                const itemData = JSON.parse(jsonStr);
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ type: "item_discovered", item: itemData })}\n\n`)
+                );
+              } catch (err) {
+                // fallback
+              }
+            } else if (line.includes("[AF_PROGRESS]")) {
               try {
                 const jsonStr = line.substring(line.indexOf("[AF_PROGRESS]") + 13).trim();
                 const progressData = JSON.parse(jsonStr);
