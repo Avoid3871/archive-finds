@@ -8,6 +8,7 @@ import urllib.request
 from PIL import Image
 import rembg
 from image_cutout_pipeline import process_and_cutout_image
+from job_logger import log_job
 
 if sys.platform == "win32":
     try:
@@ -54,6 +55,7 @@ def slugify(text: str) -> str:
     return s[:60]
 
 def ingest(payload_file: str):
+    start_time = time.time()
     with open(payload_file, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -79,7 +81,11 @@ def ingest(payload_file: str):
 
     if existing_full_path and os.path.exists(existing_full_path):
         import shutil
-        shutil.copy2(existing_full_path, out_png)
+        if os.path.abspath(existing_full_path) != os.path.abspath(out_png):
+            try:
+                shutil.copy2(existing_full_path, out_png)
+            except Exception as e:
+                print(f"[COPY WARN] {e}", flush=True)
         print(f"[REUSE CUTOUT] Using verified pre-generated studio cutout: {existing_img}", flush=True)
     else:
         search_query = f"{brand} {title}"
@@ -144,6 +150,22 @@ def ingest(payload_file: str):
     with open(SHEET_PRODUCTS_PATH, "w", encoding="utf-8") as f:
         json.dump(products, f, indent=2, ensure_ascii=False)
 
+    duration_ms = (time.time() - start_time) * 1000.0
+    log_job(
+        job_type="INGEST_GRAIL",
+        piece_name=f"{brand} - {title}",
+        status="SUCCESS",
+        duration_ms=duration_ms,
+        details=f"Live product #{item_id} added/updated with Sugargoo affiliate link ({slug})"
+    )
+
+    print(json.dumps({
+        "status": "SUCCESS",
+        "slug": slug,
+        "id": item_id,
+        "title": new_piece["title"],
+        "imageUrl": local_img
+    }), flush=True)
     print("Ingest process complete! Product live in catalog.", flush=True)
 
 

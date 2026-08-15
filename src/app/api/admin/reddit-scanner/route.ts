@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import { logJobRecord } from "@/lib/admin/jobLogger";
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,8 +61,8 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   try {
     const body = await req.json().catch(() => ({}));
     const limit = body.limit || 10;
@@ -142,6 +143,14 @@ export async function POST(req: NextRequest) {
               items = JSON.parse(fs.readFileSync(scratchPath, "utf-8"));
             } catch (e) {}
           }
+
+          logJobRecord({
+            type: "SCAN_REDDIT_FEED",
+            pieceName: `r/QualityReps Feed Scan (limit=${limit})`,
+            status: code === 0 ? "SUCCESS" : "FAILED",
+            durationMs: Date.now() - startTime,
+            details: code === 0 ? `Found ${items.length} total potential grails in buffer` : `Exited with status code ${code}`,
+          });
 
           controller.enqueue(
             encoder.encode(

@@ -15,8 +15,12 @@ import {
   Layers,
   Sparkles,
   ShoppingBag,
+  Eye,
+  EyeOff,
+  CloudUpload,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { LiveSyncControl } from "@/components/admin/LiveSyncControl";
 
 interface Product {
   id: string;
@@ -36,7 +40,7 @@ interface Product {
   localImage?: string;
   slug: string;
   era?: string;
-  status?: string;
+  status?: "ACTIVE" | "DRAFT" | "HIDDEN";
 }
 
 export default function AdminProductsPage() {
@@ -45,7 +49,9 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("ALL");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<"ALL" | "ACTIVE" | "DRAFT">("ALL");
   const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -71,6 +77,43 @@ export default function AdminProductsPage() {
   const showToast = (type: "success" | "error", text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleToggleStatus = async (prod: Product) => {
+    const currentStatus = prod.status || "ACTIVE";
+    const nextStatus = currentStatus === "DRAFT" ? "ACTIVE" : "DRAFT";
+
+    try {
+      setTogglingId(prod.id);
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: prod.id,
+          action: "toggle-status",
+          status: nextStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === prod.id ? { ...p, status: nextStatus } : p))
+        );
+        showToast(
+          "success",
+          nextStatus === "ACTIVE"
+            ? `✓ "${prod.title || prod.name}" is now LIVE in store!`
+            : `⏸ "${prod.title || prod.name}" moved to DRAFT (hidden from public store)`
+        );
+      } else {
+        showToast("error", data.error || "Failed to update status");
+      }
+    } catch (e: any) {
+      showToast("error", e.message);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const handleRotateImage = async (prod: Product) => {
@@ -131,7 +174,12 @@ export default function AdminProductsPage() {
   const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))).sort();
   const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))).sort();
 
+  const activeCount = products.filter((p) => (p.status || "ACTIVE") === "ACTIVE").length;
+  const draftCount = products.filter((p) => p.status === "DRAFT").length;
+
   const filteredProducts = products.filter((p) => {
+    const pStatus = p.status || "ACTIVE";
+    if (selectedStatus !== "ALL" && pStatus !== selectedStatus) return false;
     if (selectedBrand !== "ALL" && p.brand !== selectedBrand) return false;
     if (selectedCategory !== "ALL" && p.category !== selectedCategory) return false;
     if (searchQuery.trim()) {
@@ -163,6 +211,9 @@ export default function AdminProductsPage() {
         </div>
       )}
 
+      {/* 🚀 LIVE WEBSITE SYNC CONTROL BAR */}
+      <LiveSyncControl onSyncSuccess={fetchProducts} />
+
       {/* Header with Live Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
         <div>
@@ -182,7 +233,7 @@ export default function AdminProductsPage() {
             </span>
           </h1>
           <p className="text-xs font-mono text-neutral-400 mt-1">
-            Verified database single source of truth (`sheetProducts.json`). Manage, rotate images, test links, and remove pieces.
+            Verified database single source of truth (`sheetProducts.json`). Manage status (Live vs Draft), rotate images, and sync changes live.
           </p>
         </div>
 
@@ -203,6 +254,42 @@ export default function AdminProductsPage() {
             <span>Discover & Ingest</span>
           </Link>
         </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-neutral-800 pb-2">
+        <button
+          onClick={() => setSelectedStatus("ALL")}
+          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg transition-all ${
+            selectedStatus === "ALL"
+              ? "bg-white text-black font-bold shadow"
+              : "text-neutral-400 hover:text-white hover:bg-neutral-900"
+          }`}
+        >
+          All Items ({products.length})
+        </button>
+        <button
+          onClick={() => setSelectedStatus("ACTIVE")}
+          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
+            selectedStatus === "ACTIVE"
+              ? "bg-emerald-500 text-black font-bold shadow"
+              : "text-emerald-400 hover:bg-emerald-950/40"
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span>🟢 Live In Store ({activeCount})</span>
+        </button>
+        <button
+          onClick={() => setSelectedStatus("DRAFT")}
+          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
+            selectedStatus === "DRAFT"
+              ? "bg-amber-400 text-black font-bold shadow"
+              : "text-amber-400 hover:bg-amber-950/40"
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          <span>⏸ Drafts / Hidden ({draftCount})</span>
+        </button>
       </div>
 
       {/* Search & Filter Bar */}
@@ -261,7 +348,7 @@ export default function AdminProductsPage() {
                 <th className="py-3.5 px-4">Brand</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Price</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-4 text-center">Store Status</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -282,7 +369,10 @@ export default function AdminProductsPage() {
               ) : (
                 filteredProducts.map((prod, idx) => {
                   const isRotating = rotatingId === prod.id;
+                  const isToggling = togglingId === prod.id;
                   const isDeleting = deletingId === prod.id;
+                  const isLive = (prod.status || "ACTIVE") === "ACTIVE";
+
                   const sugargooLink =
                     prod.sugargooUrl ||
                     prod.affiliateLink ||
@@ -343,11 +433,33 @@ export default function AdminProductsPage() {
                         )}
                       </td>
 
-                      {/* Status Badge */}
+                      {/* Interactive Status Toggle Badge */}
                       <td className="py-3 px-4 text-center">
-                        <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] rounded">
-                          ACTIVE
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(prod)}
+                          disabled={isToggling}
+                          title={isLive ? "Click to move to DRAFT (hide from store)" : "Click to publish LIVE to store"}
+                          className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold inline-flex items-center gap-1.5 transition-all border ${
+                            isLive
+                              ? "bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border-emerald-800 hover:border-emerald-500"
+                              : "bg-amber-950/80 hover:bg-amber-900 text-amber-400 border-amber-800 hover:border-amber-500"
+                          } disabled:opacity-50`}
+                        >
+                          {isToggling ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : isLive ? (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>🟢 LIVE</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              <span>⏸ DRAFT</span>
+                            </>
+                          )}
+                        </button>
                       </td>
 
                       {/* Action Buttons */}

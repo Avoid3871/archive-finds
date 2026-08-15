@@ -126,6 +126,22 @@ print("SUCCESS")
       });
     }
 
+    if (action === "toggle-status" || action === "set-status") {
+      const currentStatus = prod.status || "ACTIVE";
+      const newStatus = body.status || (currentStatus === "DRAFT" ? "ACTIVE" : "DRAFT");
+      prod.status = newStatus;
+      products[prodIndex] = prod;
+      saveProducts(products);
+
+      return NextResponse.json({
+        success: true,
+        message: `Product ${prod.title || prod.name} is now ${newStatus}`,
+        status: newStatus,
+        product: prod,
+        products
+      });
+    }
+
     return NextResponse.json({ success: false, error: "Unknown action" }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -1,16 +1,26 @@
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { getAllProducts } from "@/lib/products/mockData";
+import { getJobsHistory } from "@/lib/admin/jobLogger";
 import { formatPrice } from "@/lib/utils";
-import { Layers, CheckCircle2, AlertCircle, FileSpreadsheet, Play, RefreshCw } from "lucide-react";
+import { Layers, CheckCircle2, AlertCircle, FileSpreadsheet, Play, RefreshCw, Activity } from "lucide-react";
 import Link from "next/link";
+import { LiveSyncControl } from "@/components/admin/LiveSyncControl";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function AdminDashboardPage() {
-  const totalProducts = MOCK_PRODUCTS.length;
-  const activeProducts = MOCK_PRODUCTS.length;
-  const pendingJobs = 0;
+  const allProducts = getAllProducts();
+  const jobs = getJobsHistory();
+  const totalProducts = allProducts.length;
+  const activeProducts = allProducts.filter(p => (p.status || "ACTIVE") === "ACTIVE").length;
+  const totalJobsCount = jobs.length;
   const activeSources = 3;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+      {/* 🚀 LIVE WEBSITE SYNC CONTROL BAR */}
+      <LiveSyncControl />
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
         <div>
@@ -62,14 +72,17 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="p-5 bg-neutral-900 border border-neutral-800 rounded">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">
-            Pending Queue
+        <Link href="/admin/jobs" className="p-5 bg-neutral-900 border border-neutral-800 rounded hover:border-neutral-700 transition-colors block">
+          <div className="flex items-center justify-between text-neutral-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest">
+              Worker Jobs
+            </span>
+            <Activity className="w-3.5 h-3.5 text-neutral-500" />
+          </div>
+          <p className="text-3xl font-mono font-black text-emerald-400 mt-2">
+            {totalJobsCount}
           </p>
-          <p className="text-3xl font-mono font-black text-neutral-400 mt-2">
-            {pendingJobs}
-          </p>
-        </div>
+        </Link>
       </div>
 
       {/* Recent Scanned Products Table */}
@@ -98,7 +111,7 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800 text-neutral-300">
-              {MOCK_PRODUCTS.slice(0, 5).map((p) => (
+              {allProducts.slice(0, 5).map((p) => (
                 <tr key={p.id} className="hover:bg-neutral-800/50">
                   <td className="py-3 px-4 font-semibold text-white">
                     {p.name}

@@ -18,6 +18,7 @@ export interface Product {
   tags: string[];
   isFeatured: boolean;
   isRare: boolean;
+  status?: "ACTIVE" | "DRAFT" | "HIDDEN";
 }
 
 export type MockProduct = Product;
@@ -38,6 +39,7 @@ function parseRawProducts(rawList: any[]): Product[] {
     const price = typeof p.price === "number" ? p.price : typeof p.sourcePrice === "number" ? p.sourcePrice : 59;
     const affiliateUrl = p.affiliateUrl || p.sugargooUrl || p.affiliateLink || "#";
     const imageUrl = p.imageUrl || p.localImage || `/products/${slug}.png`;
+    const status = p.status === "DRAFT" ? "DRAFT" : p.status === "HIDDEN" ? "HIDDEN" : "ACTIVE";
 
     const tags = Array.isArray(p.tags) && p.tags.length > 0
       ? p.tags
@@ -61,17 +63,58 @@ function parseRawProducts(rawList: any[]): Product[] {
       tags,
       isFeatured: Boolean(p.isFeatured ?? idx < 8),
       isRare: Boolean(p.isRare ?? true),
+      status,
     };
   });
+}
+
+export function getFreshRawProducts(): any[] {
+  if (typeof window === "undefined") {
+    try {
+      const nodeFs = eval("require")("fs");
+      const nodePath = eval("require")("path");
+      const filePath = nodePath.join(process.cwd(), "src", "lib", "products", "sheetProducts.json");
+      if (nodeFs.existsSync(filePath)) {
+        const fileContent = nodeFs.readFileSync(filePath, "utf-8");
+        return JSON.parse(fileContent);
+      }
+    } catch (e) {}
+  }
+  return sheetProductsRaw;
 }
 
 export const MOCK_PRODUCTS: Product[] = parseRawProducts(sheetProductsRaw);
 
 export function getAllProducts(): Product[] {
-  return MOCK_PRODUCTS;
+  return parseRawProducts(getFreshRawProducts());
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
-  return MOCK_PRODUCTS.find((p) => p.slug === slug || p.slug.includes(slug) || slug.includes(p.slug));
+  const products = getAllProducts();
+  const cleanSlug = decodeURIComponent(slug || "").toLowerCase().trim();
+  if (!cleanSlug) return undefined;
+
+  // 1. Exact slug match
+  const exact = products.find((p) => p.slug.toLowerCase() === cleanSlug);
+  if (exact) return exact;
+
+  // 2. ID match if slug is numeric
+  const byId = products.find((p) => String(p.id) === cleanSlug);
+  if (byId) return byId;
+
+  // 3. Normalized slug comparison (stripping trailing timestamp or hash)
+  const normInput = cleanSlug.replace(/-\d+$/, "").replace(/[^a-z0-9]/g, "");
+  const partial = products.find((p) => {
+    const pNorm = p.slug.toLowerCase().replace(/-\d+$/, "").replace(/[^a-z0-9]/g, "");
+    return (
+      pNorm === normInput ||
+      p.slug.toLowerCase().includes(cleanSlug) ||
+      cleanSlug.includes(p.slug.toLowerCase()) ||
+      (normInput.length > 5 && (pNorm.includes(normInput) || normInput.includes(pNorm)))
+    );
+  });
+  if (partial) return partial;
+
+  return undefined;
 }
 

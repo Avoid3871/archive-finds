@@ -48,9 +48,27 @@ export async function POST(req: NextRequest) {
             })
           );
         } else {
+          let parsedResult: any = null;
+          if (stdout) {
+            const lines = stdout.trim().split("\n");
+            for (let i = lines.length - 1; i >= 0; i--) {
+              try {
+                const obj = JSON.parse(lines[i].trim());
+                if (obj && obj.slug) {
+                  parsedResult = obj;
+                  break;
+                }
+              } catch (e) {}
+            }
+          }
+
           resolve(
             NextResponse.json({
               success: true,
+              slug: parsedResult?.slug || "",
+              id: parsedResult?.id || "",
+              title: parsedResult?.title || title,
+              imageUrl: parsedResult?.imageUrl || localImage || imageUrl,
               message: "Piece successfully ingested with AI cutout and Sugargoo affiliate link!",
               stdout,
             })

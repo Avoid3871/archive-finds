@@ -7,9 +7,11 @@ import asyncio
 import urllib.parse
 from PIL import Image
 import rembg
+import requests
 from playwright.async_api import async_playwright
 from product_identifier import identify_product_metadata
 from image_cutout_pipeline import process_and_cutout_image, fetch_marketplace_store_photos
+from job_logger import log_job
 
 # Ensure UTF-8 output on Windows
 if sys.platform == "win32":
@@ -96,8 +98,67 @@ CATEGORY_KEYWORDS = {
 IGNORE_TITLES = [
     "megathread", "rules", "discord", "seller ban", "guide", "easter mega", "announcement", "winner", "essential guide",
     "lc", "legit check", "legit-check", "is this real", "real or fake", "authentication", "can i get a lc", "please lc", 
-    "help lc", "pls lc", "fitpic", "fit pic", "discussion", "question", "general question", "w2c", "where to cop", "wtc"
+    "help lc", "pls lc", "fitpic", "fit pic", "discussion", "question", "general question", "w2c", "where to cop", "wtc",
+    "blowjob", "nsfw", "porn", "hentai", "shitpost", "meme", "scam", "drama", "giveaway", "mod post", "gifs"
 ]
+
+def verify_market_link_live(raw_url: str) -> tuple[bool, str]:
+    clean_target = resolve_and_clean_market_url(raw_url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+    }
+    try:
+        resp = requests.get(clean_target, headers=headers, timeout=6, allow_redirects=True)
+        if resp.status_code in [404, 410]:
+            return False, f"HTTP {resp.status_code} Not Found"
+        
+        text = resp.text
+        delisted_keywords = [
+            "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
+            "item deleted", "404 Not Found", "此商品不存在", "已下架", 
+            "该宝贝不存在", "已被删除", "违规下架", "error-notice"
+        ]
+        if any(kw in text for kw in delisted_keywords):
+            return False, "Marketplace item delisted / out of stock"
+            
+        if "item_offline" in resp.url or "error1.html" in resp.url:
+            return False, "Taobao item offline redirect"
+            
+        return True, "Active"
+    except Exception as e:
+        return True, f"Network pass: {e}"
+
+def is_valid_grail_image(image_path: str) -> tuple[bool, str]:
+    if not os.path.exists(image_path):
+        return False, "Image file not found"
+    try:
+        with Image.open(image_path) as img:
+            if img.width < 100 or img.height < 100:
+                return False, f"Image dimensions too small ({img.width}x{img.height})"
+                
+            if img.mode == "RGBA":
+                bbox = img.getbbox()
+                if not bbox:
+                    return False, "Empty canvas with 0 visible pixels"
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+                if w < 60 or h < 60:
+                    return False, f"Cutout content too small ({w}x{h})"
+                    
+            rgb = img.convert("RGB")
+            small = rgb.resize((50, 50))
+            pixels = list(small.getdata())
+            
+            # Check for totally black / dark frames
+            total_lum = sum((r * 0.299 + g * 0.587 + b * 0.114) for r, g, b in pixels)
+            avg_lum = total_lum / len(pixels)
+            if avg_lum < 9.0:
+                return False, f"Image is completely dark/black (avg lum: {avg_lum:.1f})"
+                
+            return True, "Valid"
+    except Exception as e:
+        return False, f"Image check exception: {e}"
 
 
 def clean_text_and_extract_links(text: str) -> list[str]:
@@ -406,6 +467,15 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                         print(f"Skipping blacklisted market link: {market_link}", flush=True)
                         continue
 
+                    # 0. Live Availability & Dead-Link Check on Marketplace (Taobao/Weidian)
+                    is_live, live_msg = verify_market_link_live(market_link)
+                    if not is_live:
+                        print(f"Skipping dead/delisted marketplace listing ({live_msg}): {market_link}", flush=True)
+                        blacklisted_links_set.add(market_link.lower())
+                        scanner_history["blacklisted_links"] = list(blacklisted_links_set)[-1000:]
+                        save_scanner_history(scanner_history)
+                        continue
+
                     affiliate_link = convert_to_sugargoo_affiliate(market_link)
                     
                     if affiliate_link.lower() in existing_urls:
@@ -464,6 +534,17 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     
                     if not success or not os.path.exists(out_png):
                         print(f"[REJECTED] Cutout failed or image invalid for: '{canonical_title}'", flush=True)
+                        continue
+
+                    # Validate cutout image quality (reject solid black, blank, or broken assets)
+                    is_valid_img, img_err = is_valid_grail_image(out_png)
+                    if not is_valid_img:
+                        print(f"[REJECTED] Image quality failed ({img_err}) for: '{canonical_title}'", flush=True)
+                        try:
+                            if os.path.exists(out_png):
+                                os.remove(out_png)
+                        except Exception:
+                            pass
                         continue
 
                     discovered_items.append(item)
