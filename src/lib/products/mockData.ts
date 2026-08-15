@@ -29,36 +29,49 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export const MOCK_PRODUCTS: Product[] = (sheetProductsRaw as any[]).map((p, idx) => {
-  const brand = p.brand || "Archive Collection";
-  const name = p.name || p.title || `Archive Piece #${p.id || idx + 1}`;
-  const category = p.category || "Outerwear";
-  const slug = p.slug || slugify(`${brand}-${name}-${p.id || idx + 1}`);
-  const price = typeof p.price === "number" ? p.price : typeof p.sourcePrice === "number" ? p.sourcePrice : 59;
-  const affiliateUrl = p.affiliateUrl || p.sugargooUrl || p.affiliateLink || "#";
-  const imageUrl = p.imageUrl || p.localImage || `/products/${slug}.png`;
+function parseRawProducts(rawList: any[]): Product[] {
+  return (rawList || []).map((p, idx) => {
+    const brand = p.brand || "Archive Collection";
+    const name = p.name || p.title || `Archive Piece #${p.id || idx + 1}`;
+    const category = p.category || "Outerwear";
+    const slug = p.slug || slugify(`${brand}-${name}-${p.id || idx + 1}`);
+    const price = typeof p.price === "number" ? p.price : typeof p.sourcePrice === "number" ? p.sourcePrice : 59;
+    const affiliateUrl = p.affiliateUrl || p.sugargooUrl || p.affiliateLink || "#";
+    const imageUrl = p.imageUrl || p.localImage || `/products/${slug}.png`;
 
-  const tags = Array.isArray(p.tags) && p.tags.length > 0
-    ? p.tags
-    : [slugify(brand), slugify(category), "archive", "sugargoo", "grail"].filter(Boolean);
+    const tags = Array.isArray(p.tags) && p.tags.length > 0
+      ? p.tags
+      : [slugify(brand), slugify(category), "archive", "sugargoo", "grail"].filter(Boolean);
 
-  return {
-    id: String(p.id || idx + 1),
-    name,
-    slug,
-    brand,
-    brandSlug: slugify(brand),
-    category,
-    categorySlug: slugify(category),
-    price,
-    currency: p.currency || "USD",
-    era: p.era || "Contemporary / Archive",
-    style: p.style || "Avant-Garde & Vintage",
-    description: p.description || p.notes || `Curated ${brand} ${category.toLowerCase()} sourced through verified supplier network. Featuring authentic silhouette detailing, premium textile construction, and direct Sugargoo agent procurement.`,
-    affiliateUrl,
-    imageUrl,
-    tags,
-    isFeatured: Boolean(p.isFeatured ?? idx < 8),
-    isRare: Boolean(p.isRare ?? true),
-  };
-});
+    return {
+      id: String(p.id || idx + 1),
+      name,
+      slug,
+      brand,
+      brandSlug: slugify(brand),
+      category,
+      categorySlug: slugify(category),
+      price,
+      currency: p.currency || "USD",
+      era: p.era || "Contemporary / Archive",
+      style: p.style || "Avant-Garde & Vintage",
+      description: p.description || p.notes || `Curated ${brand} ${category.toLowerCase()} sourced through verified supplier network. Featuring authentic silhouette detailing, premium textile construction, and direct Sugargoo agent procurement.`,
+      affiliateUrl,
+      imageUrl,
+      tags,
+      isFeatured: Boolean(p.isFeatured ?? idx < 8),
+      isRare: Boolean(p.isRare ?? true),
+    };
+  });
+}
+
+export const MOCK_PRODUCTS: Product[] = parseRawProducts(sheetProductsRaw);
+
+export function getAllProducts(): Product[] {
+  return MOCK_PRODUCTS;
+}
+
+export function getProductBySlug(slug: string): Product | undefined {
+  return MOCK_PRODUCTS.find((p) => p.slug === slug || p.slug.includes(slug) || slug.includes(p.slug));
+}
+

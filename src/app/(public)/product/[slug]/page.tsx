@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { getProductBySlug, getAllProducts } from "@/lib/products/mockData";
 import { formatPrice } from "@/lib/utils";
 import { AffiliateButton } from "@/components/products/AffiliateButton";
 import { SavePieceButton } from "@/components/products/SavePieceButton";
@@ -16,14 +16,15 @@ interface ProductPageProps {
 }
 
 export async function generateStaticParams() {
-  return MOCK_PRODUCTS.map((prod) => ({
+  const products = getAllProducts();
+  return products.map((prod) => ({
     slug: prod.slug,
   }));
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
+  const product = getProductBySlug(slug);
 
   if (!product) {
     return {
@@ -51,18 +52,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
+  const product = getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const relatedProducts = MOCK_PRODUCTS.filter(
+  const allProducts = getAllProducts();
+  const relatedProducts = allProducts.filter(
     (p) => p.id !== product.id && (p.brandSlug === product.brandSlug || p.categorySlug === product.categorySlug)
   ).slice(0, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-12">
+
       {/* Back breadcrumb */}
       <div>
         <Link
