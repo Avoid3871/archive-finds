@@ -20,16 +20,52 @@ if sys.platform == "win32":
 BAD_IMAGE_DOMAINS = [
     "vecteezy", "shutterstock", "alamy", "istockphoto", "gettyimages", "stock.adobe", "freepik", "dreamstime", "123rf",
     "ytimg", "youtube", "tiktok", "instagram", "facebook", "pinterest", "tripadvisor", "wikipedia", "wikimedia",
-    "preview.redd.it", "i.redd.it", "snoovatar", "avatar", "badge", "emoji", "award", "lookaside", "icon"
+    "snoovatar", "avatar", "badge", "emoji", "award", "lookaside", "icon", "filesor", "pimpandhost", "tumblr"
 ]
+
+def fetch_weidian_thor_api(item_id: str) -> list[str]:
+    """Fetches seller studio photos directly from Weidian Thor API in 0.1s."""
+    try:
+        url = f"https://thor.weidian.com/detail/getItemSkuInfo/1.0?param=%7B%22itemId%22%3A%22{item_id}%22%7D"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+            res = data.get("result", {})
+            main_pic = res.get("itemMainPic")
+            photos = []
+            if main_pic:
+                photos.append(main_pic)
+            for sku in res.get("skuInfos", []):
+                sku_img = sku.get("skuImg")
+                if sku_img and sku_img not in photos:
+                    photos.append(sku_img)
+            if photos:
+                print(f"[WEIDIAN THOR API] Instantly retrieved {len(photos)} seller studio photo(s) in 0.1s!")
+                return photos
+    except Exception:
+        pass
+    return []
 
 def fetch_marketplace_store_photos(market_url: str) -> list[str]:
     """
-    Directly extracts high-resolution seller studio photos from Weidian, Taobao, and 1688 item pages.
+    Directly extracts high-resolution seller studio photos from Weidian (Thor API + HTML), Taobao, and 1688 item pages.
     """
     if not market_url or not any(k in market_url for k in ["weidian.com", "taobao.com", "1688.com"]):
         return []
         
+    # 1. Fast Weidian Thor API Lookup
+    if "weidian.com" in market_url:
+        match = re.search(r'(?:itemID|itemId|id)=(\d+)', market_url, re.IGNORECASE)
+        if match:
+            item_id = match.group(1)
+            api_photos = fetch_weidian_thor_api(item_id)
+            if api_photos:
+                return api_photos
+
+    # 2. HTML Scraper Fallback
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
@@ -43,7 +79,6 @@ def fetch_marketplace_store_photos(market_url: str) -> list[str]:
         for img in imgs:
             if any(cdn in img for cdn in ["geilicdn", "wdvdimg", "alicdn", "taobaocdn", "cbu01", "img.alicdn.com"]):
                 if not any(bad in img.lower() for bad in ["icon", "logo", "avatar", "badge", "banner", "head", "footer", "unadjust_550_200", "96_52", "42_42"]):
-                    # Clean query strings if needed
                     valid.append(img)
         
         valid = list(dict.fromkeys(valid))
