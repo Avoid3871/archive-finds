@@ -699,7 +699,7 @@ export default function AdminSourcesPage() {
           </div>
           <div className="flex items-center gap-2 pl-2 border-l border-neutral-800 flex-shrink-0">
             <a
-              href="/products"
+              href={successToast.slug ? `/product/${successToast.slug}` : "/"}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 bg-emerald-500 text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-lg hover:bg-emerald-400 transition-colors flex items-center gap-1 shadow-lg shadow-emerald-500/20"
@@ -721,6 +721,7 @@ export default function AdminSourcesPage() {
               <X className="w-4 h-4" />
             </button>
           </div>
+
         </div>
       )}
 
@@ -1846,7 +1847,7 @@ export default function AdminSourcesPage() {
                   {ingestModalProgress.phase === "SUCCESS" && (
                     <div className="flex items-center gap-3 pt-2">
                       <a
-                        href="/products"
+                        href={ingestModalProgress.ingestedSlug ? `/product/${ingestModalProgress.ingestedSlug}` : "/"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 py-2.5 bg-emerald-500 text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-400 transition-colors rounded-lg flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
@@ -1863,6 +1864,7 @@ export default function AdminSourcesPage() {
                       </a>
                     </div>
                   )}
+
                 </div>
               )}
             </div>
