@@ -353,6 +353,24 @@ export default function AdminSourcesPage() {
     }
   };
 
+  const handleDismissPiece = async (item: DiscoveredItem) => {
+    // Optimistic UI update
+    setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug));
+
+    try {
+      const params = new URLSearchParams({
+        slug: item.slug,
+        rawMarketUrl: item.rawMarketUrl || "",
+        redditPostUrl: item.redditPostUrl || "",
+      });
+      await fetch(`/api/admin/reddit-scanner?${params.toString()}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.error("Failed to blacklist dismissed item:", e);
+    }
+  };
+
   const handleApprovePiece = async (item: DiscoveredItem) => {
     setApprovingSlug(item.slug);
     try {
@@ -818,11 +836,9 @@ export default function AdminSourcesPage() {
                       </button>
 
                       <button
-                        onClick={() =>
-                          setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug))
-                        }
+                        onClick={() => handleDismissPiece(item)}
                         className="p-2 text-neutral-400 hover:text-red-400 hover:bg-neutral-800 rounded transition-colors"
-                        title="Dismiss"
+                        title="Dismiss & Blacklist"
                       >
                         <X className="w-4 h-4" />
                       </button>

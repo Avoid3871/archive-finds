@@ -16,6 +16,51 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const slug = searchParams.get("slug");
+    const rawMarketUrl = searchParams.get("rawMarketUrl");
+    const redditPostUrl = searchParams.get("redditPostUrl");
+
+    // 1. Update scratch/reddit_scanner_history.json
+    const historyPath = path.join(process.cwd(), "scratch", "reddit_scanner_history.json");
+    let history: { scanned_reddit_posts: string[]; blacklisted_links: string[]; blacklisted_titles: string[] } = {
+      scanned_reddit_posts: [],
+      blacklisted_links: [],
+      blacklisted_titles: [],
+    };
+    if (fs.existsSync(historyPath)) {
+      try {
+        history = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+      } catch (e) {}
+    }
+    if (redditPostUrl && !history.scanned_reddit_posts.includes(redditPostUrl)) {
+      history.scanned_reddit_posts.push(redditPostUrl);
+    }
+    if (rawMarketUrl && !history.blacklisted_links.includes(rawMarketUrl.toLowerCase())) {
+      history.blacklisted_links.push(rawMarketUrl.toLowerCase());
+    }
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2), "utf-8");
+
+    // 2. Remove from scratch/discovered_qualityreps_finds.json
+    const scratchPath = path.join(process.cwd(), "scratch", "discovered_qualityreps_finds.json");
+    let items: any[] = [];
+    if (fs.existsSync(scratchPath)) {
+      try {
+        items = JSON.parse(fs.readFileSync(scratchPath, "utf-8"));
+        items = items.filter((it: any) => it.slug !== slug);
+        fs.writeFileSync(scratchPath, JSON.stringify(items, null, 2), "utf-8");
+      } catch (e) {}
+    }
+
+    return NextResponse.json({ success: true, items });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));

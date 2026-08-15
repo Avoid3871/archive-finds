@@ -21,6 +21,25 @@ if sys.platform == "win32":
 AFFILIATE_MEMBER_ID = "1325437696506389977"
 SHEET_PRODUCTS_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "lib", "products", "sheetProducts.json")
 PRODUCTS_IMG_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "products")
+HISTORY_FILE = os.path.join(os.path.dirname(__file__), "..", "scratch", "reddit_scanner_history.json")
+
+def load_scanner_history() -> dict:
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "scanned_reddit_posts": [],
+        "blacklisted_links": [],
+        "blacklisted_titles": []
+    }
+
+def save_scanner_history(history: dict):
+    os.makedirs(os.path.dirname(HISTORY_FILE), exist_ok=True)
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
 
 def emit_progress(percent: int, message: str, current: int, total: int, found_count: int, phase: str = "SCANNING", item: str = ""):
     data = {
@@ -33,6 +52,7 @@ def emit_progress(percent: int, message: str, current: int, total: int, found_co
         "item": item
     }
     print(f"[AF_PROGRESS] {json.dumps(data)}", flush=True)
+
 
 
 # Known Designer & Archive Brands Dictionary for accurate tagging
@@ -191,6 +211,12 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
     for p in existing_products:
         existing_urls.add(p.get("sugargooUrl", "").lower())
         existing_urls.add(p.get("affiliateLink", "").lower())
+        if p.get("rawMarketUrl"):
+            existing_urls.add(p.get("rawMarketUrl", "").lower())
+
+    scanner_history = load_scanner_history()
+    scanned_posts_set = set(scanner_history.get("scanned_reddit_posts", []))
+    blacklisted_links_set = set(scanner_history.get("blacklisted_links", []))
 
     discovered_items = []
 
@@ -201,39 +227,61 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
         )
         page = await context.new_page()
         
+        # Dynamic rotating search queries across designers to ensure fresh results every run
+        all_search_queries = [
+            "flair%3AFIND+OR+weidian+OR+taobao",
+            "flair%3AQC+OR+flair%3AGRAIL",
+            "Rick+Owens+OR+Geobasket+OR+Ramones+OR+Geth+OR+Bolan",
+            "Chrome+Hearts+OR+Matty+Boy+OR+Dagger+OR+Cross",
+            "Enfants+Riches+Deprimes+OR+ERD",
+            "Balenciaga+OR+Defender+OR+3XL+OR+Steroid+OR+Hamptons",
+            "Maison+Margiela+OR+Tabi+OR+GAT",
+            "Undercover+OR+Jun+Takahashi+OR+Scab+OR+85",
+            "Raf+Simons+OR+Consumed+OR+Riot+OR+Virginia+Creeper",
+            "Carol+Christian+Poell+OR+CCP+OR+BBS",
+            "Acne+Studios+OR+1981m+OR+1989",
+            "Kapital+OR+Bone+OR+Damask",
+            "Vivienne+Westwood+OR+Orb",
+            "Yohji+Yamamoto+OR+Number+Nine"
+        ]
+        import random
+        random.shuffle(all_search_queries)
+
         urls_to_scan = [
-            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND+OR+weidian+OR+taobao+OR+haul&sort=new",
             "https://www.reddit.com/r/QualityReps/new/",
-            "https://www.reddit.com/r/QualityReps/search/?q=Rick+Owens+OR+Chrome+Hearts+OR+ERD+OR+Vetements+OR+Margiela+OR+Balenciaga+OR+Undercover&sort=new",
-            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AQC+OR+flair%3AGRAIL&sort=new"
+            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[0]}&sort=new",
+            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[1]}&sort=relevance",
+            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[2]}&sort=top&t=month",
+            f"https://www.reddit.com/r/DesignerReps/search/?q={all_search_queries[3]}&sort=new",
         ]
         
         post_links = []
-        emit_progress(3, "Connecting stealth browser to r/QualityReps feeds...", 0, max_posts, 0, "INIT")
+        emit_progress(3, "Connecting stealth browser to r/QualityReps & rotating designer feeds...", 0, max_posts, 0, "INIT")
         for u_idx, u in enumerate(urls_to_scan):
             feed_pct = int(5 + (u_idx / len(urls_to_scan)) * 12)
-            emit_progress(feed_pct, f"Crawling feed ({u_idx+1}/{len(urls_to_scan)}): {u.split('?')[0]}...", 0, max_posts, 0, "FEED_FETCH")
+            feed_name = u.split('?')[0].replace("https://www.reddit.com/r/", "r/")
+            emit_progress(feed_pct, f"Crawling feed ({u_idx+1}/{len(urls_to_scan)}): {feed_name}...", 0, max_posts, 0, "FEED_FETCH")
             print(f"Fetching feed: {u}", flush=True)
             try:
                 await page.goto(u, timeout=35000)
                 await page.wait_for_timeout(2500)
                 # Scroll down to load more dynamic content
-                for _ in range(4):
+                for _ in range(5):
                     await page.keyboard.press("PageDown")
                     await page.wait_for_timeout(800)
                     
                 links = await page.eval_on_selector_all(
-                    "a[href*='/r/QualityReps/comments/']",
+                    "a[href*='/comments/']",
                     "els => Array.from(new Set(els.map(e => e.href))).filter(h => !h.includes('/comment/'))"
                 )
                 for l in links:
-                    if l not in post_links:
+                    if l not in post_links and l not in scanned_posts_set:
                         post_links.append(l)
             except Exception as e:
                 print(f"Error fetching feed {u}: {e}", flush=True)
                 
-        emit_progress(18, f"Extracted {len(post_links)} candidate posts. Starting Grail analysis...", 0, max_posts, 0, "CANDIDATE_POOL")
-        print(f"Found {len(post_links)} total candidate posts. Processing up to {max_posts}...", flush=True)
+        emit_progress(18, f"Extracted {len(post_links)} unseen candidate posts. Starting Grail analysis...", 0, max_posts, 0, "CANDIDATE_POOL")
+        print(f"Found {len(post_links)} unseen candidate posts. Processing up to {max_posts}...", flush=True)
 
         valid_count = 0
         total_eval_target = min(len(post_links), max_posts * 3)
@@ -241,6 +289,15 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
             if valid_count >= max_posts:
                 break
                 
+            if post_url in scanned_posts_set:
+                print(f"Skipping already scanned post (History Cache): {post_url}", flush=True)
+                continue
+                
+            # Record post as scanned
+            scanned_posts_set.add(post_url)
+            scanner_history["scanned_reddit_posts"] = list(scanned_posts_set)[-1000:]
+            save_scanner_history(scanner_history)
+
             progress_base = 20 + int((idx / max(1, total_eval_target)) * 75)
             progress_base = min(95, progress_base)
             
@@ -257,6 +314,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                 if any(ig in title.lower() for ig in IGNORE_TITLES):
                     print(f"Skipping announcement/guide thread: '{title}'", flush=True)
                     continue
+
                     
                 body_el = await post_page.query_selector("shreddit-post, div[data-testid='post-container']")
                 body_text = (await body_el.inner_text()) if body_el else ""
@@ -329,6 +387,10 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     )
                     if not is_valid_market_link:
                         print(f"Skipping invalid store link (missing product ID): {market_link}", flush=True)
+                        continue
+
+                    if market_link.lower() in blacklisted_links_set:
+                        print(f"Skipping blacklisted market link: {market_link}", flush=True)
                         continue
 
                     affiliate_link = convert_to_sugargoo_affiliate(market_link)
