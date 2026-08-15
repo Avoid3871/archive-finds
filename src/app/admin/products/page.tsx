@@ -18,6 +18,7 @@ import {
   Eye,
   EyeOff,
   CloudUpload,
+  Zap,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { LiveSyncControl } from "@/components/admin/LiveSyncControl";
@@ -116,6 +117,28 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handlePublishAllDrafts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish-all-drafts" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts((prev) => prev.map((p) => ({ ...p, status: "ACTIVE" })));
+        showToast("success", `✓ All ${data.count || ""} drafts are now LIVE in the public store!`);
+      } else {
+        showToast("error", data.error || "Failed to publish drafts");
+      }
+    } catch (e: any) {
+      showToast("error", e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRotateImage = async (prod: Product) => {
     try {
       setRotatingId(prod.id);
@@ -174,12 +197,15 @@ export default function AdminProductsPage() {
   const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))).sort();
   const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))).sort();
 
-  const activeCount = products.filter((p) => (p.status || "ACTIVE") === "ACTIVE").length;
+  const isProductLive = (p: Product) => p.status !== "DRAFT";
+
+  const activeCount = products.filter(isProductLive).length;
   const draftCount = products.filter((p) => p.status === "DRAFT").length;
 
   const filteredProducts = products.filter((p) => {
-    const pStatus = p.status || "ACTIVE";
-    if (selectedStatus !== "ALL" && pStatus !== selectedStatus) return false;
+    const isLive = isProductLive(p);
+    if (selectedStatus === "ACTIVE" && !isLive) return false;
+    if (selectedStatus === "DRAFT" && isLive) return false;
     if (selectedBrand !== "ALL" && p.brand !== selectedBrand) return false;
     if (selectedCategory !== "ALL" && p.category !== selectedCategory) return false;
     if (searchQuery.trim()) {
@@ -256,40 +282,54 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-neutral-800 pb-2">
-        <button
-          onClick={() => setSelectedStatus("ALL")}
-          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg transition-all ${
-            selectedStatus === "ALL"
-              ? "bg-white text-black font-bold shadow"
-              : "text-neutral-400 hover:text-white hover:bg-neutral-900"
-          }`}
-        >
-          All Items ({products.length})
-        </button>
-        <button
-          onClick={() => setSelectedStatus("ACTIVE")}
-          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
-            selectedStatus === "ACTIVE"
-              ? "bg-emerald-500 text-black font-bold shadow"
-              : "text-emerald-400 hover:bg-emerald-950/40"
-          }`}
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span>🟢 Live In Store ({activeCount})</span>
-        </button>
-        <button
-          onClick={() => setSelectedStatus("DRAFT")}
-          className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
-            selectedStatus === "DRAFT"
-              ? "bg-amber-400 text-black font-bold shadow"
-              : "text-amber-400 hover:bg-amber-950/40"
-          }`}
-        >
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span>⏸ Drafts / Hidden ({draftCount})</span>
-        </button>
+      {/* Status Filter Tabs & Bulk Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800 pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedStatus("ALL")}
+            className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg transition-all ${
+              selectedStatus === "ALL"
+                ? "bg-white text-black font-bold shadow"
+                : "text-neutral-400 hover:text-white hover:bg-neutral-900"
+            }`}
+          >
+            All Items ({products.length})
+          </button>
+          <button
+            onClick={() => setSelectedStatus("ACTIVE")}
+            className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
+              selectedStatus === "ACTIVE"
+                ? "bg-emerald-500 text-black font-bold shadow"
+                : "text-emerald-400 hover:bg-emerald-950/40"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>🟢 Live In Store ({activeCount})</span>
+          </button>
+          <button
+            onClick={() => setSelectedStatus("DRAFT")}
+            className={`px-3 py-1.5 font-mono text-xs uppercase tracking-wider rounded-lg flex items-center gap-1.5 transition-all ${
+              selectedStatus === "DRAFT"
+                ? "bg-amber-400 text-black font-bold shadow"
+                : "text-amber-400 hover:bg-amber-950/40"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span>⏸ Drafts / Hidden ({draftCount})</span>
+          </button>
+        </div>
+
+        {draftCount > 0 && (
+          <button
+            type="button"
+            onClick={handlePublishAllDrafts}
+            disabled={loading}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-black uppercase tracking-wider rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          >
+            <Zap className="w-3.5 h-3.5 fill-black" />
+            <span>🚀 PUBLISH ALL DRAFTS TO LIVE ({draftCount})</span>
+          </button>
+        )}
       </div>
 
       {/* Search & Filter Bar */}
@@ -371,7 +411,7 @@ export default function AdminProductsPage() {
                   const isRotating = rotatingId === prod.id;
                   const isToggling = togglingId === prod.id;
                   const isDeleting = deletingId === prod.id;
-                  const isLive = (prod.status || "ACTIVE") === "ACTIVE";
+                  const isLive = isProductLive(prod);
 
                   const sugargooLink =
                     prod.sugargooUrl ||
@@ -433,33 +473,44 @@ export default function AdminProductsPage() {
                         )}
                       </td>
 
-                      {/* Interactive Status Toggle Badge */}
+                      {/* Interactive Store Status Toggle Button */}
                       <td className="py-3 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(prod)}
-                          disabled={isToggling}
-                          title={isLive ? "Click to move to DRAFT (hide from store)" : "Click to publish LIVE to store"}
-                          className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold inline-flex items-center gap-1.5 transition-all border ${
-                            isLive
-                              ? "bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 border-emerald-800 hover:border-emerald-500"
-                              : "bg-amber-950/80 hover:bg-amber-900 text-amber-400 border-amber-800 hover:border-amber-500"
-                          } disabled:opacity-50`}
-                        >
-                          {isToggling ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : isLive ? (
-                            <>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>🟢 LIVE</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                              <span>⏸ DRAFT</span>
-                            </>
-                          )}
-                        </button>
+                        {isLive ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(prod)}
+                            disabled={isToggling}
+                            title="Product is LIVE in store. Click to move to DRAFT / PAUSED"
+                            className="px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold inline-flex items-center gap-1.5 transition-all border bg-emerald-950/70 hover:bg-neutral-900 text-emerald-400 border-emerald-800/80 hover:border-amber-500/60 hover:text-amber-400 group disabled:opacity-50"
+                          >
+                            {isToggling ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse group-hover:bg-amber-400" />
+                                <span className="group-hover:hidden">🟢 LIVE</span>
+                                <span className="hidden group-hover:inline">⏸ PAUSE / DRAFT</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(prod)}
+                            disabled={isToggling}
+                            title="Click to publish this piece directly to the LIVE store!"
+                            className="px-3.5 py-1.5 rounded-lg font-mono text-[11px] font-black inline-flex items-center gap-1.5 transition-all bg-emerald-500 hover:bg-emerald-400 text-black border border-emerald-400 shadow-md shadow-emerald-500/25 hover:scale-105 active:scale-95 disabled:opacity-50"
+                          >
+                            {isToggling ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5 fill-black" />
+                                <span>LIVE SCHALTEN ↗</span>
+                              </>
+                            )}
+                          </button>
+                        )}
                       </td>
 
                       {/* Action Buttons */}

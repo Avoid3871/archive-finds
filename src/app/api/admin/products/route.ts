@@ -70,6 +70,25 @@ export async function PATCH(req: NextRequest) {
     const { id, slug, action, degrees = 90 } = body;
 
     let products = readProducts();
+
+    if (action === "publish-all-drafts") {
+      let updatedCount = 0;
+      products = products.map((p: any) => {
+        if (p.status === "DRAFT" || !p.status) {
+          updatedCount++;
+          return { ...p, status: "ACTIVE" };
+        }
+        return p;
+      });
+      saveProducts(products);
+      return NextResponse.json({
+        success: true,
+        message: `Successfully published all ${updatedCount} drafts to LIVE store!`,
+        count: updatedCount,
+        products,
+      });
+    }
+
     const prodIndex = products.findIndex((p: any) => p.id === id || p.slug === slug);
 
     if (prodIndex === -1) {
