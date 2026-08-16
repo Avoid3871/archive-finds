@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MockProduct } from "@/lib/products/mockData";
 import { formatPrice } from "@/lib/utils";
+import { ProductPrice } from "@/components/products/ProductPrice";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
 import { Bookmark, Heart } from "lucide-react";
 
@@ -82,7 +83,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           {/* Price & Category Meta */}
           <div className="mt-3 pt-2 border-t border-neutral-100 flex items-center justify-between">
             <span className="text-xs sm:text-sm font-bold font-mono text-black">
-              {formatPrice(product.price, product.currency)}
+              <ProductPrice price={product.price} />
             </span>
             <span className="text-[10px] font-mono text-neutral-600 uppercase">
               {product.categorySlug}

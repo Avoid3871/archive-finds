@@ -9,7 +9,7 @@ from PIL import Image
 import rembg
 import requests
 from playwright.async_api import async_playwright
-from product_identifier import identify_product_metadata
+from product_identifier import identify_product_metadata, resolve_exact_source_price
 from image_cutout_pipeline import process_and_cutout_image, fetch_marketplace_store_photos
 from job_logger import log_job
 
@@ -446,9 +446,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     print(f"Skipping duplicate product in catalog: {brand} - {canonical_title}", flush=True)
                     continue
                 
-                category = detect_category(canonical_title + " " + title + " " + body_text)
-                price = estimate_price(brand, category, full_text)
-                estimated_retail = identified.get("estimatedRetail") or round(price * 8.5, 0)
+                category = identified.get("category") or detect_category(canonical_title + " " + title + " " + body_text)
                 season = identified.get("season", "")
                 
                 # Ingest only the primary single piece link to avoid duplicate variants
@@ -475,6 +473,12 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                         scanner_history["blacklisted_links"] = list(blacklisted_links_set)[-1000:]
                         save_scanner_history(scanner_history)
                         continue
+
+                    # Live exact Sugargoo price resolution from Weidian/Taobao API
+                    price = resolve_exact_source_price(market_link, full_text, category)
+                    estimated_retail = identified.get("estimatedRetail") or round(price * 8.5, 0)
+                    if estimated_retail < price * 2:
+                        estimated_retail = round(price * 5.0, 0)
 
                     affiliate_link = convert_to_sugargoo_affiliate(market_link)
                     

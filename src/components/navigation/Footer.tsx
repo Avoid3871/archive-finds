@@ -1,11 +1,37 @@
 import Link from "next/link";
 import { SITE_CONFIG, BRANDS, CATEGORIES } from "@/lib/constants";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
+import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
 
 export function Footer() {
   return (
     <footer className="w-full bg-neutral-950 text-white border-t border-neutral-800 pt-16 pb-24 md:pb-16 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* VIP Agent Registration Banner */}
+        <div className="mb-12 p-5 sm:p-6 bg-neutral-900 border border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-mono tracking-widest text-emerald-400 uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Official Agent Partner</span>
+            </div>
+            <h4 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+              Get $140 in International Shipping Coupons
+            </h4>
+            <p className="text-xs text-neutral-400 font-light max-w-xl">
+              Create your free Sugargoo account using our VIP referral link to unlock warehouse inspection discounts and worldwide priority shipping coupons.
+            </p>
+          </div>
+          <a
+            href="https://www.sugargoo.com/register?memberId=1325437696506389977"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 px-4 py-2.5 bg-white text-black hover:bg-neutral-200 text-xs font-mono uppercase tracking-wider font-bold inline-flex items-center gap-1.5 transition-colors"
+          >
+            Claim $140 Coupons
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-neutral-800">
           {/* Brand Col */}
           <div className="md:col-span-5 space-y-4">
@@ -107,9 +133,12 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom copyright */}
+        {/* Bottom copyright & Currency selector */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-neutral-500">
-          <p>© {new Date().getFullYear()} ARCHIVE FINDS. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <p>© {new Date().getFullYear()} ARCHIVE FINDS. All rights reserved.</p>
+            <CurrencySwitcher variant="footer" />
+          </div>
           <p className="text-neutral-600">
             Automated Product Discovery & Content Pipeline
           </p>

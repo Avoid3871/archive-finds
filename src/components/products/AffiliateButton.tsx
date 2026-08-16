@@ -14,6 +14,7 @@ interface AffiliateButtonProps {
   currency?: string;
   source?: string;
   className?: string;
+  agentName?: string;
 }
 
 export function AffiliateButton({
@@ -23,9 +24,10 @@ export function AffiliateButton({
   brand,
   category,
   price,
-  currency = "EUR",
+  currency = "USD",
   source = "product_detail",
   className,
+  agentName = "Sugargoo",
 }: AffiliateButtonProps) {
   const handleClick = () => {
     trackAffiliateClick({
@@ -54,7 +56,7 @@ export function AffiliateButton({
       <span className="font-bold flex items-center gap-2">
         VIEW ITEM
         <span className="text-[10px] text-neutral-400 font-normal">
-          (via Sugargoo)
+          (via {agentName})
         </span>
       </span>
 
@@ -64,4 +66,5 @@ export function AffiliateButton({
     </a>
   );
 }
+
 

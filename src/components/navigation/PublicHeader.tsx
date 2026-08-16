@@ -5,13 +5,30 @@ import { useState } from "react";
 import { Search, Menu, X, ArrowUpRight, Bookmark } from "lucide-react";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
 
+import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
+
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { savedCount } = useWishlist();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-neutral-200 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      {/* Top VIP Announcement Bar */}
+      <div className="bg-black text-white px-4 py-1.5 text-center text-[10px] sm:text-[11px] font-mono tracking-wider flex items-center justify-center gap-2">
+        <span className="hidden xs:inline">NEW TO AGENT SHOPPING?</span>
+        <span>REGISTER VIA VIP LINK & CLAIM $140 SHIPPING COUPONS</span>
+        <a
+          href="https://www.sugargoo.com/register?memberId=1325437696506389977"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-0.5 underline hover:text-neutral-300 ml-1 font-bold"
+        >
+          CLAIM NOW
+          <ArrowUpRight className="w-3 h-3" />
+        </a>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
         {/* Brand Title */}
         <Link href="/" className="group flex items-center gap-2">
           <div className="w-3 h-3 bg-black transform group-hover:rotate-45 transition-transform duration-300" />
@@ -63,10 +80,13 @@ export function PublicHeader() {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Currency Switcher */}
+          <CurrencySwitcher variant="header" />
+
           {/* Quick Search Button */}
           <Link
             href="/search"
-            className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-200 text-neutral-500 hover:text-black hover:border-black transition-all text-xs font-medium"
+            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded border border-neutral-200 text-neutral-500 hover:text-black hover:border-black transition-all text-xs font-medium"
             aria-label="Search Archive Finds"
           >
             <Search className="w-3.5 h-3.5" />

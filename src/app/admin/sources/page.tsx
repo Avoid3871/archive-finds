@@ -175,6 +175,7 @@ export default function AdminSourcesPage() {
   const [alternateImages, setAlternateImages] = useState<string[]>([]);
   const [isFetchingImages, setIsFetchingImages] = useState<boolean>(false);
   const [isApplyingCutout, setIsApplyingCutout] = useState<boolean>(false);
+  const [isAutoIdentifyingTitle, setIsAutoIdentifyingTitle] = useState<boolean>(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>("");
   const [customImageUrlInput, setCustomImageUrlInput] = useState<string>("");
   const [imageSearchQuery, setImageSearchQuery] = useState<string>("");
@@ -201,6 +202,37 @@ export default function AdminSourcesPage() {
     try {
       sessionStorage.removeItem("active_ingested_modal");
     } catch (e) {}
+  };
+
+  const handleAIIdentifyModel = async () => {
+    if (!editFormData.title && !editingItem?.title) return;
+    setIsAutoIdentifyingTitle(true);
+    try {
+      const query = `${editFormData.brand || editingItem?.brand || ""} ${editFormData.title || editingItem?.title || ""}`;
+      const marketUrl = editFormData.rawMarketUrl || editingItem?.rawMarketUrl || (editingItem as any)?.directStoreLink || "";
+      const res = await fetch("/api/admin/identify-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, marketUrl }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const canonical = data.data.canonicalTitle || "";
+        const cleanTitle = canonical.replace(new RegExp(`^${data.data.brand || editFormData.brand}\\s*-\\s*`, "i"), "").trim();
+        setEditFormData((prev) => ({
+          ...prev,
+          title: cleanTitle || canonical || prev.title,
+          brand: data.data.brand && data.data.brand !== "Archive Collection" ? data.data.brand : prev.brand,
+          category: data.data.category || prev.category,
+          price: data.data.sourcePrice || prev.price,
+          estimatedRetail: data.data.estimatedRetail || prev.estimatedRetail,
+        }));
+      }
+    } catch (err) {
+      console.error("AI Identify failed:", err);
+    } finally {
+      setIsAutoIdentifyingTitle(false);
+    }
   };
 
   // Restore success toast & modal across Fast Refresh / page reloads
@@ -315,7 +347,10 @@ export default function AdminSourcesPage() {
   const openReviewModal = (item: DiscoveredItem) => {
     setEditingItem(item);
     setEditRotation(0);
-    const cleanTitle = item.title.replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "").trim();
+    const cleanTitle = item.title
+      .replace(/^(can\s+(these|this|they|it)\s+(be|look)?\s*(close\s+to|like|good|accurate)?|is\s+this\s+(close\s+to|accurate|legit|real)|are\s+these\s+(close\s+to|accurate|legit|real)|how\s+do\s+these\s+look|thoughts\s+on(\s+this|\s+these)?|qc\s+on|review\s+on)\s*/i, "")
+      .replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "")
+      .trim();
     const brandTitle = cleanTitle.toLowerCase().startsWith((item.brand || "").toLowerCase())
       ? cleanTitle
       : `${item.brand || ""} ${cleanTitle}`.trim();
@@ -342,6 +377,26 @@ export default function AdminSourcesPage() {
 
     // Proactively fetch alternative studio images in background
     fetchAlternativeImages(brandTitle, item.rawMarketUrl || "");
+
+    // Proactively fetch exact live Sugargoo price if from a marketplace link
+    if (item.rawMarketUrl && (!item.sourcePrice || item.sourcePrice === 48 || item.sourcePrice === 50)) {
+      fetch("/api/admin/identify-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: brandTitle, marketUrl: item.rawMarketUrl }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data?.sourcePrice) {
+            setEditFormData((prev) => ({
+              ...prev,
+              price: data.data.sourcePrice,
+              estimatedRetail: data.data.estimatedRetail || prev.estimatedRetail,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleConfirmIngest = async () => {
@@ -1895,9 +1950,25 @@ export default function AdminSourcesPage() {
                 {/* Right Form Fields Column (7 cols) */}
                 <div className="md:col-span-7 space-y-4">
                   <div>
-                    <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
-                      Product Title / Name
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400">
+                        Product Title / Name
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAIIdentifyModel}
+                        disabled={isAutoIdentifyingTitle}
+                        className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+                        title="AI auto-identifies exact archive model name and cleans title"
+                      >
+                        {isAutoIdentifyingTitle ? (
+                          <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-2.5 h-2.5" />
+                        )}
+                        <span>AI Auto-Identify Model</span>
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={editFormData.title}
@@ -2146,24 +2217,64 @@ export default function AdminSourcesPage() {
               </button>
 
               {ingestModalProgress.phase !== "SUCCESS" ? (
-                <button
-                  type="button"
-                  onClick={handleConfirmIngest}
-                  disabled={ingestModalProgress.isIngesting || !editFormData.title.trim()}
-                  className="px-6 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all rounded-lg flex items-center gap-2 shadow-lg disabled:opacity-50"
-                >
-                  {ingestModalProgress.isIngesting ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>INGESTING...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-3.5 h-3.5 fill-black" />
-                      <span>CONFIRM & INGEST GRAIL</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-3">
+                  {/* DISCARD / TRASH BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingItem) {
+                        handleDismissPiece(editingItem);
+                        closeModal();
+                      }
+                    }}
+                    disabled={ingestModalProgress.isIngesting}
+                    className="px-4 py-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 font-mono text-xs font-bold uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    title="Discard piece from moderation queue and blacklist source link"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <span>DISCARD / TRASH</span>
+                  </button>
+
+                  {/* TEST ON SUGARGOO BUTTON */}
+                  {(() => {
+                    const rawUrl = editFormData.rawMarketUrl || editingItem?.rawMarketUrl || "";
+                    const sgUrl =
+                      editingItem?.sugargooUrl ||
+                      (rawUrl ? `https://www.sugargoo.com/products?productLink=${encodeURIComponent(rawUrl)}&memberId=1325437696506389977` : "#");
+                    return (
+                      <a
+                        href={sgUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2.5 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border border-amber-800/60 font-mono text-xs font-bold uppercase rounded-lg flex items-center gap-1.5 transition-colors"
+                        title="Test & verify purchasing on Sugargoo in a new tab"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                        <span>TEST ON SUGARGOO ↗</span>
+                      </a>
+                    );
+                  })()}
+
+                  {/* CONFIRM & INGEST BUTTON */}
+                  <button
+                    type="button"
+                    onClick={handleConfirmIngest}
+                    disabled={ingestModalProgress.isIngesting || !editFormData.title.trim()}
+                    className="px-6 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all rounded-lg flex items-center gap-2 shadow-lg disabled:opacity-50"
+                  >
+                    {ingestModalProgress.isIngesting ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>INGESTING...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 fill-black" />
+                        <span>CONFIRM & INGEST GRAIL</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               ) : (
                 <div className="flex items-center gap-3">
                   <a

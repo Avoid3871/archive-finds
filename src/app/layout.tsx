@@ -57,6 +57,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -65,9 +67,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white pb-16 md:pb-0">
-        <WishlistProvider>
-          {children}
-        </WishlistProvider>
+        <CurrencyProvider>
+          <WishlistProvider>
+            {children}
+          </WishlistProvider>
+        </CurrencyProvider>
         <Analytics />
         <SpeedInsights />
       </body>

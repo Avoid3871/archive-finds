@@ -3,11 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug, getAllProducts } from "@/lib/products/mockData";
-import { formatPrice } from "@/lib/utils";
-import { AffiliateButton } from "@/components/products/AffiliateButton";
-import { SavePieceButton } from "@/components/products/SavePieceButton";
+import { ProductDetailActions } from "@/components/products/ProductDetailActions";
 import { ProductCard } from "@/components/products/ProductCard";
-import { ArrowLeft, ShieldCheck, Truck, RefreshCw, Sparkles, ExternalLink } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 interface ProductPageProps {
   params: Promise<{
@@ -120,43 +118,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </h1>
             </div>
 
-            {/* Price Tag */}
-            <div className="flex items-baseline gap-3 pb-4 border-b border-neutral-200">
-              <span className="text-2xl sm:text-3xl font-mono font-black text-black">
-                {formatPrice(product.price, product.currency)}
-              </span>
-              <span className="text-xs font-mono text-neutral-600 uppercase">
-                ESTIMATED PROCURING PRICE
-              </span>
-            </div>
-
-            {/* Primary Action Button (Desktop/Tablet) */}
-            <div className="space-y-3 pt-2">
-              <AffiliateButton
-                affiliateUrl={product.affiliateUrl}
-                productId={product.id}
-                productName={product.name}
-                brand={product.brand}
-                category={product.category}
-                price={product.price}
-                currency={product.currency}
-                source="product_detail_main"
-              />
-              <SavePieceButton product={product} />
-              <p className="text-[11px] font-mono text-neutral-600 text-center uppercase tracking-wider">
-                Direct procurement via Sugargoo Agent
-              </p>
-            </div>
-
-            {/* Editorial Description */}
-            <div className="space-y-2 pt-4">
-              <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-600">
-                Piece Editorial
-              </h3>
-              <p className="text-sm text-neutral-700 font-light leading-relaxed">
-                {product.description}
-              </p>
-            </div>
+            {/* Dynamic Actions, Pricing & Agent Switcher */}
+            <ProductDetailActions product={product} />
 
             {/* Taxonomy & Specifications */}
             <div className="pt-4 border-t border-neutral-200 space-y-3">
@@ -190,43 +153,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
               ))}
             </div>
           </div>
-
-          {/* Value Assurance Badges */}
-          <div className="p-4 bg-neutral-50 border border-neutral-200 space-y-2 text-xs text-neutral-600">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-black shrink-0" />
-              <span>Verified Sugargoo agent order link</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-black shrink-0" />
-              <span>Automated archive link integrity checks</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Sticky Mobile Conversion Bar */}
-      <div className="lg:hidden fixed bottom-14 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200 p-3 shadow-lg flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-mono text-neutral-600 uppercase truncate max-w-[140px]">
-            {product.brand}
-          </p>
-          <p className="text-base font-black font-mono text-black">
-            {formatPrice(product.price, product.currency)}
-          </p>
-        </div>
-        <div className="flex-grow max-w-[220px]">
-          <AffiliateButton
-            affiliateUrl={product.affiliateUrl}
-            productId={product.id}
-            productName={product.name}
-            brand={product.brand}
-            category={product.category}
-            price={product.price}
-            currency={product.currency}
-            source="product_detail_mobile_bar"
-            className="py-2.5 px-4 text-xs"
-          />
         </div>
       </div>
 
