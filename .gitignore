@@ -35,6 +35,8 @@ next-env.d.ts
 # temp storage (large xlsx unzipped files)
 storage/temp/
 scratch/
+graphify-out/
+.agents/
 __pycache__/
 *.pyc
 src/lib/admin/jobs_history.json
