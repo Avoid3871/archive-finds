@@ -37,6 +37,7 @@ storage/temp/
 scratch/
 __pycache__/
 *.pyc
+src/lib/admin/jobs_history.json
 
 # test screenshots
 public/test_*.png
