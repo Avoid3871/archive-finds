@@ -1,5 +1,15 @@
 [
   {
+    "id": "job-17223",
+    "type": "LIVE_STORE_SYNC",
+    "pieceName": "Live Store & GitHub Auto-Sync",
+    "status": "SUCCESS",
+    "duration": "2.6s",
+    "durationMs": 2614,
+    "timestamp": "2026-08-16T21:51:57.223Z",
+    "details": "Successfully synced 1 files to live repository."
+  },
+  {
     "id": "job-4287",
     "type": "LIVE_STORE_SYNC",
     "pieceName": "Live Store & GitHub Auto-Sync",

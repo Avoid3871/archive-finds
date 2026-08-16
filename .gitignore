@@ -38,4 +38,13 @@ scratch/
 __pycache__/
 *.pyc
 
-.vercel
+# test screenshots
+public/test_*.png
+public/admin_*.png
+public/debug_*.png
+public/live_*.png
+public/sugargoo_*.png
+public/*.png
+!public/products/
+!public/slides/
+

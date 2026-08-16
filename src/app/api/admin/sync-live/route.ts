@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const customMessage = body.message;
 
-    // 1. Stage catalog, products, components, and scripts
-    await execPromise("git add src/ public/products/ scripts/");
+    // 1. Stage catalog, products, components, public assets, and scripts
+    await execPromise("git add -A src/ public/ scripts/ .gitignore package.json");
 
     // Check if there are staged changes
     const { stdout: stagedOut } = await execPromise("git diff --staged --name-only");
