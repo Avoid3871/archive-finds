@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CloudUpload, CheckCircle2, AlertCircle, RefreshCw, GitBranch, ExternalLink, Globe } from "lucide-react";
+import { CloudUpload, CheckCircle2, AlertCircle, RefreshCw, GitBranch, ExternalLink, Globe, ArrowUpRight } from "lucide-react";
 
 export function LiveSyncControl({ onSyncSuccess }: { onSyncSuccess?: () => void }) {
   const [syncing, setSyncing] = useState(false);
