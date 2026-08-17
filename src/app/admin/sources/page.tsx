@@ -143,6 +143,15 @@ const INITIAL_SOURCES: SheetSource[] = [
   },
 ];
 
+function getProxiedImageUrl(src?: string): string {
+  if (!src) return "";
+  if (src.startsWith("/") || src.startsWith("data:")) return src;
+  if (src.includes("docs.google.com/sheets-images-rt") || src.includes("googleusercontent.com")) {
+    return `/api/admin/sheet-image-proxy?url=${encodeURIComponent(src)}`;
+  }
+  return src;
+}
+
 export default function AdminSourcesPage() {
   const [activeTab, setActiveTab] = useState<"reddit" | "quick-ingest" | "health" | "sheets">("reddit");
   
@@ -2555,11 +2564,17 @@ export default function AdminSourcesPage() {
                         <div className="space-y-3">
                           {/* Image Container & Selection Badge */}
                           <div className="relative aspect-square bg-neutral-950 rounded-lg overflow-hidden border border-neutral-800/80 flex items-center justify-center p-2 group-hover:border-neutral-700 transition-colors">
-                            {item.imageUrl ? (
+                            {item.imageUrl || item.localImage || item.rawImageSrc ? (
                               <img
-                                src={item.imageUrl}
-                                alt={item.title}
+                                src={getProxiedImageUrl(item.localImage || item.imageUrl || item.rawImageSrc)}
+                                alt=""
+                                referrerPolicy="no-referrer"
                                 className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                onError={(e) => {
+                                  if (item.rawImageSrc && !e.currentTarget.src.includes("sheet-image-proxy")) {
+                                    e.currentTarget.src = `/api/admin/sheet-image-proxy?url=${encodeURIComponent(item.rawImageSrc)}`;
+                                  }
+                                }}
                               />
                             ) : (
                               <div className="text-neutral-600 text-xs font-mono flex flex-col items-center gap-1">
@@ -2570,7 +2585,8 @@ export default function AdminSourcesPage() {
 
                             {/* Select Checkbox */}
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedSheetItemIds((prev) => {
                                   const next = new Set(prev);
                                   if (next.has(item.id)) next.delete(item.id);
@@ -2578,7 +2594,7 @@ export default function AdminSourcesPage() {
                                   return next;
                                 });
                               }}
-                              className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-md rounded-md border border-neutral-700 text-white hover:bg-black transition-colors"
+                              className="absolute top-2 left-2 z-20 p-1.5 bg-black/80 backdrop-blur-md rounded-md border border-neutral-700 text-white hover:bg-black transition-colors shadow-md"
                             >
                               {isSelected ? (
                                 <CheckSquare className="w-4 h-4 text-emerald-400" />
@@ -2589,7 +2605,7 @@ export default function AdminSourcesPage() {
 
                             {/* Tab Badge */}
                             {(item as any).sheetTab && (
-                              <span className="absolute top-2 right-2 px-2 py-0.5 bg-neutral-900/80 backdrop-blur-md border border-neutral-700 text-[10px] font-mono text-neutral-300 rounded">
+                              <span className="absolute top-2 right-2 z-20 px-2 py-0.5 bg-neutral-900/90 backdrop-blur-md border border-neutral-700 text-[10px] font-mono text-neutral-300 rounded shadow-md">
                                 {(item as any).sheetTab}
                               </span>
                             )}

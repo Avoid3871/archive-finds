@@ -430,6 +430,23 @@ async def extract_sheet_pipeline(
             
             affiliate_url = normalize_sugargoo_link(c["raw_market_url"])
             
+            # Download and save preview photo locally for instant, zero-CORS rendering
+            preview_rel = c["image_url"]
+            if c["image_url"] and ("docs.google.com" in c["image_url"] or "http" in c["image_url"]):
+                try:
+                    preview_dir = os.path.join(os.path.dirname(__file__), "..", "public", "products", "sheet_previews")
+                    os.makedirs(preview_dir, exist_ok=True)
+                    preview_file = os.path.join(preview_dir, f"{slug}.jpg")
+                    
+                    req_img = urllib.request.Request(c["image_url"], headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                    with urllib.request.urlopen(req_img, timeout=6) as resp_img:
+                        with open(preview_file, "wb") as f_out:
+                            f_out.write(resp_img.read())
+                    preview_rel = f"/products/sheet_previews/{slug}.jpg"
+                except Exception as img_err:
+                    # Fallback to proxy
+                    preview_rel = f"/api/admin/sheet-image-proxy?url={urllib.parse.quote(c['image_url'])}"
+
             item_data = {
                 "id": f"sheet-{int(time.time()*1000)}-{total_extracted}",
                 "title": c["title"],
@@ -442,8 +459,8 @@ async def extract_sheet_pipeline(
                 "affiliateLink": affiliate_url,
                 "rawMarketUrl": c["raw_market_url"],
                 "directStoreLink": c["raw_market_url"],
-                "imageUrl": c["image_url"],
-                "localImage": c["image_url"],
+                "imageUrl": preview_rel,
+                "localImage": preview_rel,
                 "rawImageSrc": c["image_url"],
                 "slug": slug,
                 "status": "APPROVED_HEALTHY",
