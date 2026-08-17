@@ -3,8 +3,7 @@ import os
 import json
 import asyncio
 import urllib.parse
-from playwright.async_api import async_playwright
-import requests
+import datetime
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -15,7 +14,7 @@ def normalize_sugargoo_link(raw_market_url: str) -> str:
     encoded = urllib.parse.quote(raw_market_url, safe="")
     return f"https://www.sugargoo.com/products?productLink={encoded}&memberId=1325437696506389977"
 
-async def check_single_product(item: dict) -> dict:
+async def check_single_product_async(item: dict, sem: asyncio.Semaphore) -> dict:
     direct_link = item.get("directStoreLink") or item.get("sourceLink") or ""
     affiliate_url = item.get("affiliateUrl") or item.get("affiliateLink") or item.get("sugargooUrl") or ""
     title = item.get("name") or item.get("title") or "Unnamed Grail"
@@ -36,12 +35,13 @@ async def check_single_product(item: dict) -> dict:
         "slug": slug,
         "brand": item.get("brand"),
         "directLink": direct_link,
+        "directStoreLink": direct_link,
         "affiliateUrl": affiliate_url,
         "imageUrl": item.get("imageUrl") or item.get("localImage") or "",
         "status": "HEALTHY",
         "statusCode": 200,
         "message": "Link verified and active",
-        "testedAt": ""
+        "testedAt": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
     
     if not direct_link:
@@ -49,39 +49,56 @@ async def check_single_product(item: dict) -> dict:
         result["message"] = "No direct market link found"
         return result
         
-    # Quick HTTP check with timeout
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
     }
-    
-    try:
-        resp = requests.get(direct_link, headers=headers, timeout=10, allow_redirects=True)
-        result["statusCode"] = resp.status_code
-        text = resp.text
-        
-        # Check for delisting patterns in Chinese marketplaces
-        delisted_keywords = [
-            "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
-            "item deleted", "404 Not Found", "此商品不存在", "已下架", "该宝贝不存在"
-        ]
-        
-        if resp.status_code in [404, 410]:
-            result["status"] = "DEAD"
-            result["message"] = f"HTTP {resp.status_code} - Item page deleted or not found"
-        elif any(kw in text for kw in delisted_keywords):
-            result["status"] = "DEAD"
-            result["message"] = "Marketplace notice: Item was delisted / out of stock by seller"
-        else:
-            result["status"] = "HEALTHY"
-            result["message"] = "Item page is live on marketplace"
-    except requests.exceptions.RequestException as e:
-        result["status"] = "NEEDS_REVIEW"
-        result["message"] = f"Network check warning: {str(e)[:60]}"
-        
+
+    async with sem:
+        try:
+            import urllib.request
+            req = urllib.request.Request(direct_link, headers=headers)
+            # Run blocking urllib request in threadpool for zero async overhead
+            loop = asyncio.get_event_loop()
+            
+            def fetch():
+                try:
+                    with urllib.request.urlopen(req, timeout=6) as response:
+                        return response.getcode(), response.read().decode('utf-8', errors='ignore')
+                except urllib.error.HTTPError as e:
+                    return e.code, ""
+                except Exception as e:
+                    return 0, str(e)
+
+            status_code, text = await loop.run_in_executor(None, fetch)
+            result["statusCode"] = status_code
+            
+            delisted_keywords = [
+                "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
+                "item deleted", "404 Not Found", "此商品不存在", "已下架", "该宝贝不存在",
+                "卖家已下架", "商品不存在或已被删除"
+            ]
+            
+            if status_code in [404, 410]:
+                result["status"] = "DEAD"
+                result["message"] = f"HTTP {status_code} - Item page deleted or not found"
+            elif any(kw in text for kw in delisted_keywords):
+                result["status"] = "DEAD"
+                result["message"] = "Marketplace notice: Item was delisted / out of stock by seller"
+            elif status_code == 0:
+                result["status"] = "FLAGGED"
+                result["message"] = "Network timeout checking seller store"
+            else:
+                result["status"] = "HEALTHY"
+                result["message"] = "Item page is live on marketplace"
+        except Exception as e:
+            result["status"] = "FLAGGED"
+            result["message"] = f"Network warning: {str(e)[:40]}"
+            
     return result
 
 async def run_full_audit(limit: int = 150):
-    print(f"Loading catalog from {CATALOG_PATH}...")
     if not os.path.exists(CATALOG_PATH):
         print(f"Error: Catalog not found at {CATALOG_PATH}")
         return
@@ -89,35 +106,63 @@ async def run_full_audit(limit: int = 150):
     with open(CATALOG_PATH, "r", encoding="utf-8") as f:
         products = json.load(f)
         
-    print(f"Starting Link Health Audit for {len(products)} products (checking up to {limit})...")
+    target_products = products[:limit]
+    total = len(target_products)
     
+    # Progress start
+    print(json.dumps({
+        "type": "progress",
+        "data": {
+            "percent": 0,
+            "current": 0,
+            "total": total,
+            "phase": "STARTING",
+            "message": f"Starting link audit for {total} pieces..."
+        }
+    }), flush=True)
+    
+    sem = asyncio.Semaphore(8) # 8 concurrent requests for max speed
     results = []
     healthy_count = 0
     dead_count = 0
     flagged_count = 0
     
-    for i, p in enumerate(products[:limit]):
-        res = await check_single_product(p)
+    tasks = [check_single_product_async(p, sem) for p in target_products]
+    
+    completed_count = 0
+    for coro in asyncio.as_completed(tasks):
+        res = await coro
         results.append(res)
+        completed_count += 1
         
         if res["status"] == "HEALTHY":
             healthy_count += 1
-            icon = "✅"
         elif res["status"] == "DEAD":
             dead_count += 1
-            icon = "❌"
         else:
             flagged_count += 1
-            icon = "⚠️"
             
-        print(f"[{i+1}/{len(products[:limit])}] {icon} {res['title'][:35]} -> {res['status']} ({res['message'][:40]})")
+        percent = int((completed_count / total) * 100)
         
+        # Stream structured progress event
+        print(f"[AF_PROGRESS] " + json.dumps({
+            "percent": percent,
+            "current": completed_count,
+            "total": total,
+            "healthy": healthy_count,
+            "dead": dead_count,
+            "flagged": flagged_count,
+            "item": res.get("title", ""),
+            "status": res.get("status", "HEALTHY"),
+            "message": f"Audited [{completed_count}/{total}] {res.get('title', '')[:30]} ({res.get('status')})"
+        }), flush=True)
+
     summary = {
-        "lastAudit": os.environ.get("AUDIT_TIME", "2026-08-14T20:45:00Z"),
+        "lastAudit": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "totalChecked": len(results),
-        "healthy": healthy_count,
-        "dead": dead_count,
-        "flagged": flagged_count,
+        "healthyCount": healthy_count,
+        "deadCount": dead_count,
+        "flaggedCount": flagged_count,
         "items": results
     }
     
@@ -125,8 +170,7 @@ async def run_full_audit(limit: int = 150):
     with open(HEALTH_REPORT_PATH, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
         
-    print(f"\n[AUDIT FINISHED] Total: {len(results)} | Healthy: {healthy_count} | Dead: {dead_count} | Flagged: {flagged_count}")
-    print(f"Report saved to: {HEALTH_REPORT_PATH}")
+    print(f"[AF_HEALTH_REPORT] " + json.dumps(summary), flush=True)
     return summary
 
 if __name__ == "__main__":

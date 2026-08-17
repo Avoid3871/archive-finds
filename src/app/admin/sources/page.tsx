@@ -671,6 +671,27 @@ export default function AdminSourcesPage() {
   // Link Health States
   const [healthReport, setHealthReport] = useState<HealthReport | null>(null);
   const [isAuditingHealth, setIsAuditingHealth] = useState(false);
+  const [healthAuditProgress, setHealthAuditProgress] = useState<{
+    isAuditing: boolean;
+    percent: number;
+    current: number;
+    total: number;
+    item: string;
+    healthy: number;
+    dead: number;
+    flagged: number;
+    message: string;
+  }>({
+    isAuditing: false,
+    percent: 0,
+    current: 0,
+    total: 0,
+    item: "",
+    healthy: 0,
+    dead: 0,
+    flagged: 0,
+    message: "",
+  });
   const [healthFilter, setHealthFilter] = useState<"all" | "dead" | "flagged" | "healthy">("all");
   const [healthSearch, setHealthSearch] = useState("");
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null);
@@ -715,16 +736,78 @@ export default function AdminSourcesPage() {
 
   const handleRunHealthAudit = async () => {
     setIsAuditingHealth(true);
+    setHealthAuditProgress({
+      isAuditing: true,
+      percent: 0,
+      current: 0,
+      total: 108,
+      item: "Initializing crawler...",
+      healthy: 0,
+      dead: 0,
+      flagged: 0,
+      message: "Starting Link Health Audit...",
+    });
+
     try {
       const res = await fetch("/api/admin/link-health?action=run-audit");
-      const data = await res.json();
-      if (data.report) {
-        setHealthReport(data.report);
+      if (!res.ok || !res.body) {
+        throw new Error("Failed to start health audit stream");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const event = JSON.parse(line.substring(6));
+              if (event.type === "progress" && event.data) {
+                setHealthAuditProgress((prev) => ({
+                  ...prev,
+                  isAuditing: true,
+                  percent: event.data.percent ?? prev.percent,
+                  current: event.data.current ?? prev.current,
+                  total: event.data.total ?? prev.total,
+                  item: event.data.item || prev.item,
+                  healthy: event.data.healthy ?? prev.healthy,
+                  dead: event.data.dead ?? prev.dead,
+                  flagged: event.data.flagged ?? prev.flagged,
+                  message: event.data.message || prev.message,
+                }));
+              } else if (event.type === "complete" && event.report) {
+                setHealthReport(event.report);
+                setHealthAuditProgress((prev) => ({
+                  ...prev,
+                  isAuditing: false,
+                  percent: 100,
+                  current: event.report.totalChecked || prev.current,
+                  total: event.report.totalChecked || prev.total,
+                  healthy: event.report.healthyCount ?? prev.healthy,
+                  dead: event.report.deadCount ?? prev.dead,
+                  flagged: event.report.flaggedCount ?? prev.flagged,
+                  message: "✓ Audit Complete!",
+                }));
+              }
+            } catch (err) {
+              console.warn("Error parsing SSE line:", err);
+            }
+          }
+        }
       }
     } catch (e) {
       console.error("Audit error:", e);
     } finally {
       setIsAuditingHealth(false);
+      fetchHealthReport();
     }
   };
 
@@ -1616,10 +1699,54 @@ export default function AdminSourcesPage() {
                   className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center gap-2 rounded disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isAuditingHealth ? "animate-spin" : ""}`} />
-                  <span>{isAuditingHealth ? "AUDITING CATALOG..." : "RUN FULL HEALTH AUDIT"}</span>
+                  <span>{isAuditingHealth ? `AUDITING (${healthAuditProgress.percent}%)...` : "RUN FULL HEALTH AUDIT"}</span>
                 </button>
               </div>
             </div>
+
+            {/* Real-time Health Audit Progress Bar */}
+            {isAuditingHealth && (
+              <div className="p-4 bg-neutral-950 border border-emerald-500/30 rounded-lg space-y-3 animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="font-bold text-white uppercase tracking-wider">
+                      Auditing Catalog Links:
+                    </span>
+                    <span className="text-emerald-400 font-bold">
+                      {healthAuditProgress.current} / {healthAuditProgress.total} Pieces ({healthAuditProgress.percent}%)
+                    </span>
+                  </div>
+
+                  {/* Mini live counters */}
+                  <div className="flex items-center gap-3 text-[11px]">
+                    <span className="text-emerald-400">🟢 {healthAuditProgress.healthy} Active</span>
+                    <span className="text-amber-400">🟡 {healthAuditProgress.flagged} Flagged</span>
+                    <span className="text-red-400">🔴 {healthAuditProgress.dead} Dead</span>
+                  </div>
+                </div>
+
+                {/* Progress bar line */}
+                <div className="w-full h-2.5 bg-neutral-900 rounded-full overflow-hidden border border-neutral-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 transition-all duration-300 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                    style={{ width: `${Math.max(healthAuditProgress.percent, 3)}%` }}
+                  />
+                </div>
+
+                {/* Currently Auditing Item Label */}
+                {healthAuditProgress.item && (
+                  <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 truncate">
+                    <span className="truncate">
+                      Testing: <strong className="text-neutral-200">{healthAuditProgress.item}</strong>
+                    </span>
+                    <span className="shrink-0 text-neutral-500 pl-2">
+                      {healthAuditProgress.message}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Health Stats Grid */}
             {healthReport && (

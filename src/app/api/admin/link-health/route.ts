@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
-import util from 'util';
-
-const execPromise = util.promisify(exec);
+import { spawn } from 'child_process';
 
 const REPORT_PATH = path.join(process.cwd(), 'src', 'lib', 'products', 'linkHealthReport.json');
 const CATALOG_PATH = path.join(process.cwd(), 'src', 'lib', 'products', 'sheetProducts.json');
@@ -15,20 +12,114 @@ export async function GET(req: Request) {
     const action = searchParams.get('action');
 
     if (action === 'run-audit') {
-      const limit = searchParams.get('limit') || '106';
+      const limit = searchParams.get('limit') || '150';
       const scriptPath = path.join(process.cwd(), 'scripts', 'link_health_checker.py');
       
-      const { stdout, stderr } = await execPromise(`python "${scriptPath}" ${limit}`);
-      
-      let reportData = null;
-      if (fs.existsSync(REPORT_PATH)) {
-        reportData = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf-8'));
-      }
-      
-      return NextResponse.json({
-        success: true,
-        output: stdout || stderr,
-        report: reportData
+      const child = spawn('python', ['-u', scriptPath, limit], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          PYTHONUNBUFFERED: '1',
+          PYTHONIOENCODING: 'utf-8',
+        },
+      });
+
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream({
+        start(controller) {
+          let isClosed = false;
+          const safeEnqueue = (data: Uint8Array) => {
+            if (!isClosed) {
+              try {
+                controller.enqueue(data);
+              } catch (e) {
+                isClosed = true;
+              }
+            }
+          };
+
+          const safeClose = () => {
+            if (!isClosed) {
+              isClosed = true;
+              try {
+                controller.close();
+              } catch (e) {}
+            }
+          };
+
+          child.stdout.on('data', (chunk) => {
+            const text = chunk.toString('utf-8');
+            const lines = text.split('\n');
+
+            for (const line of lines) {
+              if (!line.trim()) continue;
+
+              if (line.includes('[AF_PROGRESS]')) {
+                try {
+                  const jsonStr = line.substring(line.indexOf('[AF_PROGRESS]') + 13).trim();
+                  const progressData = JSON.parse(jsonStr);
+                  safeEnqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: 'progress', data: progressData })}\n\n`)
+                  );
+                } catch (err) {
+                  safeEnqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: 'log', text: line })}\n\n`)
+                  );
+                }
+              } else if (line.includes('[AF_HEALTH_REPORT]')) {
+                try {
+                  const jsonStr = line.substring(line.indexOf('[AF_HEALTH_REPORT]') + 18).trim();
+                  const reportData = JSON.parse(jsonStr);
+                  safeEnqueue(
+                    encoder.encode(`data: ${JSON.stringify({ type: 'complete', report: reportData })}\n\n`)
+                  );
+                } catch (err) {
+                  // Fallback
+                }
+              } else {
+                safeEnqueue(
+                  encoder.encode(`data: ${JSON.stringify({ type: 'log', text: line })}\n\n`)
+                );
+              }
+            }
+          });
+
+          child.stderr.on('data', (chunk) => {
+            const text = chunk.toString('utf-8');
+            safeEnqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'log', text: `[ERROR] ${text}` })}\n\n`)
+            );
+          });
+
+          child.on('close', () => {
+            let reportData = null;
+            if (fs.existsSync(REPORT_PATH)) {
+              try {
+                reportData = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf-8'));
+              } catch (e) {}
+            }
+            safeEnqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'complete', report: reportData })}\n\n`)
+            );
+            safeClose();
+          });
+
+          child.on('error', (err) => {
+            safeEnqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'error', error: err.message })}\n\n`)
+            );
+            safeClose();
+          });
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
       });
     }
 
