@@ -2831,5 +2831,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "114",
+    "title": "RICK OWENS - F/W 2022 STROBE FUR LEATHER COAT",
+    "name": "RICK OWENS - F/W 2022 STROBE FUR LEATHER COAT",
+    "brand": "RICK OWENS",
+    "brandSlug": "rick-owens",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 741.49,
+    "sourcePrice": 741.49,
+    "estimatedRetail": 6302.66,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=691984619999",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691984619999&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691984619999&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691984619999&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-f-w-2022-strobe-fur-leather-coat-5810.png",
+    "localImage": "/products/rick-owens-f-w-2022-strobe-fur-leather-coat-5810.png",
+    "slug": "rick-owens-f-w-2022-strobe-fur-leather-coat-5810",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
