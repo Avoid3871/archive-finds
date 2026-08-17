@@ -2831,5 +2831,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "114",
+    "title": "Saint Laurent - TEDDY JACKET",
+    "name": "Saint Laurent - TEDDY JACKET",
+    "brand": "Saint Laurent",
+    "brandSlug": "saint-laurent",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 152.8,
+    "sourcePrice": 152.8,
+    "estimatedRetail": 1298.8,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=659430211426",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D659430211426&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D659430211426&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D659430211426&memberId=1325437696506389977",
+    "imageUrl": "/products/saint-laurent-teddy-jacket-6859.png",
+    "localImage": "/products/saint-laurent-teddy-jacket-6859.png",
+    "slug": "saint-laurent-teddy-jacket-6859",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
