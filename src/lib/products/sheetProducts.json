@@ -2856,5 +2856,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "115",
+    "title": "Enfants Riches Déprimés - FADED GRAY SWEATER",
+    "name": "Enfants Riches Déprimés - FADED GRAY SWEATER",
+    "brand": "Enfants Riches Déprimés",
+    "brandSlug": "enfants-riches-d-prim-s",
+    "category": "Hoodies",
+    "categorySlug": "hoodies",
+    "season": "",
+    "price": 21.96,
+    "sourcePrice": 21.96,
+    "estimatedRetail": 186.66,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=614539957275",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D614539957275&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D614539957275&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D614539957275&memberId=1325437696506389977",
+    "imageUrl": "/products/enfants-riches-d-prim-s-faded-gray-sweater-7882.png",
+    "localImage": "/products/enfants-riches-d-prim-s-faded-gray-sweater-7882.png",
+    "slug": "enfants-riches-d-prim-s-faded-gray-sweater-7882",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
