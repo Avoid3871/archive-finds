@@ -2781,5 +2781,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "112",
+    "title": "RICK OWENS - LONG SLEEVE SHIRT COMBO",
+    "name": "RICK OWENS - LONG SLEEVE SHIRT COMBO",
+    "brand": "RICK OWENS",
+    "brandSlug": "rick-owens",
+    "category": "T-Shirts",
+    "categorySlug": "t-shirts",
+    "season": "",
+    "price": 32.33,
+    "sourcePrice": 32.33,
+    "estimatedRetail": 274.81,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=599376218076",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D599376218076&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D599376218076&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D599376218076&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-long-sleeve-shirt-combo-5131.png",
+    "localImage": "/products/rick-owens-long-sleeve-shirt-combo-5131.png",
+    "slug": "rick-owens-long-sleeve-shirt-combo-5131",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
