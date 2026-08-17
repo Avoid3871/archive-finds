@@ -239,6 +239,14 @@ export default function AdminSourcesPage() {
 
   const closeModal = () => {
     setEditingItem(null);
+    setIngestModalProgress({
+      isIngesting: false,
+      percent: 0,
+      phase: "IDLE",
+      message: "",
+      logs: [],
+      ingestedSlug: undefined,
+    });
     try {
       sessionStorage.removeItem("active_ingested_modal");
     } catch (e) {}
@@ -276,42 +284,14 @@ export default function AdminSourcesPage() {
     }
   };
 
-  // Restore success toast & modal across Fast Refresh / page reloads
+  // Restore success toast across Fast Refresh / page reloads
   useEffect(() => {
     try {
       const savedToast = sessionStorage.getItem("last_ingested_grail");
       if (savedToast) {
         setSuccessToast(JSON.parse(savedToast));
       }
-      const savedModal = sessionStorage.getItem("active_ingested_modal");
-      if (savedModal) {
-        const parsed = JSON.parse(savedModal);
-        if (parsed?.editingItem) {
-          setEditingItem(parsed.editingItem);
-          setEditFormData(parsed.editFormData || {
-            title: parsed.editingItem.title,
-            brand: parsed.editingItem.brand,
-            category: parsed.editingItem.category,
-            price: parsed.editingItem.sourcePrice || 50,
-            estimatedRetail: parsed.editingItem.estimatedRetail || 400,
-            tags: "archive, grail",
-            rawMarketUrl: parsed.editingItem.rawMarketUrl || "",
-          });
-          setIngestModalProgress({
-            isIngesting: false,
-            percent: 100,
-            phase: "SUCCESS",
-            message: "✓ Successfully Ingested! Piece is now live in your public store.",
-            logs: [
-              `[1/4] Preparing product: "${parsed.editingItem.brand} - ${parsed.editingItem.title}"`,
-              `[2/4] Generated Sugargoo affiliate link with member ID 1325437696506389977`,
-              `[3/4] Persisting piece to catalog database...`,
-              `[4/4] Ingest complete! Product is active in catalog.`,
-            ],
-            ingestedSlug: parsed.actualSlug,
-          });
-        }
-      }
+      sessionStorage.removeItem("active_ingested_modal");
     } catch (e) {
       // Ignore storage errors
     }
@@ -502,25 +482,34 @@ export default function AdminSourcesPage() {
   };
 
   const openReviewModal = (item: DiscoveredItem) => {
-    setEditingItem(item);
+    try {
+      sessionStorage.removeItem("active_ingested_modal");
+    } catch (e) {}
+
+    const rawUrl = item.rawMarketUrl || (item as any).directStoreLink || "";
+    const cleanItem: DiscoveredItem = {
+      ...item,
+      rawMarketUrl: rawUrl,
+    };
+    setEditingItem(cleanItem);
     setEditRotation(0);
     setSelectedCutoutModel("isnet-general-use");
-    const cleanTitle = item.title
+    const cleanTitle = (item.title || "")
       .replace(/^(can\s+(these|this|they|it)\s+(be|look)?\s*(close\s+to|like|good|accurate)?|is\s+this\s+(close\s+to|accurate|legit|real)|are\s+these\s+(close\s+to|accurate|legit|real)|how\s+do\s+these\s+look|thoughts\s+on(\s+this|\s+these)?|qc\s+on|review\s+on)\s*/i, "")
-      .replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "")
+      .replace(new RegExp(`^${item.brand || ""}\\s*-\\s*`, "i"), "")
       .trim();
     const brandTitle = cleanTitle.toLowerCase().startsWith((item.brand || "").toLowerCase())
       ? cleanTitle
       : `${item.brand || ""} ${cleanTitle}`.trim();
     setEditFormData({
-      title: cleanTitle || item.title,
+      title: cleanTitle || item.title || "Archive Piece",
       brand: item.brand || "Maison Margiela",
       category: item.category || "Outerwear",
-      season: item.season || "",
+      season: (item as any).season || item.season || "",
       price: item.sourcePrice || 50,
       estimatedRetail: item.estimatedRetail || (item.sourcePrice ? Math.round(item.sourcePrice * 8.5) : 450),
-      tags: "archive, grail",
-      rawMarketUrl: item.rawMarketUrl || "",
+      tags: `${item.brand || "archive"}, ${item.category || "clothing"}, archive, grail`,
+      rawMarketUrl: rawUrl,
     });
     setSelectedImageSrc(item.imageUrl || item.localImage || item.rawImageSrc || "");
     setCustomImageUrlInput("");
@@ -532,17 +521,18 @@ export default function AdminSourcesPage() {
       phase: "IDLE",
       message: "",
       logs: [],
+      ingestedSlug: undefined,
     });
 
     // Proactively fetch alternative studio images in background
-    fetchAlternativeImages(brandTitle, item.rawMarketUrl || "");
+    fetchAlternativeImages(brandTitle, rawUrl);
 
     // Proactively fetch exact live Sugargoo price if from a marketplace link
-    if (item.rawMarketUrl && (!item.sourcePrice || item.sourcePrice === 48 || item.sourcePrice === 50)) {
+    if (rawUrl && (!item.sourcePrice || item.sourcePrice === 48 || item.sourcePrice === 50)) {
       fetch("/api/admin/identify-product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: brandTitle, marketUrl: item.rawMarketUrl }),
+        body: JSON.stringify({ query: brandTitle, marketUrl: rawUrl }),
       })
         .then((res) => res.json())
         .then((data) => {
@@ -656,15 +646,7 @@ export default function AdminSourcesPage() {
         setSuccessToast(toastItem);
         try {
           sessionStorage.setItem("last_ingested_grail", JSON.stringify(toastItem));
-          sessionStorage.setItem(
-            "active_ingested_modal",
-            JSON.stringify({
-              editingItem,
-              editFormData,
-              actualSlug,
-              imageUrl: data.imageUrl || editingItem.localImage || editingItem.imageUrl,
-            })
-          );
+          sessionStorage.removeItem("active_ingested_modal");
         } catch (e) {}
 
         setIngestModalProgress((prev) => ({
@@ -2686,23 +2668,7 @@ export default function AdminSourcesPage() {
                             </a>
 
                             <button
-                              onClick={() => {
-                                setEditingItem({
-                                  ...item,
-                                  rawMarketUrl: item.rawMarketUrl || (item as any).directStoreLink || "",
-                                });
-                                setEditFormData({
-                                  title: item.title,
-                                  brand: item.brand,
-                                  category: item.category,
-                                  season: (item as any).season || "",
-                                  price: item.sourcePrice || 49.0,
-                                  estimatedRetail: item.estimatedRetail || (item.sourcePrice ? item.sourcePrice * 8.5 : 450),
-                                  tags: `${item.brand}, ${item.category}, archive, grail`,
-                                  rawMarketUrl: item.rawMarketUrl || (item as any).directStoreLink || "",
-                                });
-                                setSelectedImageSrc(item.imageUrl || item.localImage || "");
-                              }}
+                              onClick={() => openReviewModal(item)}
                               className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
                             >
                               <SlidersHorizontal className="w-3 h-3 text-emerald-400" />
