@@ -2881,5 +2881,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "116",
+    "title": "Mastermind Japan - MASTERMIND SWEATER",
+    "name": "Mastermind Japan - MASTERMIND SWEATER",
+    "brand": "Mastermind Japan",
+    "brandSlug": "mastermind-japan",
+    "category": "Hoodies",
+    "categorySlug": "hoodies",
+    "season": "",
+    "price": 26.4,
+    "sourcePrice": 26.4,
+    "estimatedRetail": 224.4,
+    "directStoreLink": "https://shop1707804864.v.weidian.com/item.html?itemId=3913619385&vc_cps_track=1459920903_0_0&vc_cps_track=1459920903_0_0&spm=1101.1101.N.N.1799b06",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1707804864.v.weidian.com%2Fitem.html%3FitemId%3D3913619385%26vc_cps_track%3D1459920903_0_0%26vc_cps_track%3D1459920903_0_0%26spm%3D1101.1101.N.N.1799b06&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1707804864.v.weidian.com%2Fitem.html%3FitemId%3D3913619385%26vc_cps_track%3D1459920903_0_0%26vc_cps_track%3D1459920903_0_0%26spm%3D1101.1101.N.N.1799b06&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fshop1707804864.v.weidian.com%2Fitem.html%3FitemId%3D3913619385%26vc_cps_track%3D1459920903_0_0%26vc_cps_track%3D1459920903_0_0%26spm%3D1101.1101.N.N.1799b06&memberId=1325437696506389977",
+    "imageUrl": "/products/mastermind-japan-mastermind-sweater-7152.png",
+    "localImage": "/products/mastermind-japan-mastermind-sweater-7152.png",
+    "slug": "mastermind-japan-mastermind-sweater-7152",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
