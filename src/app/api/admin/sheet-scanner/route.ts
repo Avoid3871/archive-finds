@@ -53,16 +53,16 @@ export async function DELETE(req: NextRequest) {
 
     const normalizeUrl = (u: string) => {
       if (!u) return "";
+      // IMPORTANT: Preserve query params — stripping them causes all weidian/taobao
+      // items to normalize to the same base path, triggering mass deletion.
       return u
         .trim()
         .toLowerCase()
         .replace(/^https?:\/\//, "")
-        .replace(/\/$/, "")
-        .split("?")[0]
-        .split("&")[0];
+        .replace(/\/$/, "");
     };
 
-    const targetUrlNorm = normalizeUrl(rawMarketUrl);
+    const targetUrlNorm = rawMarketUrl ? normalizeUrl(rawMarketUrl) : "";
 
     // 1. Update registry
     let registry: any = { processed_links: {}, blacklisted_links: [] };
@@ -92,22 +92,31 @@ export async function DELETE(req: NextRequest) {
       fs.writeFileSync(REGISTRY_PATH, JSON.stringify(registry, null, 2), "utf-8");
     }
 
-    // 2. Remove from discovered queue
+    // 2. Remove ONLY the single targeted item from discovered queue.
+    //    Strategy: Use `id` as unique primary key. Only fall back to URL match
+    //    if no `id` was provided, and only if the URL is non-empty.
     let items: any[] = [];
     if (fs.existsSync(DISCOVERED_PATH)) {
       try {
         items = JSON.parse(fs.readFileSync(DISCOVERED_PATH, "utf-8"));
-        items = items.filter((it: any) => {
-          if (id && it.id && it.id === id) return false;
-          if (slug && it.slug && it.slug === slug) return false;
-          if (title && it.title && it.title.trim().toLowerCase() === title.trim().toLowerCase()) return false;
-          
-          if (targetUrlNorm) {
+        const beforeCount = items.length;
+
+        if (id) {
+          // Primary: strict ID match (removes exactly 1 item)
+          items = items.filter((it: any) => it.id !== id);
+        } else if (targetUrlNorm) {
+          // Fallback: exact full-URL match (only if id was not provided)
+          items = items.filter((it: any) => {
             const itUrlNorm = normalizeUrl(it.rawMarketUrl || it.directStoreLink || "");
-            if (itUrlNorm && itUrlNorm === targetUrlNorm) return false;
-          }
-          return true;
-        });
+            return !itUrlNorm || itUrlNorm !== targetUrlNorm;
+          });
+        }
+
+        const removed = beforeCount - items.length;
+        if (removed > 1) {
+          console.warn(`[sheet-scanner DELETE] WARNING: Removed ${removed} items (expected 1). id=${id}, url=${rawMarketUrl}`);
+        }
+
         fs.writeFileSync(DISCOVERED_PATH, JSON.stringify(items, null, 2), "utf-8");
       } catch (e) {}
     }

@@ -137,6 +137,14 @@ async def check_single_product_async(item: dict, sem: asyncio.Semaphore) -> dict
                 result["status"] = "FLAGGED"
                 result["message"] = "Network timeout checking seller store"
             else:
+                # Taobao anti-bot: detect login redirect wall pages
+                is_taobao = "taobao.com" in direct_link or "tmall.com" in direct_link
+                if is_taobao:
+                    is_login_wall = "x5referer" in text or "login.taobao.com" in text or "login.m.taobao.com" in text
+                    if is_login_wall and len(text) < 8000:
+                        result["status"] = "FLAGGED"
+                        result["message"] = "Taobao login wall — cannot verify stock server-side"
+                        return result
                 result["status"] = "HEALTHY"
                 result["message"] = "Item page is live on marketplace"
         except Exception as e:

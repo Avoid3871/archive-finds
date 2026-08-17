@@ -1266,9 +1266,9 @@ export default function AdminSourcesPage() {
   };
 
   const handleDismissPiece = async (item: DiscoveredItem) => {
-    // Optimistic UI update for both queues
-    setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug && i.id !== item.id));
-    setDiscoveredSheetItems((prev) => prev.filter((i) => i.slug !== item.slug && i.id !== item.id && i.title !== item.title));
+    // Optimistic UI update — strictly by unique id only
+    setDiscoveredItems((prev) => prev.filter((i) => i.id !== item.id));
+    setDiscoveredSheetItems((prev) => prev.filter((i) => i.id !== item.id));
 
     try {
       // 1. Reddit cleanup
@@ -2680,6 +2680,11 @@ export default function AdminSourcesPage() {
                               </span>
                               {(item as any).priceCNY && (
                                 <span>¥{(item as any).priceCNY}</span>
+                              )}
+                              {item.status === "UNVERIFIED_TAOBAO" && (
+                                <span className="px-1.5 py-0.5 bg-amber-950/60 border border-amber-700/50 rounded text-amber-400" title={(item as any).validationNote || "Taobao login wall — stock unverified"}>
+                                  ⚠ Unverified
+                                </span>
                               )}
                             </div>
                           </div>

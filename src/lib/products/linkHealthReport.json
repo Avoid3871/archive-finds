@@ -1,8 +1,8 @@
 {
   "lastAudit": "2026-08-17T12:09:07.570267+00:00",
-  "totalChecked": 108,
+  "totalChecked": 107,
   "healthyCount": 105,
-  "deadCount": 3,
+  "deadCount": 2,
   "flaggedCount": 0,
   "items": [
     {
@@ -760,20 +760,6 @@
       "statusCode": 200,
       "message": "Item page is live on marketplace",
       "testedAt": "2026-08-17T12:08:56.349754+00:00"
-    },
-    {
-      "id": "54",
-      "title": "Prada Snow Boots La France",
-      "slug": "archive-selection-prada-snow-boots-la-france",
-      "brand": "Archive Selection",
-      "directLink": "https://weidian.com/item.html?itemID=4440073535",
-      "directStoreLink": "https://weidian.com/item.html?itemID=4440073535",
-      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4440073535&memberId=1325437696506389977",
-      "imageUrl": "/products/sheet/grid_r43_c05_image157.png",
-      "status": "DEAD",
-      "statusCode": 200,
-      "message": "Marketplace notice: Item was delisted / out of stock by seller",
-      "testedAt": "2026-08-17T12:08:56.349721+00:00"
     },
     {
       "id": "4",

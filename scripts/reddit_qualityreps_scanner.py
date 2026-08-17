@@ -77,6 +77,40 @@ IGNORE_TITLES = [
 
 def verify_market_link_live(raw_url: str) -> tuple[bool, str]:
     clean_target = resolve_and_clean_market_url(raw_url)
+    
+    # 1. Weidian Thor Live Verification (most reliable)
+    if "weidian.com" in clean_target:
+        wid_match = re.search(r'(?:itemID|itemId|item_id)=(\d+)', clean_target)
+        if wid_match:
+            wid = wid_match.group(1)
+            thor_url = f"https://thor.weidian.com/detail/getItemSkuInfo/1.0?param=%7B%22itemId%22%3A%22{wid}%22%7D"
+            try:
+                resp = requests.get(thor_url, headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Referer": "https://weidian.com/"
+                }, timeout=5)
+                data = resp.json()
+                code = data.get('status', {}).get('code')
+                if code != 0:
+                    return False, "Weidian: Item delisted (code != 0)"
+                res = data.get('result', {})
+                sku_infos = res.get('skuInfos', [])
+                total_stock = 0
+                if isinstance(sku_infos, list):
+                    for s in sku_infos:
+                        total_stock += s.get('skuInfo', {}).get('stock', 0)
+                elif isinstance(sku_infos, dict):
+                    for k, s in sku_infos.items():
+                        total_stock += s.get('stock', 0)
+                if sku_infos and total_stock == 0:
+                    return False, "Weidian: Out of stock (0 units available)"
+                if not sku_infos:
+                    return False, "Weidian: No SKU data (item may be delisted)"
+                return True, "Weidian: Active (In Stock)"
+            except Exception as e:
+                pass  # Fall through to generic check
+
+    # 2. General HTTP check
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
@@ -97,6 +131,13 @@ def verify_market_link_live(raw_url: str) -> tuple[bool, str]:
             
         if "item_offline" in resp.url or "error1.html" in resp.url:
             return False, "Taobao item offline redirect"
+        
+        # Taobao login wall detection
+        is_taobao = "taobao.com" in clean_target or "tmall.com" in clean_target
+        if is_taobao:
+            is_login_wall = "x5referer" in text or "login.taobao.com" in text or "login.m.taobao.com" in text
+            if is_login_wall and len(text) < 8000:
+                return True, "Taobao: Unverified (login wall)"
             
         return True, "Active"
     except Exception as e:

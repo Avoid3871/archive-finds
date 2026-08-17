@@ -206,6 +206,17 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
         if status_code == 0:
             return False, "Host unreachable / link dead"
 
+        # Taobao anti-bot: detect login redirect wall pages.
+        # These are ~5KB pages with "localStorage.x5referer" and no actual product data.
+        # Real product pages are much larger (50KB+) and contain item content.
+        is_taobao = "taobao.com" in raw_url or "tmall.com" in raw_url
+        if is_taobao:
+            is_login_wall = "x5referer" in text or "login.taobao.com" in text or "login.m.taobao.com" in text
+            if is_login_wall and len(text) < 8000:
+                # Taobao blocked server-side verification — cannot confirm alive or dead.
+                # Return True but with a warning so the item enters queue as UNVERIFIED.
+                return True, "Taobao: Unverified (login wall, cannot confirm stock server-side)"
+
         return True, "Active"
 
 def discover_tabs_from_sheet(sheet_id: str) -> list[dict]:
@@ -453,8 +464,10 @@ async def extract_sheet_pipeline(
                 continue
 
             # 5. Link Health Live Validation
+            link_status_reason = ""
             if validate_links:
                 is_alive, reason = await check_link_alive(c["raw_market_url"], sem)
+                link_status_reason = reason
                 if not is_alive:
                     registry["processed_links"][raw_url_lower] = {
                         "status": "DEAD",
@@ -489,6 +502,10 @@ async def extract_sheet_pipeline(
                     # Fallback to proxy
                     preview_rel = f"/api/admin/sheet-image-proxy?url={urllib.parse.quote(c['image_url'])}"
 
+            # Determine verification status
+            is_taobao_unverified = "Unverified" in link_status_reason
+            item_status = "UNVERIFIED_TAOBAO" if is_taobao_unverified else "APPROVED_HEALTHY"
+
             item_data = {
                 "id": f"sheet-{int(time.time()*1000)}-{total_extracted}",
                 "title": c["title"],
@@ -505,7 +522,8 @@ async def extract_sheet_pipeline(
                 "localImage": preview_rel,
                 "rawImageSrc": c["image_url"],
                 "slug": slug,
-                "status": "APPROVED_HEALTHY",
+                "status": item_status,
+                "validationNote": link_status_reason if link_status_reason else "Verified live",
                 "qcLink": c["qc_link"],
                 "sheetTab": c["tab"],
                 "discoveredAt": datetime.now(timezone.utc).isoformat()
