@@ -187,7 +187,15 @@ export async function POST(req: NextRequest) {
           for (const line of lines) {
             if (!line.trim()) continue;
 
-            if (line.includes("[AF_SHEET_PROGRESS]")) {
+            if (line.includes("[AF_SHEET_ITEM]")) {
+              try {
+                const jsonStr = line.substring(line.indexOf("[AF_SHEET_ITEM]") + 15).trim();
+                const itemData = JSON.parse(jsonStr);
+                safeEnqueue(
+                  encoder.encode(`data: ${JSON.stringify({ type: "item_discovered", item: itemData })}\n\n`)
+                );
+              } catch (err) {}
+            } else if (line.includes("[AF_SHEET_PROGRESS]")) {
               try {
                 const jsonStr = line.substring(line.indexOf("[AF_SHEET_PROGRESS]") + 19).trim();
                 const progressData = JSON.parse(jsonStr);

@@ -109,7 +109,13 @@ function normalizeSugargooLink(rawUrl: string): string {
     }
     return rawUrl;
   }
-  const cleanUrl = rawUrl.replace(/^https?:\/\/www\.google\.com\/url\?q=/, "").split("&")[0];
+  let cleanUrl = rawUrl.trim();
+  if (cleanUrl.includes("google.com/url?")) {
+    try {
+      const parsed = new URL(cleanUrl);
+      cleanUrl = parsed.searchParams.get("q") || cleanUrl;
+    } catch (e) {}
+  }
   const encoded = encodeURIComponent(cleanUrl);
   return `https://www.sugargoo.com/products?productLink=${encoded}&memberId=${SUGARGOO_AFFILIATE_ID}`;
 }
@@ -638,25 +644,25 @@ export default function AdminSourcesPage() {
           method: "DELETE",
         }).catch(() => {});
 
-        // Optimistically remove from both Reddit & Google Sheet state
-        const normTarget = sheetRawUrl.toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/$/, "").split("?")[0].split("&")[0];
+        // Optimistically remove from both Reddit & Google Sheet state (strictly target the ingested item)
+        const targetId = editingItem.id;
+        const targetSlug = actualSlug || editingItem.slug;
+        const targetUrl = (sheetRawUrl || "").trim().toLowerCase();
 
         setDiscoveredItems((prev) =>
           prev.filter((i) => {
-            if (i.id === editingItem.id || i.slug === actualSlug || i.slug === editingItem.slug) return false;
-            if (normTarget && (i.rawMarketUrl || "").toLowerCase().includes(normTarget)) return false;
+            if (targetId && i.id === targetId) return false;
+            if (targetSlug && (i.slug === targetSlug || i.slug === editingItem.slug)) return false;
+            if (targetUrl && (i.rawMarketUrl || "").trim().toLowerCase() === targetUrl) return false;
             return true;
           })
         );
 
         setDiscoveredSheetItems((prev) =>
           prev.filter((i) => {
-            if (i.id === editingItem.id || i.slug === actualSlug || i.slug === editingItem.slug) return false;
-            if (i.title && i.title.trim().toLowerCase() === editingItem.title.trim().toLowerCase()) return false;
-            if (normTarget) {
-              const iNorm = (i.rawMarketUrl || (i as any).directStoreLink || "").toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/$/, "").split("?")[0].split("&")[0];
-              if (iNorm && iNorm === normTarget) return false;
-            }
+            if (targetId && i.id === targetId) return false;
+            if (targetSlug && (i.slug === targetSlug || i.slug === editingItem.slug)) return false;
+            if (targetUrl && (i.rawMarketUrl || (i as any).directStoreLink || "").trim().toLowerCase() === targetUrl) return false;
             return true;
           })
         );
@@ -877,7 +883,13 @@ export default function AdminSourcesPage() {
           if (line.startsWith("data: ")) {
             try {
               const event = JSON.parse(line.substring(6));
-              if (event.type === "log") {
+              if (event.type === "item_discovered" && event.item) {
+                // Live real-time discovery insertion!
+                setDiscoveredSheetItems((prev) => {
+                  if (prev.some((it) => it.id === event.item.id || (it.rawMarketUrl && it.rawMarketUrl === event.item.rawMarketUrl))) return prev;
+                  return [event.item, ...prev];
+                });
+              } else if (event.type === "log") {
                 setSheetLiveLogs((prev) => [...prev, event.text]);
               } else if (event.type === "progress") {
                 setSheetScanProgress((prev) => ({

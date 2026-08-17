@@ -239,12 +239,13 @@ def ingest(payload_file: str):
                 with open(q_path, "r", encoding="utf-8") as qf:
                     q_items = json.load(qf)
                 
-                clean_target = clean_url(raw_url).split('&')[0].split('?')[0].lower()
+                target_raw_lower = clean_url(raw_url).lower().strip()
+                target_title_lower = (new_piece.get("title") or "").strip().lower()
                 q_items_filtered = [
                     it for it in q_items
                     if it.get("slug") != slug
-                    and (it.get("title") or "").strip().lower() != (new_piece["title"] or "").strip().lower()
-                    and clean_url(it.get("rawMarketUrl") or it.get("directStoreLink") or "").split('&')[0].split('?')[0].lower() != clean_target
+                    and (it.get("title") or "").strip().lower() != target_title_lower
+                    and clean_url(it.get("rawMarketUrl") or it.get("directStoreLink") or "").lower().strip() != target_raw_lower
                 ]
                 with open(q_path, "w", encoding="utf-8") as qf:
                     json.dump(q_items_filtered, qf, indent=2, ensure_ascii=False)

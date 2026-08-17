@@ -532,6 +532,19 @@ async def extract_sheet_pipeline(
             discovered_healthy_items.append(item_data)
             existing_queue_links.add(raw_url_lower)
             
+            # 1. Real-time stream event for frontend live injection
+            print(f"[AF_SHEET_ITEM] {json.dumps(item_data, ensure_ascii=False)}", flush=True)
+
+            # 2. Incremental disk persistence
+            try:
+                temp_queue = existing_queue + discovered_healthy_items
+                os.makedirs(os.path.dirname(DISCOVERED_QUEUE_PATH), exist_ok=True)
+                with open(DISCOVERED_QUEUE_PATH, "w", encoding="utf-8") as f:
+                    json.dump(temp_queue, f, indent=2, ensure_ascii=False)
+                save_registry(registry)
+            except Exception as e:
+                pass
+
             # Streaming progress event
             progress_payload = {
                 "current": total_extracted,
@@ -542,8 +555,8 @@ async def extract_sheet_pipeline(
                 "item": f"{c['brand']} - {c['title']}",
                 "phase": f"SCANNING ({tab_name})"
             }
-            print(f"[AF_SHEET_PROGRESS] {json.dumps(progress_payload)}")
-            print(f"  ✨ Found Healthy Grail: {c['brand']} - {c['title']} (${c['price_usd']} | {c['category']})")
+            print(f"[AF_SHEET_PROGRESS] {json.dumps(progress_payload)}", flush=True)
+            print(f"  ✨ Found Healthy Grail: {c['brand']} - {c['title']} (${c['price_usd']} | {c['category']})", flush=True)
 
     # Save registry
     save_registry(registry)
