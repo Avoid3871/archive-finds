@@ -2756,5 +2756,30 @@
       "TOPS"
     ],
     "createdAt": "2026-08-17T12:40:50.929Z"
+  },
+  {
+    "id": "111",
+    "title": "ONLINE CERAMICS - LIFE LIVED IN LSD TEE",
+    "name": "ONLINE CERAMICS - LIFE LIVED IN LSD TEE",
+    "brand": "ONLINE CERAMICS",
+    "brandSlug": "online-ceramics",
+    "category": "T-Shirts",
+    "categorySlug": "t-shirts",
+    "season": "",
+    "price": 25.06,
+    "sourcePrice": 25.06,
+    "estimatedRetail": 213.01,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=644610917987",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D644610917987&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D644610917987&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D644610917987&memberId=1325437696506389977",
+    "imageUrl": "/products/online-ceramics-life-lived-in-lsd-tee-3899.png",
+    "localImage": "/products/online-ceramics-life-lived-in-lsd-tee-3899.png",
+    "slug": "online-ceramics-life-lived-in-lsd-tee-3899",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
