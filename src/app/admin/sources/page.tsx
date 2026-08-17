@@ -24,6 +24,7 @@ import {
   Search,
   Terminal,
   Square,
+  CheckSquare,
   Activity,
   ChevronDown,
   ChevronUp,
@@ -712,11 +713,243 @@ export default function AdminSourcesPage() {
   const [newSheetId, setNewSheetId] = useState("");
   const [newTab, setNewTab] = useState("Sheet1");
 
+  // Google Sheets Scanner States
+  const [sheetUrlInput, setSheetUrlInput] = useState("https://docs.google.com/spreadsheets/d/1tA1QwceEtsyzXtUN6mHewhuTdoSaOKIaTL9PqGotKsI/");
+  const [selectedSheetTab, setSelectedSheetTab] = useState<string>("ALL");
+  const [sheetLimit, setSheetLimit] = useState(25);
+  const [validateSheetLinks, setValidateSheetLinks] = useState(true);
+  const [isScanningSheet, setIsScanningSheet] = useState(false);
+  const [sheetScanProgress, setSheetScanProgress] = useState<{
+    percent: number;
+    message: string;
+    current: number;
+    total: number;
+    foundCount: number;
+    deadCount: number;
+    phase: string;
+    item?: string;
+  }>({
+    percent: 0,
+    message: "Google Sheet Scanner Ready",
+    current: 0,
+    total: 25,
+    foundCount: 0,
+    deadCount: 0,
+    phase: "IDLE",
+  });
+  const [sheetLiveLogs, setSheetLiveLogs] = useState<string[]>([]);
+  const [showSheetTerminal, setShowSheetTerminal] = useState(true);
+  const [discoveredSheetItems, setDiscoveredSheetItems] = useState<DiscoveredItem[]>([]);
+  const [selectedSheetItemIds, setSelectedSheetItemIds] = useState<Set<string>>(new Set());
+  const [sheetStats, setSheetStats] = useState<{
+    queueCount: number;
+    deadCount: number;
+    ingestedCount: number;
+    skippedCount: number;
+    totalRegistry: number;
+  }>({
+    queueCount: 0,
+    deadCount: 0,
+    ingestedCount: 0,
+    skippedCount: 0,
+    totalRegistry: 0,
+  });
+  const [isBatchIngesting, setIsBatchIngesting] = useState(false);
+  const [sheetFilter, setSheetFilter] = useState<string>("ALL");
+  const [sheetSearch, setSheetSearch] = useState("");
+  const [sheetActionLoadingId, setSheetActionLoadingId] = useState<string | null>(null);
+  const sheetAbortControllerRef = useRef<AbortController | null>(null);
+
   // Fetch cached data on load
   useEffect(() => {
     fetchDiscovered();
     fetchHealthReport();
+    fetchDiscoveredSheet();
   }, []);
+
+  const fetchDiscoveredSheet = async () => {
+    try {
+      const res = await fetch("/api/admin/sheet-scanner");
+      const data = await res.json();
+      if (data.items) {
+        setDiscoveredSheetItems(data.items);
+      }
+      if (data.stats) {
+        setSheetStats(data.stats);
+      }
+    } catch (e) {
+      console.error("Failed to load sheet queue:", e);
+    }
+  };
+
+  const handleScanSheet = async () => {
+    setIsScanningSheet(true);
+    setSheetLiveLogs([]);
+    setSheetScanProgress({
+      percent: 3,
+      message: "Connecting to Google Sheet & discovering tabs...",
+      current: 0,
+      total: sheetLimit,
+      foundCount: 0,
+      deadCount: 0,
+      phase: "INIT",
+    });
+
+    const controller = new AbortController();
+    sheetAbortControllerRef.current = controller;
+
+    try {
+      const res = await fetch("/api/admin/sheet-scanner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sheetUrl: sheetUrlInput,
+          limit: sheetLimit,
+          tabs: selectedSheetTab === "ALL" ? [] : [selectedSheetTab],
+          validateLinks: validateSheetLinks,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.body) {
+        throw new Error("ReadableStream not supported on this browser.");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const event = JSON.parse(line.substring(6));
+              if (event.type === "log") {
+                setSheetLiveLogs((prev) => [...prev, event.text]);
+              } else if (event.type === "progress") {
+                setSheetScanProgress((prev) => ({
+                  ...prev,
+                  percent: event.data.percent ?? prev.percent,
+                  message: `Found ${event.data.foundCount} healthy grails (${event.data.deadCount || 0} dead filtered)`,
+                  current: event.data.current ?? prev.current,
+                  total: event.data.total ?? prev.total,
+                  foundCount: event.data.foundCount ?? prev.foundCount,
+                  deadCount: event.data.deadCount ?? prev.deadCount,
+                  phase: event.data.phase ?? prev.phase,
+                  item: event.data.item ?? prev.item,
+                }));
+              } else if (event.type === "complete") {
+                if (event.result && event.result.items) {
+                  setSheetScanProgress((prev) => ({
+                    ...prev,
+                    percent: 100,
+                    message: `✓ Ingested ${event.result.newFound} healthy grails into queue (${event.result.deadFiltered || 0} dead filtered)!`,
+                    phase: "COMPLETE",
+                  }));
+                }
+              }
+            } catch (err) {
+              console.warn("Error parsing SSE line:", err);
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        setSheetLiveLogs((prev) => [...prev, `[ERROR] Extraction failed: ${e.message}`]);
+      }
+    } finally {
+      setIsScanningSheet(false);
+      fetchDiscoveredSheet();
+    }
+  };
+
+  const handleDismissSheetItem = async (id: string, rawMarketUrl: string, action: "dismiss" | "blacklist" = "dismiss") => {
+    setSheetActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/sheet-scanner?id=${id}&rawMarketUrl=${encodeURIComponent(rawMarketUrl)}&action=${action}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDiscoveredSheetItems((prev) => prev.filter((it) => it.id !== id));
+        setSelectedSheetItemIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        fetchDiscoveredSheet();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSheetActionLoadingId(null);
+    }
+  };
+
+  const handleBatchIngestSelectedSheets = async () => {
+    const selectedItems = discoveredSheetItems.filter((it) => selectedSheetItemIds.has(it.id));
+    if (selectedItems.length === 0) return;
+
+    setIsBatchIngesting(true);
+    try {
+      const res = await fetch("/api/admin/sheet-scanner/batch-ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: selectedItems }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessToast({
+          title: `Batch Ingested ${selectedItems.length} Pieces to Live Store!`,
+          slug: "",
+          imageUrl: selectedItems[0]?.imageUrl || "",
+        });
+        setSelectedSheetItemIds(new Set());
+        fetchDiscoveredSheet();
+      } else {
+        alert(`Batch Ingest failed: ${data.error}`);
+      }
+    } catch (e: any) {
+      alert(`Network error: ${e.message}`);
+    } finally {
+      setIsBatchIngesting(false);
+    }
+  };
+
+  const handleQuickIngestSingleSheet = async (item: DiscoveredItem) => {
+    setSheetActionLoadingId(item.id);
+    try {
+      const res = await fetch("/api/admin/sheet-scanner/batch-ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: [item] }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessToast({
+          title: item.title,
+          slug: item.slug || "",
+          imageUrl: item.imageUrl || item.localImage || "",
+        });
+        setDiscoveredSheetItems((prev) => prev.filter((it) => it.id !== item.id));
+        fetchDiscoveredSheet();
+      } else {
+        alert(`Ingest failed: ${data.error}`);
+      }
+    } catch (e: any) {
+      alert(`Network error: ${e.message}`);
+    } finally {
+      setSheetActionLoadingId(null);
+    }
+  };
 
   const fetchDiscovered = async () => {
     try {
@@ -2009,121 +2242,447 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* TAB 4: Google Sheets */}
+      {/* TAB 4: Google Sheets Multi-Tab Ingestion Engine */}
       {activeTab === "sheets" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sources.map((src) => (
-              <div
-                key={src.id}
-                className="p-5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-4"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <FileSpreadsheet className="w-5 h-5 text-neutral-400" />
-                    <div>
-                      <h2 className="font-mono font-bold text-sm text-white">{src.name}</h2>
-                      <p className="text-[10px] font-mono text-neutral-500">
-                        Tab: {src.sheetName} • {src.itemsCount} products
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-mono rounded">
-                    {src.status}
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t border-neutral-800 text-xs font-mono grid grid-cols-2 gap-2 text-neutral-400">
-                  <div>
-                    <span className="text-[10px] text-neutral-500 uppercase block">Sheet ID:</span>
-                    <span className="text-neutral-300 truncate block">{src.spreadsheetId}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-neutral-500 uppercase block">Last Scanned:</span>
-                    <span className="text-neutral-300 block">{src.lastScanned}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-xl space-y-4">
-            <h2 className="text-sm font-mono uppercase tracking-widest text-white flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              <span>Connect Secondary Google Sheet</span>
-            </h2>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newName.trim() || !newSheetId.trim()) return;
-                setSources([
-                  ...sources,
-                  {
-                    id: `src-${Date.now()}`,
-                    name: newName,
-                    spreadsheetId: newSheetId,
-                    sheetName: newTab || "Sheet1",
-                    itemsCount: 0,
-                    lastScanned: "Never",
-                    status: "ACTIVE",
-                  },
-                ]);
-                setNewName("");
-                setNewSheetId("");
-              }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2"
-            >
+          {/* Scanner Control Hub */}
+          <div className="p-6 bg-neutral-900/90 border border-neutral-800 rounded-xl space-y-5 shadow-2xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Source Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. Secondary Finds Sheet"
-                  className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
-                />
+                <h2 className="text-base font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                  <span>Google Sheets Multi-Tab Ingestion Engine</span>
+                </h2>
+                <p className="text-xs font-mono text-neutral-400 mt-1">
+                  Extract pristine designer grails directly from curated community sheets, auto-verify link health, filter dead items, and ingest with Sugargoo affiliate tags.
+                </p>
               </div>
 
-              <div>
-                <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Spreadsheet ID
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newSheetId}
-                  onChange={(e) => setNewSheetId(e.target.value)}
-                  placeholder="e.g. 1BxiMVs0..."
-                  className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                  Sheet Tab Name
-                </label>
-                <input
-                  type="text"
-                  value={newTab}
-                  onChange={(e) => setNewTab(e.target.value)}
-                  placeholder="Sheet1"
-                  className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
-                />
-              </div>
-
-              <div className="sm:col-span-3 pt-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
                 <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors rounded"
+                  onClick={handleScanSheet}
+                  disabled={isScanningSheet}
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  ADD SPREADSHEET SOURCE
+                  {isScanningSheet ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Scanning Sheet...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 fill-black" />
+                      <span>Extract & Ingest Sheet</span>
+                    </>
+                  )}
                 </button>
               </div>
-            </form>
+            </div>
+
+            {/* Inputs & Settings Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-neutral-800/80">
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-mono uppercase text-neutral-400 flex items-center justify-between">
+                  <span>Google Sheet URL or ID</span>
+                  <span className="text-[10px] text-emerald-400/80">Auto-Detects All Tabs</span>
+                </label>
+                <input
+                  type="text"
+                  value={sheetUrlInput}
+                  onChange={(e) => setSheetUrlInput(e.target.value)}
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase text-neutral-400 block">
+                  Batch Extraction Limit
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[15, 25, 50, 100].map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setSheetLimit(l)}
+                      className={`py-2 text-xs font-mono rounded-lg transition-colors border ${
+                        sheetLimit === l
+                          ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold"
+                          : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Filter Pills & Link Health Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-mono uppercase text-neutral-500 mr-1">Filter Tabs:</span>
+                {[
+                  { id: "ALL", label: "All Tabs (1800+ Items)" },
+                  { id: "TOPS", label: "Tops & Jackets" },
+                  { id: "BOTTOMS", label: "Pants & Denim" },
+                  { id: "SHOES", label: "Shoes & Footwear" },
+                  { id: "OTHERS", label: "Accessories & Bags" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedSheetTab(t.id)}
+                    className={`px-3 py-1 text-xs font-mono rounded-md transition-colors border ${
+                      selectedSheetTab === t.id
+                        ? "bg-white text-black font-bold border-white"
+                        : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono text-neutral-300 bg-neutral-950 px-3 py-1.5 rounded-lg border border-neutral-800">
+                <input
+                  type="checkbox"
+                  checked={validateSheetLinks}
+                  onChange={(e) => setValidateSheetLinks(e.target.checked)}
+                  className="rounded border-neutral-700 bg-neutral-900 text-emerald-500 focus:ring-0"
+                />
+                <span>Auto-Filter Dead / 404 Links</span>
+              </label>
+            </div>
+
+            {/* Progress Bar & Live Status */}
+            {isScanningSheet && (
+              <div className="space-y-2 pt-3 border-t border-neutral-800 animate-in fade-in duration-200">
+                <div className="flex justify-between text-xs font-mono text-neutral-300">
+                  <span className="flex items-center gap-2 text-emerald-400">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{sheetScanProgress.phase}: {sheetScanProgress.item || sheetScanProgress.message}</span>
+                  </span>
+                  <span>{sheetScanProgress.percent}% ({sheetScanProgress.current}/{sheetScanProgress.total})</span>
+                </div>
+                <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-300 rounded-full"
+                    style={{ width: `${sheetScanProgress.percent}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Metrics & Registry Summary Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
+              <span className="text-[10px] font-mono uppercase text-neutral-500 block">Queue Ready</span>
+              <p className="text-xl font-mono font-bold text-white">{discoveredSheetItems.length} Grails</p>
+            </div>
+            <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
+              <span className="text-[10px] font-mono uppercase text-red-400 block">Dead Links Filtered</span>
+              <p className="text-xl font-mono font-bold text-red-400">{sheetStats.deadCount} OOS</p>
+            </div>
+            <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
+              <span className="text-[10px] font-mono uppercase text-emerald-400 block">Ingested to Live Store</span>
+              <p className="text-xl font-mono font-bold text-emerald-400">{sheetStats.ingestedCount} Pieces</p>
+            </div>
+            <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
+              <span className="text-[10px] font-mono uppercase text-neutral-500 block">Total Scanned Registry</span>
+              <p className="text-xl font-mono font-bold text-neutral-300">{sheetStats.totalRegistry} Tested</p>
+            </div>
+          </div>
+
+          {/* Live Streaming Terminal */}
+          {sheetLiveLogs.length > 0 && (
+            <div className="bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden shadow-2xl">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900/80 border-b border-neutral-800">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                    Google Sheet Live Extraction Stream
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowSheetTerminal(!showSheetTerminal)}
+                  className="text-neutral-400 hover:text-white p-1 rounded transition-colors"
+                >
+                  {showSheetTerminal ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {showSheetTerminal && (
+                <div className="p-4 font-mono text-[11px] text-neutral-300 max-h-48 overflow-y-auto space-y-1 bg-black/40">
+                  {sheetLiveLogs.map((log, idx) => (
+                    <div
+                      key={idx}
+                      className={
+                        log.includes("❌") || log.includes("[ERROR]")
+                          ? "text-red-400"
+                          : log.includes("✨") || log.includes("[AF_SHEET_RESULT]")
+                          ? "text-emerald-400 font-bold"
+                          : "text-neutral-400"
+                      }
+                    >
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Moderation Queue Header & Batch Bar */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-3">
+              <div>
+                <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                  <span>Discovered Healthy Grails Queue ({discoveredSheetItems.length})</span>
+                </h3>
+                <p className="text-xs font-mono text-neutral-500">
+                  Review extracted community pieces, inspect images, or 1-click batch ingest to live catalog.
+                </p>
+              </div>
+
+              {discoveredSheetItems.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      if (selectedSheetItemIds.size === discoveredSheetItems.length) {
+                        setSelectedSheetItemIds(new Set());
+                      } else {
+                        setSelectedSheetItemIds(new Set(discoveredSheetItems.map((it) => it.id)));
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-xs font-mono rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    {selectedSheetItemIds.size === discoveredSheetItems.length ? (
+                      <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Square className="w-3.5 h-3.5 text-neutral-500" />
+                    )}
+                    <span>
+                      {selectedSheetItemIds.size === discoveredSheetItems.length ? "Deselect All" : "Select All"}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={handleBatchIngestSelectedSheets}
+                    disabled={selectedSheetItemIds.size === 0 || isBatchIngesting}
+                    className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>
+                      {isBatchIngesting
+                        ? "Ingesting..."
+                        : `Ingest Selected (${selectedSheetItemIds.size})`}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Queue Search & Category Filters */}
+            {discoveredSheetItems.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={sheetSearch}
+                    onChange={(e) => setSheetSearch(e.target.value)}
+                    placeholder="Search discovered grails by brand or title..."
+                    className="w-full pl-9 pr-4 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-neutral-600"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                  {["ALL", "Outerwear", "Hoodies", "T-Shirts", "Pants", "Denim", "Footwear", "Accessories"].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSheetFilter(cat)}
+                      className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-colors whitespace-nowrap border ${
+                        sheetFilter === cat
+                          ? "bg-white text-black font-bold border-white"
+                          : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Discovered Items Grid */}
+            {discoveredSheetItems.length === 0 ? (
+              <div className="p-12 text-center bg-neutral-900/50 border border-neutral-800 rounded-xl space-y-3">
+                <FileSpreadsheet className="w-8 h-8 text-neutral-600 mx-auto" />
+                <h4 className="font-mono text-sm font-bold text-white uppercase tracking-wider">
+                  No Discovered Sheet Finds in Queue
+                </h4>
+                <p className="font-mono text-xs text-neutral-500 max-w-md mx-auto">
+                  Click &quot;Extract & Ingest Sheet&quot; above to scan the community Google Sheet tabs and populate healthy, active pieces automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {discoveredSheetItems
+                  .filter((it) => {
+                    if (sheetFilter !== "ALL" && it.category !== sheetFilter) return false;
+                    if (sheetSearch.trim()) {
+                      const q = sheetSearch.toLowerCase();
+                      return (
+                        it.title.toLowerCase().includes(q) ||
+                        it.brand.toLowerCase().includes(q)
+                      );
+                    }
+                    return true;
+                  })
+                  .map((item) => {
+                    const isSelected = selectedSheetItemIds.has(item.id);
+                    const isBusy = sheetActionLoadingId === item.id;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`group p-4 bg-neutral-900/90 border rounded-xl space-y-4 transition-all duration-200 hover:border-neutral-700 flex flex-col justify-between ${
+                          isSelected ? "border-emerald-500/80 bg-emerald-950/10" : "border-neutral-800"
+                        }`}
+                      >
+                        <div className="space-y-3">
+                          {/* Image Container & Selection Badge */}
+                          <div className="relative aspect-square bg-neutral-950 rounded-lg overflow-hidden border border-neutral-800/80 flex items-center justify-center p-2 group-hover:border-neutral-700 transition-colors">
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.title}
+                                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="text-neutral-600 text-xs font-mono flex flex-col items-center gap-1">
+                                <ImagePlus className="w-6 h-6" />
+                                <span>No Photo</span>
+                              </div>
+                            )}
+
+                            {/* Select Checkbox */}
+                            <button
+                              onClick={() => {
+                                setSelectedSheetItemIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(item.id)) next.delete(item.id);
+                                  else next.add(item.id);
+                                  return next;
+                                });
+                              }}
+                              className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-md rounded-md border border-neutral-700 text-white hover:bg-black transition-colors"
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-emerald-400" />
+                              ) : (
+                                <Square className="w-4 h-4 text-neutral-400" />
+                              )}
+                            </button>
+
+                            {/* Tab Badge */}
+                            {(item as any).sheetTab && (
+                              <span className="absolute top-2 right-2 px-2 py-0.5 bg-neutral-900/80 backdrop-blur-md border border-neutral-700 text-[10px] font-mono text-neutral-300 rounded">
+                                {(item as any).sheetTab}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Item Details */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold truncate">
+                                {item.brand}
+                              </span>
+                              <span className="text-xs font-mono font-bold text-white whitespace-nowrap">
+                                ${item.sourcePrice?.toFixed(2) || "49.00"}
+                              </span>
+                            </div>
+                            <h4 className="font-mono text-xs font-bold text-white line-clamp-2 leading-relaxed">
+                              {item.title}
+                            </h4>
+                            <div className="flex items-center gap-2 pt-1 text-[10px] font-mono text-neutral-500">
+                              <span className="px-1.5 py-0.5 bg-neutral-950 border border-neutral-800 rounded text-neutral-400">
+                                {item.category}
+                              </span>
+                              {(item as any).priceCNY && (
+                                <span>¥{(item as any).priceCNY}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="pt-3 border-t border-neutral-800/80 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <a
+                              href={item.affiliateLink || item.sugargooUrl || normalizeSugargooLink(item.rawMarketUrl || "")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Test Link</span>
+                            </a>
+
+                            <button
+                              onClick={() => {
+                                setEditingItem({
+                                  ...item,
+                                  rawMarketUrl: item.rawMarketUrl || (item as any).directStoreLink || "",
+                                });
+                                setEditFormData({
+                                  title: item.title,
+                                  brand: item.brand,
+                                  category: item.category,
+                                  season: (item as any).season || "",
+                                  price: item.sourcePrice || 49.0,
+                                  estimatedRetail: item.estimatedRetail || (item.sourcePrice ? item.sourcePrice * 8.5 : 450),
+                                  tags: `${item.brand}, ${item.category}, archive, grail`,
+                                  rawMarketUrl: item.rawMarketUrl || (item as any).directStoreLink || "",
+                                });
+                                setSelectedImageSrc(item.imageUrl || item.localImage || "");
+                              }}
+                              className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
+                            >
+                              <SlidersHorizontal className="w-3 h-3 text-emerald-400" />
+                              <span>Review & Studio</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              onClick={() => handleQuickIngestSingleSheet(item)}
+                              disabled={isBusy}
+                              className="col-span-2 px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/80 font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            >
+                              <Zap className="w-3 h-3" />
+                              <span>{isBusy ? "Ingesting..." : "1-Click Ingest"}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleDismissSheetItem(item.id, item.rawMarketUrl || "", "blacklist")}
+                              disabled={isBusy}
+                              className="px-2 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-800/80 font-mono text-[11px] rounded-lg transition-colors flex items-center justify-center gap-1"
+                              title="Dismiss & Blacklist from future sheet scans"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Skip</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
       )}

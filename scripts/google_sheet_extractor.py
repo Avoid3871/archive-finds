@@ -1,0 +1,511 @@
+import sys
+import os
+import re
+import json
+import csv
+import io
+import time
+import urllib.parse
+import urllib.request
+import asyncio
+from datetime import datetime, timezone
+from bs4 import BeautifulSoup
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+CATALOG_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "lib", "products", "sheetProducts.json")
+REGISTRY_PATH = os.path.join(os.path.dirname(__file__), "..", "scratch", "sheet_ingestion_registry.json")
+DISCOVERED_QUEUE_PATH = os.path.join(os.path.dirname(__file__), "..", "scratch", "discovered_sheet_finds.json")
+
+SUGARGOO_AFFILIATE_ID = "1325437696506389977"
+DEFAULT_EXCHANGE_RATE = 0.14815  # 1 CNY = 0.14815 USD (1 USD = 6.75 CNY)
+
+def clean_url(url: str) -> str:
+    if not url:
+        return ""
+    url = url.strip()
+    # If wrapped in google redirect url: https://www.google.com/url?q=...
+    if "google.com/url?q=" in url:
+        parsed = urllib.parse.urlparse(url)
+        params = urllib.parse.parse_qs(parsed.query)
+        if "q" in params:
+            url = params["q"][0]
+    return url.strip()
+
+def normalize_sugargoo_link(raw_url: str) -> str:
+    raw_url = clean_url(raw_url)
+    if not raw_url:
+        return ""
+    encoded = urllib.parse.quote(raw_url, safe="")
+    return f"https://www.sugargoo.com/products?productLink={encoded}&memberId={SUGARGOO_AFFILIATE_ID}"
+
+def parse_price(val: str, default_usd: float = 45.0) -> float:
+    if not val:
+        return default_usd
+    cleaned = re.sub(r'[^\d.]', '', str(val).replace(',', ''))
+    try:
+        f = float(cleaned)
+        return round(f, 2) if f > 0 else default_usd
+    except Exception:
+        return default_usd
+
+def load_registry() -> dict:
+    if os.path.exists(REGISTRY_PATH):
+        try:
+            with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "processed_links": {},  # raw_url -> { status: "INGESTED"|"DEAD"|"SKIPPED", timestamp: "..." }
+        "blacklisted_links": [],
+        "last_offset_by_tab": {},
+        "sheet_stats": {}
+    }
+
+def save_registry(registry: dict):
+    os.makedirs(os.path.dirname(REGISTRY_PATH), exist_ok=True)
+    with open(REGISTRY_PATH, "w", encoding="utf-8") as f:
+        json.dump(registry, f, indent=2, ensure_ascii=False)
+
+def load_catalog_links() -> set:
+    links = set()
+    if os.path.exists(CATALOG_PATH):
+        try:
+            with open(CATALOG_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for item in data:
+                    for k in ["directStoreLink", "directLink", "sourceLink", "sugargooUrl", "affiliateUrl"]:
+                        v = item.get(k)
+                        if v:
+                            cleaned = clean_url(v).lower()
+                            links.add(cleaned)
+                            # Also add raw market link parsed out of sugargooUrl
+                            if "productLink=" in cleaned or "productUrl=" in cleaned:
+                                try:
+                                    parsed = urllib.parse.urlparse(cleaned)
+                                    qs = urllib.parse.parse_qs(parsed.query)
+                                    raw = qs.get("productLink", qs.get("productUrl", [""]))[0]
+                                    if raw:
+                                        links.add(raw.lower())
+                                except Exception:
+                                    pass
+        except Exception:
+            pass
+    return links
+
+def map_category(tab_name: str, item_title: str) -> str:
+    tab_upper = tab_name.upper()
+    title_upper = item_title.upper()
+    
+    if "SHOE" in tab_upper or "FOOTWEAR" in tab_upper or "SNEAKER" in tab_upper:
+        return "Footwear"
+    if "BOTTOM" in tab_upper or "PANT" in tab_upper or "JEAN" in tab_upper:
+        if "JEAN" in title_upper or "DENIM" in title_upper:
+            return "Denim"
+        return "Pants"
+    if "TOP" in tab_upper:
+        if "JACKET" in title_upper or "COAT" in title_upper or "PUFFER" in title_upper or "BLAZER" in title_upper or "BOMBER" in title_upper or "PARKA" in title_upper or "ANORAK" in title_upper:
+            return "Outerwear"
+        if "HOODIE" in title_upper or "SWEATSHIRT" in title_upper or "ZIP" in title_upper or "KNIT" in title_upper or "CARDIGAN" in title_upper or "SWEATER" in title_upper:
+            return "Hoodies"
+        if "TEE" in title_upper or "T-SHIRT" in title_upper or "SHIRT" in title_upper or "TOP" in title_upper:
+            return "T-Shirts"
+        return "Outerwear"
+    if "ACCESSOR" in tab_upper or "OTHER" in tab_upper or "BAG" in tab_upper:
+        if "BAG" in title_upper or "BACKPACK" in title_upper or "TOTE" in title_upper:
+            return "Bags"
+        if "RING" in title_upper or "NECKLACE" in title_upper or "BRACELET" in title_upper or "CHAIN" in title_upper:
+            return "Jewelry"
+        return "Accessories"
+    return "Outerwear"
+
+async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, str]:
+    """Test marketplace link live availability without paid APIs."""
+    raw_url = clean_url(raw_url)
+    if not raw_url or not raw_url.startswith("http"):
+        return False, "Invalid or missing URL"
+    
+    # Fast heuristic check for obvious sold out notes
+    if "sold out" in raw_url.lower() or "deleted" in raw_url.lower():
+        return False, "Marked sold out"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
+    }
+
+    async with sem:
+        loop = asyncio.get_event_loop()
+        def fetch():
+            try:
+                req = urllib.request.Request(raw_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    code = resp.getcode()
+                    body = resp.read().decode('utf-8', errors='ignore')
+                    return code, body
+            except urllib.error.HTTPError as e:
+                return e.code, ""
+            except Exception as e:
+                # Some sites block generic requests, treat as potentially ok if domain resolves
+                return 200, ""
+
+        status_code, text = await loop.run_in_executor(None, fetch)
+        
+        if status_code in [404, 410]:
+            return False, f"HTTP {status_code} Page Not Found"
+            
+        delisted_keywords = [
+            "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
+            "item deleted", "404 Not Found", "此商品不存在", "已下架", "该宝贝不存在",
+            "卖家已下架", "商品不存在或已被删除"
+        ]
+        if any(kw in text for kw in delisted_keywords):
+            return False, "Seller delisted or item out of stock"
+            
+        return True, "Active"
+
+def discover_tabs_from_sheet(sheet_id: str) -> list[dict]:
+    """Dynamically discover all tabs in a Google Sheet."""
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/htmlview"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            html = resp.read().decode('utf-8')
+    except Exception as e:
+        print(f"[ERROR] Failed to discover sheet tabs: {e}", file=sys.stderr)
+        return []
+
+    pattern = r'items\.push\(\{\s*name:\s*"([^"]+)",\s*pageUrl:\s*"([^"]+)",\s*gid:\s*"([^"]+)"'
+    matches = re.findall(pattern, html)
+    tabs = []
+    for name, page_url, gid in matches:
+        if name.upper() not in ["CHANGELOG", "README", "INFO", "RESOURCES"]:
+            tabs.append({
+                "name": name,
+                "gid": gid,
+                "url": f"https://docs.google.com/spreadsheets/d/{sheet_id}/htmlview/sheet?headers=true&gid={gid}"
+            })
+    return tabs
+
+async def extract_sheet_pipeline(
+    sheet_id_or_url: str,
+    selected_tab_names: list[str] = None,
+    batch_limit: int = 25,
+    validate_links: bool = True,
+    max_concurrency: int = 10
+):
+    start_time = time.time()
+    
+    # Extract sheet ID
+    sheet_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheet_id_or_url)
+    sheet_id = sheet_id_match.group(1) if sheet_id_match else sheet_id_or_url.strip()
+    
+    print(f"[AF_SHEET_LOG] Initializing Google Sheet extractor for ID: {sheet_id}")
+    
+    tabs = discover_tabs_from_sheet(sheet_id)
+    if not tabs:
+        print(f"[AF_SHEET_LOG] No product tabs discovered. Check sheet permissions or URL.")
+        return
+        
+    print(f"[AF_SHEET_LOG] Discovered {len(tabs)} product tabs: {', '.join([t['name'] for t in tabs])}")
+    
+    registry = load_registry()
+    catalog_links = load_catalog_links()
+    
+    if selected_tab_names:
+        tabs_to_process = [t for t in tabs if t["name"].upper() in [st.upper() for st in selected_tab_names]]
+    else:
+        tabs_to_process = tabs
+
+    total_extracted = 0
+    discovered_healthy_items = []
+    sem = asyncio.Semaphore(max_concurrency)
+    
+    # Load existing discovered queue to merge or append
+    existing_queue = []
+    if os.path.exists(DISCOVERED_QUEUE_PATH):
+        try:
+            with open(DISCOVERED_QUEUE_PATH, "r", encoding="utf-8") as f:
+                existing_queue = json.load(f)
+        except Exception:
+            pass
+            
+    existing_queue_links = {clean_url(it.get("rawMarketUrl", "")).lower() for it in existing_queue}
+
+    total_scanned_count = 0
+    dead_filtered_count = 0
+    already_cataloged_count = 0
+
+    for tab in tabs_to_process:
+        if total_extracted >= batch_limit:
+            break
+            
+        tab_name = tab["name"]
+        gid = tab["gid"]
+        print(f"\n[AF_SHEET_LOG] 📂 Scanning Tab: '{tab_name}' (gid: {gid})...")
+        
+        # We fetch the HTML sheet view to extract embedded images AND clean columns
+        tab_html_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/htmlview/sheet?headers=true&gid={gid}"
+        try:
+            req = urllib.request.Request(tab_html_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                tab_html = resp.read().decode('utf-8')
+        except Exception as e:
+            print(f"[AF_SHEET_LOG] Failed to fetch HTML for tab {tab_name}: {e}")
+            continue
+
+        soup = BeautifulSoup(tab_html, 'html.parser')
+        tr_elements = soup.find_all('tr')
+        print(f"[AF_SHEET_LOG] Total table rows in '{tab_name}': {len(tr_elements)}")
+
+        # Find header indices
+        header_row = None
+        img_col = 0
+        link_col = 1
+        brand_col = 2
+        name_col = 3
+        price_usd_col = 4
+        price_cny_col = 5
+        qc_col = 7
+        
+        candidates = []
+        for r_idx, tr in enumerate(tr_elements):
+            tds = tr.find_all(['td', 'th'])
+            row_texts = [td.get_text().strip().upper() for td in tds]
+            if not row_texts or len(row_texts) < 3:
+                continue
+                
+            # Check if this row is the header
+            if "BRAND" in row_texts or "ITEM NAME" in row_texts or "PRICE" in " ".join(row_texts):
+                header_row = r_idx
+                for idx, t in enumerate(row_texts):
+                    if "IMAGE" in t:
+                        img_col = idx
+                    elif "LINK" in t or "FIND" in t or "URL" in t:
+                        link_col = idx
+                    elif "BRAND" in t:
+                        brand_col = idx
+                    elif "ITEM" in t or "NAME" in t or "PIECE" in t or "MODEL" in t:
+                        name_col = idx
+                    elif "USD" in t or "PRICE ($)" in t:
+                        price_usd_col = idx
+                    elif "CNY" in t or "RMB" in t or "PRICE (¥)" in t:
+                        price_cny_col = idx
+                    elif "QC" in t or "QUALITY" in t:
+                        qc_col = idx
+                continue
+
+            if header_row is None:
+                continue
+
+            # Extract row cells
+            cell_texts = [td.get_text().strip() for td in tds]
+            if len(cell_texts) <= max(link_col, name_col):
+                continue
+                
+            # Extract links in row
+            links_in_row = []
+            for a in tr.find_all('a', href=True):
+                c_url = clean_url(a['href'])
+                if "taobao.com" in c_url or "weidian.com" in c_url or "1688.com" in c_url or "tmall.com" in c_url:
+                    links_in_row.append(c_url)
+                    
+            raw_market_url = links_in_row[0] if links_in_row else (cell_texts[link_col] if len(cell_texts) > link_col else "")
+            raw_market_url = clean_url(raw_market_url)
+            
+            if not raw_market_url or not raw_market_url.startswith("http"):
+                continue
+
+            # Check images in row
+            imgs_in_row = []
+            for img in tr.find_all('img', src=True):
+                img_src = img['src']
+                # Upgrade Google Sheets resolution
+                if "sheets-images-rt" in img_src:
+                    img_src = re.sub(r'=w\d+-h\d+', '=w1000-h1000', img_src)
+                imgs_in_row.append(img_src)
+                
+            image_url = imgs_in_row[0] if imgs_in_row else ""
+            if not image_url and len(cell_texts) > img_col and cell_texts[img_col].startswith("http"):
+                image_url = cell_texts[img_col]
+
+            raw_brand = cell_texts[brand_col] if len(cell_texts) > brand_col else "Archive Collection"
+            raw_name = cell_texts[name_col] if len(cell_texts) > name_col else "Grail Piece"
+            
+            # Clean brand tags
+            is_sold_out = "[SOLD OUT]" in raw_brand.upper() or "[SOLD OUT]" in raw_name.upper()
+            clean_brand = re.sub(r'\[.*?\]', '', raw_brand).strip()
+            clean_title = re.sub(r'\[.*?\]', '', raw_name).strip()
+            
+            if not clean_brand:
+                clean_brand = "Archive Collection"
+            if not clean_title:
+                clean_title = raw_name or "Grail Item"
+
+            price_usd_str = cell_texts[price_usd_col] if len(cell_texts) > price_usd_col else ""
+            price_cny_str = cell_texts[price_cny_col] if len(cell_texts) > price_cny_col else ""
+            
+            price_usd = parse_price(price_usd_str, default_usd=49.0)
+            price_cny = parse_price(price_cny_str, default_usd=round(price_usd / DEFAULT_EXCHANGE_RATE, 2))
+            
+            estimated_retail = round(price_usd * 8.5, 2)
+            category = map_category(tab_name, clean_title)
+            
+            qc_link = ""
+            if len(cell_texts) > qc_col:
+                qc_link = cell_texts[qc_col]
+            for a in tr.find_all('a', href=True):
+                if "imgur.com" in a['href'] or "reddit.com" in a['href']:
+                    qc_link = clean_url(a['href'])
+                    break
+
+            candidates.append({
+                "tab": tab_name,
+                "raw_market_url": raw_market_url,
+                "brand": clean_brand,
+                "title": clean_title,
+                "price_usd": price_usd,
+                "price_cny": price_cny,
+                "estimated_retail": estimated_retail,
+                "category": category,
+                "image_url": image_url,
+                "qc_link": qc_link,
+                "is_sold_out_flag": is_sold_out
+            })
+
+        print(f"[AF_SHEET_LOG] Extracted {len(candidates)} candidate items from '{tab_name}'. Checking registry & dead links...")
+
+        # Process candidates
+        for c in candidates:
+            if total_extracted >= batch_limit:
+                break
+                
+            raw_url_lower = c["raw_market_url"].lower()
+            total_scanned_count += 1
+            
+            # 1. Check if already in live catalog
+            if raw_url_lower in catalog_links:
+                already_cataloged_count += 1
+                continue
+                
+            # 2. Check if already processed / blacklisted in registry
+            if raw_url_lower in registry["processed_links"] or raw_url_lower in registry["blacklisted_links"]:
+                status = registry["processed_links"].get(raw_url_lower, {}).get("status", "BLACKLISTED")
+                if status in ["INGESTED", "DEAD", "SKIPPED"]:
+                    continue
+
+            # 3. Check if already in current queue
+            if raw_url_lower in existing_queue_links:
+                continue
+
+            # 4. Check if marked sold out in sheet
+            if c["is_sold_out_flag"]:
+                registry["processed_links"][raw_url_lower] = {
+                    "status": "DEAD",
+                    "reason": "Marked Sold Out in Sheet",
+                    "testedAt": datetime.now(timezone.utc).isoformat()
+                }
+                dead_filtered_count += 1
+                continue
+
+            # 5. Link Health Live Validation
+            if validate_links:
+                is_alive, reason = await check_link_alive(c["raw_market_url"], sem)
+                if not is_alive:
+                    registry["processed_links"][raw_url_lower] = {
+                        "status": "DEAD",
+                        "reason": reason,
+                        "testedAt": datetime.now(timezone.utc).isoformat()
+                    }
+                    dead_filtered_count += 1
+                    print(f"  ❌ Filtered Dead Link: {c['brand']} - {c['title']} ({reason})")
+                    continue
+
+            # 6. Item is Healthy & Unique!
+            total_extracted += 1
+            slug_base = f"{c['brand']}-{c['title']}".lower()
+            slug = re.sub(r'[^a-z0-9]+', '-', slug_base).strip('-')
+            
+            affiliate_url = normalize_sugargoo_link(c["raw_market_url"])
+            
+            item_data = {
+                "id": f"sheet-{int(time.time()*1000)}-{total_extracted}",
+                "title": c["title"],
+                "brand": c["brand"],
+                "category": c["category"],
+                "sourcePrice": c["price_usd"],
+                "priceCNY": c["price_cny"],
+                "estimatedRetail": c["estimated_retail"],
+                "sugargooUrl": affiliate_url,
+                "affiliateLink": affiliate_url,
+                "rawMarketUrl": c["raw_market_url"],
+                "directStoreLink": c["raw_market_url"],
+                "imageUrl": c["image_url"],
+                "localImage": c["image_url"],
+                "rawImageSrc": c["image_url"],
+                "slug": slug,
+                "status": "APPROVED_HEALTHY",
+                "qcLink": c["qc_link"],
+                "sheetTab": c["tab"],
+                "discoveredAt": datetime.now(timezone.utc).isoformat()
+            }
+            
+            discovered_healthy_items.append(item_data)
+            existing_queue_links.add(raw_url_lower)
+            
+            # Streaming progress event
+            progress_payload = {
+                "current": total_extracted,
+                "total": batch_limit,
+                "percent": min(100, int((total_extracted / batch_limit) * 100)),
+                "foundCount": total_extracted,
+                "deadCount": dead_filtered_count,
+                "item": f"{c['brand']} - {c['title']}",
+                "phase": f"SCANNING ({tab_name})"
+            }
+            print(f"[AF_SHEET_PROGRESS] {json.dumps(progress_payload)}")
+            print(f"  ✨ Found Healthy Grail: {c['brand']} - {c['title']} (${c['price_usd']} | {c['category']})")
+
+    # Save registry
+    save_registry(registry)
+    
+    # Merge newly discovered items into queue
+    combined_queue = existing_queue + discovered_healthy_items
+    os.makedirs(os.path.dirname(DISCOVERED_QUEUE_PATH), exist_ok=True)
+    with open(DISCOVERED_QUEUE_PATH, "w", encoding="utf-8") as f:
+        json.dump(combined_queue, f, indent=2, ensure_ascii=False)
+        
+    duration = round(time.time() - start_time, 2)
+    summary = {
+        "success": True,
+        "newFound": len(discovered_healthy_items),
+        "totalQueue": len(combined_queue),
+        "totalScanned": total_scanned_count,
+        "deadFiltered": dead_filtered_count,
+        "alreadyCataloged": already_cataloged_count,
+        "durationSeconds": duration,
+        "items": discovered_healthy_items
+    }
+    
+    print(f"\n[AF_SHEET_RESULT] {json.dumps(summary)}")
+    print(f"[AF_SHEET_LOG] Ingestion batch complete in {duration}s. {len(discovered_healthy_items)} healthy grails queued for moderation.")
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Google Sheet Multi-Tab Ingestion & Dead Link Filtration Engine")
+    parser.add_argument("sheet_url", nargs="?", default="https://docs.google.com/spreadsheets/d/1tA1QwceEtsyzXtUN6mHewhuTdoSaOKIaTL9PqGotKsI/", help="Google Sheet URL or ID")
+    parser.add_argument("--tabs", nargs="*", default=None, help="Specific tabs to scan (e.g. TOPS BOTTOMS SHOES)")
+    parser.add_argument("--limit", type=int, default=15, help="Batch limit")
+    parser.add_argument("--no-validate", action="store_true", help="Skip live link health checking")
+    parser.add_argument("--concurrency", type=int, default=8, help="Async validation concurrency")
+    
+    args = parser.parse_args()
+    asyncio.run(extract_sheet_pipeline(
+        sheet_id_or_url=args.sheet_url,
+        selected_tab_names=args.tabs,
+        batch_limit=args.limit,
+        validate_links=not args.no_validate,
+        max_concurrency=args.concurrency
+    ))
