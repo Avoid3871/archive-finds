@@ -2856,5 +2856,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "115",
+    "title": "KAPITAL - GAUDY SWEATER",
+    "name": "KAPITAL - GAUDY SWEATER",
+    "brand": "KAPITAL",
+    "brandSlug": "kapital",
+    "category": "Hoodies",
+    "categorySlug": "hoodies",
+    "season": "",
+    "price": 70.89,
+    "sourcePrice": 70.89,
+    "estimatedRetail": 602.57,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=611010678704",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D611010678704&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D611010678704&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D611010678704&memberId=1325437696506389977",
+    "imageUrl": "/products/kapital-gaudy-sweater-5899.png",
+    "localImage": "/products/kapital-gaudy-sweater-5899.png",
+    "slug": "kapital-gaudy-sweater-5899",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
