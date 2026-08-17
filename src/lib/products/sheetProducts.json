@@ -2806,5 +2806,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "113",
+    "title": "SOA - PUFFER JACKET",
+    "name": "SOA - PUFFER JACKET",
+    "brand": "SOA",
+    "brandSlug": "soa",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 110.93,
+    "sourcePrice": 110.93,
+    "estimatedRetail": 942.91,
+    "directStoreLink": "https://item.taobao.com/item.htm?id=691875026787",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691875026787&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691875026787&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D691875026787&memberId=1325437696506389977",
+    "imageUrl": "/products/soa-puffer-jacket-5689.png",
+    "localImage": "/products/soa-puffer-jacket-5689.png",
+    "slug": "soa-puffer-jacket-5689",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
