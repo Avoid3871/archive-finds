@@ -615,7 +615,7 @@ export default function AdminSourcesPage() {
           price: editFormData.price,
           estimatedRetail: editFormData.estimatedRetail,
           rawImageSrc: editingItem.rawImageSrc,
-          localImage: editingItem.localImage || editingItem.imageUrl,
+          localImage: selectedImageSrc || editingItem.localImage || editingItem.imageUrl,
           rotation: editRotation,
         }),
       });
@@ -623,7 +623,7 @@ export default function AdminSourcesPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Remove from moderation queue
+        // Remove from Reddit moderation queue
         const params = new URLSearchParams({
           slug: editingItem.slug,
           rawMarketUrl: editingItem.rawMarketUrl || "",
@@ -631,16 +631,27 @@ export default function AdminSourcesPage() {
         });
         await fetch(`/api/admin/reddit-scanner?${params.toString()}`, {
           method: "DELETE",
-        });
+        }).catch(() => {});
 
-        // Optimistically remove from state
-        setDiscoveredItems((prev) => prev.filter((i) => i.slug !== editingItem.slug));
+        // Remove from Google Sheet moderation queue & update registry
+        const sheetRawUrl = editingItem.rawMarketUrl || (editingItem as any).directStoreLink || "";
+        await fetch(
+          `/api/admin/sheet-scanner?id=${editingItem.id}&rawMarketUrl=${encodeURIComponent(sheetRawUrl)}&action=dismiss`,
+          { method: "DELETE" }
+        ).catch(() => {});
+
+        // Optimistically remove from both Reddit & Google Sheet state
+        setDiscoveredItems((prev) => prev.filter((i) => i.slug !== editingItem.slug && i.id !== editingItem.id));
+        setDiscoveredSheetItems((prev) =>
+          prev.filter((i) => i.slug !== editingItem.slug && i.id !== editingItem.id && i.title !== editingItem.title)
+        );
+        fetchDiscoveredSheet();
         
         const actualSlug = data.slug || editingItem.slug;
         const toastItem = {
           title: `${editFormData.brand} - ${editFormData.title}`,
           slug: actualSlug,
-          imageUrl: data.imageUrl || editingItem.localImage || editingItem.imageUrl,
+          imageUrl: data.imageUrl || selectedImageSrc || editingItem.localImage || editingItem.imageUrl,
         };
         setSuccessToast(toastItem);
         try {
@@ -1244,10 +1255,12 @@ export default function AdminSourcesPage() {
   };
 
   const handleDismissPiece = async (item: DiscoveredItem) => {
-    // Optimistic UI update
-    setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug));
+    // Optimistic UI update for both queues
+    setDiscoveredItems((prev) => prev.filter((i) => i.slug !== item.slug && i.id !== item.id));
+    setDiscoveredSheetItems((prev) => prev.filter((i) => i.slug !== item.slug && i.id !== item.id && i.title !== item.title));
 
     try {
+      // 1. Reddit cleanup
       const params = new URLSearchParams({
         slug: item.slug,
         rawMarketUrl: item.rawMarketUrl || "",
@@ -1255,7 +1268,16 @@ export default function AdminSourcesPage() {
       });
       await fetch(`/api/admin/reddit-scanner?${params.toString()}`, {
         method: "DELETE",
-      });
+      }).catch(() => {});
+
+      // 2. Sheet cleanup
+      const sheetRawUrl = item.rawMarketUrl || (item as any).directStoreLink || "";
+      await fetch(
+        `/api/admin/sheet-scanner?id=${item.id}&rawMarketUrl=${encodeURIComponent(sheetRawUrl)}&action=dismiss`,
+        { method: "DELETE" }
+      ).catch(() => {});
+
+      fetchDiscoveredSheet();
     } catch (e) {
       console.error("Failed to blacklist dismissed item:", e);
     }

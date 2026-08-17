@@ -78,17 +78,30 @@ def ingest(payload_file: str):
     local_img = f"/products/{slug}.png"
     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
 
-    existing_img = data.get("localImage", "") or data.get("imageUrl", "")
-    existing_full_path = os.path.join(os.path.dirname(__file__), "..", "public", existing_img.lstrip("/")) if existing_img else ""
+    existing_img = (data.get("localImage", "") or data.get("imageUrl", "") or data.get("selectedImageSrc", "")).strip()
+    clean_rel = existing_img.lstrip("/\\")
+    existing_full_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "public", clean_rel)) if clean_rel else ""
 
-    if existing_full_path and os.path.exists(existing_full_path):
-        import shutil
-        if os.path.abspath(existing_full_path) != os.path.abspath(out_png):
+    if existing_full_path and os.path.exists(existing_full_path) and os.path.isfile(existing_full_path):
+        try:
+            with Image.open(existing_full_path) as im:
+                im_rgba = im.convert("RGBA")
+                # If image has no alpha or is from sheet preview, remove background with rembg
+                ext = os.path.splitext(existing_full_path)[1].lower()
+                if ext in [".jpg", ".jpeg", ".webp"] or "sheet_previews" in existing_full_path:
+                    print(f"[REMBG STUDIO] Removing background from preview: {existing_img}...", flush=True)
+                    cutout = rembg.remove(im_rgba)
+                    cutout.save(out_png, "PNG")
+                else:
+                    im_rgba.save(out_png, "PNG")
+            print(f"[REUSE CUTOUT] Successfully saved studio cutout to: {local_img}", flush=True)
+        except Exception as e:
+            print(f"[IMAGE PROCESS WARN] {e}, falling back to copy", flush=True)
             try:
+                import shutil
                 shutil.copy2(existing_full_path, out_png)
-            except Exception as e:
-                print(f"[COPY WARN] {e}", flush=True)
-        print(f"[REUSE CUTOUT] Using verified pre-generated studio cutout: {existing_img}", flush=True)
+            except Exception as copy_err:
+                print(f"[COPY WARN] {copy_err}", flush=True)
     else:
         search_query = f"{brand} {title}"
         print(f"Generating AI cutout from market source...", flush=True)
@@ -97,10 +110,9 @@ def ingest(payload_file: str):
     rotation = int(data.get("rotation", 0))
     if rotation % 360 != 0 and os.path.exists(out_png):
         try:
-            from PIL import Image
-            img = Image.open(out_png)
-            rotated = img.rotate((360 - rotation) % 360, expand=True)
-            rotated.save(out_png)
+            with Image.open(out_png) as img:
+                rotated = img.rotate((360 - rotation) % 360, expand=True)
+                rotated.save(out_png, "PNG")
             print(f"[ROTATION] Rotated studio cutout by {rotation}° clockwise.", flush=True)
         except Exception as e:
             print(f"[ROTATION ERROR] Could not rotate image: {e}", flush=True)

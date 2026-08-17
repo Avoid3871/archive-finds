@@ -1,10 +1,10 @@
 import { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug, getAllProducts } from "@/lib/products/mockData";
 import { ProductDetailActions } from "@/components/products/ProductDetailActions";
 import { ProductCard } from "@/components/products/ProductCard";
+import { ProductHeroImage } from "@/components/products/ProductHeroImage";
 import { ArrowLeft } from "lucide-react";
 
 interface ProductPageProps {
@@ -81,25 +81,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {/* Main Product Showcase Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-        {/* Left Col: High-Res Image Display */}
+        {/* Left Col: High-Res Studio Image Display */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-[3/4] w-full bg-neutral-50 border border-neutral-200 overflow-hidden">
-            <Image
-              src={product.imageUrl || "/placeholder-fashion.svg"}
-              alt={`${product.brand} - ${product.name}`}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-contain p-6"
-            />
-            {product.isRare && (
-              <div className="absolute top-4 left-4">
-                <span className="px-2.5 py-1 bg-black text-white text-[10px] font-mono tracking-widest uppercase font-bold">
-                  RARE ARCHIVE
-                </span>
-              </div>
-            )}
-          </div>
+          <ProductHeroImage
+            imageUrl={product.imageUrl}
+            brand={product.brand}
+            name={product.name}
+            slug={product.slug}
+            isRare={product.isRare}
+          />
         </div>
 
         {/* Right Col: Editorial Details & Conversion Engine */}
