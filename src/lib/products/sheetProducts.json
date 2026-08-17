@@ -2756,5 +2756,28 @@
       "TOPS"
     ],
     "createdAt": "2026-08-17T12:33:14.280Z"
+  },
+  {
+    "id": "111",
+    "title": "A/W 2019 DAMASK FLEECE",
+    "brand": "KAPITAL",
+    "category": "Outerwear",
+    "price": 49.98,
+    "priceUSD": 49.98,
+    "priceCNY": 337,
+    "estimatedRetail": 424.83,
+    "imageUrl": "https://docs.google.com/sheets-images-rt/ADAzV4QGnhhKZea5KZdRtukqovr4_PLMXlCakj91yjDaQ30DskcVLiLsgBQOd3fXxZfE5xldkRG0p7EZwRUO8IPyGo0LDozZpLyUNiugJ7ttkOhS6T1JeuqF72vMR-H8YRf6esdrRQKXl--O95RWxxFV213WvBekeGFpxt_CMks=w1000-h1000",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D605895089632&memberId=1325437696506389977",
+    "directStoreLink": "https://item.taobao.com/item.htm?id=605895089632",
+    "slug": "kapital-a-w-2019-damask-fleece",
+    "status": "APPROVED",
+    "tags": [
+      "KAPITAL",
+      "Outerwear",
+      "archive",
+      "grail",
+      "TOPS"
+    ],
+    "createdAt": "2026-08-17T12:40:50.929Z"
   }
 ]
