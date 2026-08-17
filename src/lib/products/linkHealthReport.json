@@ -1,8 +1,8 @@
 {
   "lastAudit": "2026-08-17T12:09:07.570267+00:00",
-  "totalChecked": 106,
+  "totalChecked": 105,
   "healthyCount": 105,
-  "deadCount": 1,
+  "deadCount": 0,
   "flaggedCount": 0,
   "items": [
     {
@@ -1390,20 +1390,6 @@
       "statusCode": 200,
       "message": "Item page is live on marketplace",
       "testedAt": "2026-08-17T12:08:56.350027+00:00"
-    },
-    {
-      "id": "70",
-      "title": "Vetements \"I Did Nothing, I Just Got Lucky\" Hat",
-      "slug": "vetements-vetements-i-did-nothing-i-just-got-lucky-hat",
-      "brand": "Vetements",
-      "directLink": "https://weidian.com/item.html?itemID=6292135211",
-      "directStoreLink": "https://weidian.com/item.html?itemID=6292135211",
-      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6292135211&memberId=1325437696506389977",
-      "imageUrl": "/products/sheet/grid_r53_c05_image243.png",
-      "status": "DEAD",
-      "statusCode": 200,
-      "message": "Marketplace notice: Item was delisted / out of stock by seller",
-      "testedAt": "2026-08-17T12:08:56.350022+00:00"
     },
     {
       "id": "86",
