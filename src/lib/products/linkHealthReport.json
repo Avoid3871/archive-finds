@@ -1,8 +1,8 @@
 {
   "lastAudit": "2026-08-17T12:09:07.570267+00:00",
-  "totalChecked": 107,
+  "totalChecked": 106,
   "healthyCount": 105,
-  "deadCount": 2,
+  "deadCount": 1,
   "flaggedCount": 0,
   "items": [
     {
@@ -1040,20 +1040,6 @@
       "statusCode": 200,
       "message": "Item page is live on marketplace",
       "testedAt": "2026-08-17T12:08:56.349858+00:00"
-    },
-    {
-      "id": "26",
-      "title": "Vetements Titanic Zip up",
-      "slug": "vetements-vetements-titanic-zip-up",
-      "brand": "Vetements",
-      "directLink": "https://weidian.com/item.html?itemID=7119404524",
-      "directStoreLink": "https://weidian.com/item.html?itemID=7119404524",
-      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D7119404524&memberId=1325437696506389977",
-      "imageUrl": "/products/sheet/grid_r20_c05_image84.png",
-      "status": "DEAD",
-      "statusCode": 200,
-      "message": "Marketplace notice: Item was delisted / out of stock by seller",
-      "testedAt": "2026-08-17T12:08:56.349835+00:00"
     },
     {
       "id": "103",
