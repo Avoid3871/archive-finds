@@ -46,8 +46,23 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    const rawMarketUrl = searchParams.get("rawMarketUrl");
-    const action = searchParams.get("action") || "dismiss"; // dismiss | blacklist
+    const rawMarketUrl = searchParams.get("rawMarketUrl") || "";
+    const slug = searchParams.get("slug") || "";
+    const title = searchParams.get("title") || "";
+    const action = searchParams.get("action") || "dismiss"; // dismiss | blacklist | ingested
+
+    const normalizeUrl = (u: string) => {
+      if (!u) return "";
+      return u
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "")
+        .split("?")[0]
+        .split("&")[0];
+    };
+
+    const targetUrlNorm = normalizeUrl(rawMarketUrl);
 
     // 1. Update registry
     let registry: any = { processed_links: {}, blacklisted_links: [] };
@@ -59,9 +74,16 @@ export async function DELETE(req: NextRequest) {
 
     if (rawMarketUrl) {
       const urlLower = rawMarketUrl.toLowerCase().trim();
+      const status = action === "ingested" ? "INGESTED" : action === "blacklist" ? "DEAD" : "SKIPPED";
+      const reason = action === "ingested" 
+        ? "Ingested into Live Store Catalog" 
+        : action === "blacklist" 
+        ? "Manually Blacklisted by Admin" 
+        : "Dismissed from Queue";
+
       registry.processed_links[urlLower] = {
-        status: action === "blacklist" ? "DEAD" : "SKIPPED",
-        reason: action === "blacklist" ? "Manually Blacklisted by Admin" : "Dismissed from Queue",
+        status,
+        reason,
         timestamp: new Date().toISOString(),
       };
       if (action === "blacklist" && !registry.blacklisted_links.includes(urlLower)) {
@@ -75,16 +97,27 @@ export async function DELETE(req: NextRequest) {
     if (fs.existsSync(DISCOVERED_PATH)) {
       try {
         items = JSON.parse(fs.readFileSync(DISCOVERED_PATH, "utf-8"));
-        items = items.filter((it: any) => it.id !== id && it.rawMarketUrl !== rawMarketUrl);
+        items = items.filter((it: any) => {
+          if (id && it.id && it.id === id) return false;
+          if (slug && it.slug && it.slug === slug) return false;
+          if (title && it.title && it.title.trim().toLowerCase() === title.trim().toLowerCase()) return false;
+          
+          if (targetUrlNorm) {
+            const itUrlNorm = normalizeUrl(it.rawMarketUrl || it.directStoreLink || "");
+            if (itUrlNorm && itUrlNorm === targetUrlNorm) return false;
+          }
+          return true;
+        });
         fs.writeFileSync(DISCOVERED_PATH, JSON.stringify(items, null, 2), "utf-8");
       } catch (e) {}
     }
 
-    return NextResponse.json({ success: true, items });
+    return NextResponse.json({ success: true, items, count: items.length });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

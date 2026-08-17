@@ -209,6 +209,48 @@ def ingest(payload_file: str):
     with open(SHEET_PRODUCTS_PATH, "w", encoding="utf-8") as f:
         json.dump(products, f, indent=2, ensure_ascii=False)
 
+    # 1. Update sheet ingestion registry to mark as INGESTED
+    registry_path = os.path.join(os.path.dirname(__file__), "..", "scratch", "sheet_ingestion_registry.json")
+    try:
+        registry = {"processed_links": {}, "blacklisted_links": []}
+        if os.path.exists(registry_path):
+            with open(registry_path, "r", encoding="utf-8") as rf:
+                registry = json.load(rf)
+        
+        raw_url_lower = raw_url.lower().strip()
+        clean_url_lower = clean_url(raw_url).lower().strip()
+        entry = {
+            "status": "INGESTED",
+            "reason": f"Ingested piece: {new_piece['title']} ({slug})",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        }
+        registry.setdefault("processed_links", {})[raw_url_lower] = entry
+        registry["processed_links"][clean_url_lower] = entry
+        with open(registry_path, "w", encoding="utf-8") as rf:
+            json.dump(registry, rf, indent=2, ensure_ascii=False)
+    except Exception as reg_err:
+        print(f"[REGISTRY WARN] Could not update registry: {reg_err}", flush=True)
+
+    # 2. Remove piece from scratch discovered queues
+    for q_filename in ["discovered_sheet_finds.json", "discovered_qualityreps_finds.json"]:
+        q_path = os.path.join(os.path.dirname(__file__), "..", "scratch", q_filename)
+        if os.path.exists(q_path):
+            try:
+                with open(q_path, "r", encoding="utf-8") as qf:
+                    q_items = json.load(qf)
+                
+                clean_target = clean_url(raw_url).split('&')[0].split('?')[0].lower()
+                q_items_filtered = [
+                    it for it in q_items
+                    if it.get("slug") != slug
+                    and (it.get("title") or "").strip().lower() != (new_piece["title"] or "").strip().lower()
+                    and clean_url(it.get("rawMarketUrl") or it.get("directStoreLink") or "").split('&')[0].split('?')[0].lower() != clean_target
+                ]
+                with open(q_path, "w", encoding="utf-8") as qf:
+                    json.dump(q_items_filtered, qf, indent=2, ensure_ascii=False)
+            except Exception as q_err:
+                print(f"[QUEUE WARN] Could not update {q_filename}: {q_err}", flush=True)
+
     duration_ms = (time.time() - start_time) * 1000.0
     log_job(
         job_type="INGEST_GRAIL",
@@ -226,6 +268,7 @@ def ingest(payload_file: str):
         "imageUrl": local_img
     }), flush=True)
     print("Ingest process complete! Product live in catalog.", flush=True)
+
 
 
 if __name__ == "__main__":

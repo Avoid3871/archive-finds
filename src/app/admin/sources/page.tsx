@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Plus,
   RefreshCw,
@@ -38,6 +38,8 @@ import {
   FileUp,
 } from "lucide-react";
 import Image from "next/image";
+import { ARCHIVE_BRANDS, BRAND_NAMES, normalizeBrand, getAllKnownBrands } from "@/lib/constants/brands";
+
 
 interface DiscoveredItem {
   id: string;
@@ -112,27 +114,8 @@ function normalizeSugargooLink(rawUrl: string): string {
   return `https://www.sugargoo.com/products?productLink=${encoded}&memberId=${SUGARGOO_AFFILIATE_ID}`;
 }
 
-const POPULAR_BRANDS = [
-  "Rick Owens",
-  "Maison Margiela",
-  "Chrome Hearts",
-  "Balenciaga",
-  "Enfants Riches Déprimés",
-  "Undercover",
-  "Raf Simons",
-  "Carol Christian Poell",
-  "Acne Studios",
-  "Kapital",
-  "Vivienne Westwood",
-  "Yohji Yamamoto",
-  "Vetements",
-  "Helmut Lang",
-  "Number (N)ine",
-  "Saint Laurent",
-  "Prada",
-  "Dior Homme",
-  "Bottega Veneta",
-];
+const POPULAR_BRANDS = BRAND_NAMES;
+
 
 const CATEGORIES = [
   "Outerwear",
@@ -494,26 +477,43 @@ export default function AdminSourcesPage() {
     setEditingItem(cleanItem);
     setEditRotation(0);
     setSelectedCutoutModel("isnet-general-use");
+
+    // 1. Detect & Normalize Brand
+    const rawBrand = (item.brand || "").trim();
+    let normalizedBrand = normalizeBrand(rawBrand);
+    
+    // If brand is generic or empty, try matching title against all known archive brands
+    if (normalizedBrand === "Archive Selection" && item.title) {
+      for (const b of ARCHIVE_BRANDS) {
+        if (new RegExp(`^${b.name}\\b`, "i").test(item.title) || (b.aliases && b.aliases.some((al) => new RegExp(`^${al}\\b`, "i").test(item.title)))) {
+          normalizedBrand = b.name;
+          break;
+        }
+      }
+    }
+
     const cleanTitle = (item.title || "")
       .replace(/^(can\s+(these|this|they|it)\s+(be|look)?\s*(close\s+to|like|good|accurate)?|is\s+this\s+(close\s+to|accurate|legit|real)|are\s+these\s+(close\s+to|accurate|legit|real)|how\s+do\s+these\s+look|thoughts\s+on(\s+this|\s+these)?|qc\s+on|review\s+on)\s*/i, "")
-      .replace(new RegExp(`^${item.brand || ""}\\s*-\\s*`, "i"), "")
+      .replace(new RegExp(`^${normalizedBrand}\\s*-\\s*`, "i"), "")
+      .replace(new RegExp(`^${rawBrand}\\s*-\\s*`, "i"), "")
       .trim();
-    const brandTitle = cleanTitle.toLowerCase().startsWith((item.brand || "").toLowerCase())
+    const brandTitle = cleanTitle.toLowerCase().startsWith(normalizedBrand.toLowerCase())
       ? cleanTitle
-      : `${item.brand || ""} ${cleanTitle}`.trim();
+      : `${normalizedBrand} ${cleanTitle}`.trim();
     setEditFormData({
       title: cleanTitle || item.title || "Archive Piece",
-      brand: item.brand || "Maison Margiela",
+      brand: normalizedBrand,
       category: item.category || "Outerwear",
       season: (item as any).season || item.season || "",
       price: item.sourcePrice || 50,
       estimatedRetail: item.estimatedRetail || (item.sourcePrice ? Math.round(item.sourcePrice * 8.5) : 450),
-      tags: `${item.brand || "archive"}, ${item.category || "clothing"}, archive, grail`,
+      tags: `${normalizedBrand}, ${item.category || "clothing"}, archive, grail`,
       rawMarketUrl: rawUrl,
     });
     setSelectedImageSrc(item.imageUrl || item.localImage || item.rawImageSrc || "");
     setCustomImageUrlInput("");
     setImageSearchQuery(brandTitle);
+
     setAlternateImages([]);
     setIngestModalProgress({
       isIngesting: false,
@@ -613,31 +613,55 @@ export default function AdminSourcesPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Remove from Reddit moderation queue
-        const params = new URLSearchParams({
-          slug: editingItem.slug,
-          rawMarketUrl: editingItem.rawMarketUrl || "",
-          redditPostUrl: editingItem.redditPostUrl || "",
+        const actualSlug = data.slug || editingItem.slug;
+        const sheetRawUrl = editFormData.rawMarketUrl || editingItem.rawMarketUrl || (editingItem as any).directStoreLink || "";
+
+        // Remove from Google Sheet moderation queue & update registry with status INGESTED
+        const sheetParams = new URLSearchParams({
+          id: editingItem.id || "",
+          slug: actualSlug,
+          title: editingItem.title || "",
+          rawMarketUrl: sheetRawUrl,
+          action: "ingested",
         });
-        await fetch(`/api/admin/reddit-scanner?${params.toString()}`, {
+        await fetch(`/api/admin/sheet-scanner?${sheetParams.toString()}`, {
           method: "DELETE",
         }).catch(() => {});
 
-        // Remove from Google Sheet moderation queue & update registry
-        const sheetRawUrl = editingItem.rawMarketUrl || (editingItem as any).directStoreLink || "";
-        await fetch(
-          `/api/admin/sheet-scanner?id=${editingItem.id}&rawMarketUrl=${encodeURIComponent(sheetRawUrl)}&action=dismiss`,
-          { method: "DELETE" }
-        ).catch(() => {});
+        // Remove from Reddit moderation queue
+        const redditParams = new URLSearchParams({
+          slug: actualSlug,
+          rawMarketUrl: sheetRawUrl,
+          redditPostUrl: editingItem.redditPostUrl || "",
+        });
+        await fetch(`/api/admin/reddit-scanner?${redditParams.toString()}`, {
+          method: "DELETE",
+        }).catch(() => {});
 
         // Optimistically remove from both Reddit & Google Sheet state
-        setDiscoveredItems((prev) => prev.filter((i) => i.slug !== editingItem.slug && i.id !== editingItem.id));
+        const normTarget = sheetRawUrl.toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/$/, "").split("?")[0].split("&")[0];
+
+        setDiscoveredItems((prev) =>
+          prev.filter((i) => {
+            if (i.id === editingItem.id || i.slug === actualSlug || i.slug === editingItem.slug) return false;
+            if (normTarget && (i.rawMarketUrl || "").toLowerCase().includes(normTarget)) return false;
+            return true;
+          })
+        );
+
         setDiscoveredSheetItems((prev) =>
-          prev.filter((i) => i.slug !== editingItem.slug && i.id !== editingItem.id && i.title !== editingItem.title)
+          prev.filter((i) => {
+            if (i.id === editingItem.id || i.slug === actualSlug || i.slug === editingItem.slug) return false;
+            if (i.title && i.title.trim().toLowerCase() === editingItem.title.trim().toLowerCase()) return false;
+            if (normTarget) {
+              const iNorm = (i.rawMarketUrl || (i as any).directStoreLink || "").toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/$/, "").split("?")[0].split("&")[0];
+              if (iNorm && iNorm === normTarget) return false;
+            }
+            return true;
+          })
         );
         fetchDiscoveredSheet();
         
-        const actualSlug = data.slug || editingItem.slug;
         const toastItem = {
           title: `${editFormData.brand} - ${editFormData.title}`,
           slug: actualSlug,
@@ -648,6 +672,7 @@ export default function AdminSourcesPage() {
           sessionStorage.setItem("last_ingested_grail", JSON.stringify(toastItem));
           sessionStorage.removeItem("active_ingested_modal");
         } catch (e) {}
+
 
         setIngestModalProgress((prev) => ({
           ...prev,
@@ -757,7 +782,11 @@ export default function AdminSourcesPage() {
   const [sheetLiveLogs, setSheetLiveLogs] = useState<string[]>([]);
   const [showSheetTerminal, setShowSheetTerminal] = useState(true);
   const [discoveredSheetItems, setDiscoveredSheetItems] = useState<DiscoveredItem[]>([]);
+  const allKnownBrands = useMemo(() => {
+    return getAllKnownBrands([], [...discoveredItems, ...discoveredSheetItems]);
+  }, [discoveredItems, discoveredSheetItems]);
   const [selectedSheetItemIds, setSelectedSheetItemIds] = useState<Set<string>>(new Set());
+
   const [sheetStats, setSheetStats] = useState<{
     queueCount: number;
     deadCount: number;
@@ -1866,11 +1895,13 @@ export default function AdminSourcesPage() {
                 </label>
                 <input
                   type="text"
+                  list="brand-datalist-modal"
                   value={ingestBrand}
                   onChange={(e) => setIngestBrand(e.target.value)}
-                  placeholder="Rick Owens"
+                  placeholder="Select or type brand (e.g. Kapital, Rick Owens)..."
                   className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white"
                 />
+
               </div>
 
               <div>
@@ -2739,7 +2770,104 @@ export default function AdminSourcesPage() {
 
             {/* Modal Scrollable Content */}
             <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {ingestModalProgress.phase === "SUCCESS" ? (
+                <div className="py-8 px-4 sm:px-8 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.2)]">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                  </div>
+
+                  <div className="space-y-2 max-w-lg">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono uppercase tracking-widest rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      GRAIL INGESTED & PUBLISHED LIVE
+                    </div>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">
+                      {editFormData.brand} — {editFormData.title}
+                    </h3>
+                    <p className="text-neutral-400 text-xs font-mono">
+                      Published to live store catalog • Sugargoo VIP Affiliate active • Auto-removed from sheet queue
+                    </p>
+                  </div>
+
+                  {/* Product Preview Card */}
+                  <div className="flex items-center gap-4 p-4 bg-neutral-950 border border-neutral-800 rounded-xl max-w-md w-full text-left shadow-lg">
+                    <div className="w-20 h-20 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 shrink-0 flex items-center justify-center relative bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:8px_8px]">
+                      {selectedImageSrc ? (
+                        <img
+                          src={selectedImageSrc}
+                          alt={editFormData.title}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      ) : (
+                        <Sparkles className="w-6 h-6 text-neutral-600" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="text-[10px] font-mono text-emerald-400 uppercase font-bold tracking-wider">
+                        {editFormData.brand}
+                      </p>
+                      <p className="text-xs font-bold text-white truncate">
+                        {editFormData.title}
+                      </p>
+                      <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
+                        <span className="text-white font-bold">${editFormData.price.toFixed(2)}</span>
+                        <span>•</span>
+                        <span>{editFormData.category}</span>
+                        {editFormData.season && (
+                          <>
+                            <span>•</span>
+                            <span className="text-neutral-300">{editFormData.season}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ingestion Logs */}
+                  <div className="p-3 bg-neutral-950 rounded-lg border border-neutral-800/80 font-mono text-[11px] space-y-1 max-h-24 overflow-y-auto w-full max-w-md text-left">
+                    {ingestModalProgress.logs.map((log, idx) => (
+                      <div key={idx} className="text-neutral-400 flex items-start gap-2">
+                        <span className="text-neutral-600 select-none">&gt;</span>
+                        <span className={log.includes("[ERROR]") ? "text-red-400" : log.includes("✓") || log.includes("[4/4]") ? "text-emerald-400 font-bold" : ""}>
+                          {log}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <a
+                      href={ingestModalProgress.ingestedSlug ? `/product/${ingestModalProgress.ingestedSlug}` : "/"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider transition-all rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-500/25 cursor-pointer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>VIEW IN STORE CATALOG ↗</span>
+                    </a>
+
+                    <a
+                      href={`/admin/slides?slug=${ingestModalProgress.ingestedSlug || ""}`}
+                      className="px-5 py-3 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 font-mono text-xs font-bold uppercase tracking-wider transition-all rounded-lg flex items-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-400" />
+                      <span>9:16 SLIDE STUDIO</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="px-5 py-3 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 font-mono text-xs font-bold uppercase tracking-wider transition-all rounded-lg cursor-pointer"
+                    >
+                      <span>DONE / INGEST NEXT PIECE</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
                 {/* Left Preview Column (5 cols) */}
                 <div className="md:col-span-5 space-y-3">
                   <div className="flex items-center justify-between">
@@ -3068,21 +3196,31 @@ export default function AdminSourcesPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
-                        Brand
-                      </label>
-                      <select
-                        value={editFormData.brand}
-                        onChange={(e) => setEditFormData({ ...editFormData, brand: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
-                      >
-                        {POPULAR_BRANDS.map((b) => (
-                          <option key={b} value={b}>
-                            {b}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-mono uppercase text-neutral-400 font-bold">
+                          Brand / Designer House
+                        </label>
+                        <span className="text-[9px] font-mono text-emerald-400">
+                          {allKnownBrands.length} Houses
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          list="brand-datalist-modal"
+                          value={editFormData.brand}
+                          onChange={(e) => setEditFormData({ ...editFormData, brand: e.target.value })}
+                          placeholder="Select or type brand (e.g. Kapital, Rick Owens, SOA)..."
+                          className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
+                        />
+                        <datalist id="brand-datalist-modal">
+                          {allKnownBrands.map((b) => (
+                            <option key={b} value={b} />
+                          ))}
+                        </datalist>
+                      </div>
                     </div>
+
 
                     <div>
                       <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
@@ -3311,13 +3449,11 @@ export default function AdminSourcesPage() {
               </div>
 
               {/* Ingestion Progress */}
-              {(ingestModalProgress.isIngesting || ingestModalProgress.phase === "SUCCESS" || ingestModalProgress.phase === "ERROR") && (
+              {(ingestModalProgress.isIngesting || ingestModalProgress.phase === "ERROR") && (
                 <div className="space-y-3 pt-4 border-t border-neutral-800">
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-white font-bold flex items-center gap-2">
-                      {ingestModalProgress.phase === "SUCCESS" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      ) : ingestModalProgress.phase === "ERROR" ? (
+                      {ingestModalProgress.phase === "ERROR" ? (
                         <AlertCircle className="w-4 h-4 text-red-400" />
                       ) : (
                         <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
@@ -3326,6 +3462,7 @@ export default function AdminSourcesPage() {
                     </span>
                     <span className="text-emerald-400 font-bold">{ingestModalProgress.percent}%</span>
                   </div>
+
 
                   <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
                     <div
@@ -3349,6 +3486,8 @@ export default function AdminSourcesPage() {
                     ))}
                   </div>
                 </div>
+              )}
+                </>
               )}
             </div>
 
@@ -3424,9 +3563,16 @@ export default function AdminSourcesPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 font-mono text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer"
+                  >
+                    DONE / NEXT GRAIL
+                  </button>
                   <a
-                    href="/admin/slides"
-                    className="px-4 py-2.5 bg-neutral-800 text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-700 transition-colors rounded-lg flex items-center gap-1.5 border border-neutral-700"
+                    href={`/admin/slides?slug=${ingestModalProgress.ingestedSlug || ""}`}
+                    className="px-4 py-2.5 bg-neutral-800 text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-700 transition-colors rounded-lg flex items-center gap-1.5 border border-neutral-700 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                     <span>9:16 Slide Studio</span>
@@ -3435,14 +3581,15 @@ export default function AdminSourcesPage() {
                     href={ingestModalProgress.ingestedSlug ? `/product/${ingestModalProgress.ingestedSlug}` : "/"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-emerald-500 text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-400 transition-all rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-500/25"
+                    className="px-5 py-2.5 bg-emerald-500 text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-400 transition-all rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-500/25 cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    <span>VIEW IN STORE CATALOG ↗</span>
+                    <span>VIEW IN STORE ↗</span>
                   </a>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       )}
