@@ -30,6 +30,11 @@ import {
   Copy,
   Zap,
   Camera,
+  Layers,
+  Upload,
+  Clipboard,
+  ImagePlus,
+  FileUp,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -165,6 +170,7 @@ export default function AdminSourcesPage() {
     title: "",
     brand: "Rick Owens",
     category: "Outerwear",
+    season: "",
     price: 59.0,
     estimatedRetail: 650.0,
     tags: "archive, grail",
@@ -175,6 +181,7 @@ export default function AdminSourcesPage() {
   const [alternateImages, setAlternateImages] = useState<string[]>([]);
   const [isFetchingImages, setIsFetchingImages] = useState<boolean>(false);
   const [isApplyingCutout, setIsApplyingCutout] = useState<boolean>(false);
+  const [selectedCutoutModel, setSelectedCutoutModel] = useState<string>("isnet-general-use");
   const [isAutoIdentifyingTitle, setIsAutoIdentifyingTitle] = useState<boolean>(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>("");
   const [customImageUrlInput, setCustomImageUrlInput] = useState<string>("");
@@ -224,6 +231,7 @@ export default function AdminSourcesPage() {
           title: cleanTitle || canonical || prev.title,
           brand: data.data.brand && data.data.brand !== "Archive Collection" ? data.data.brand : prev.brand,
           category: data.data.category || prev.category,
+          season: data.data.season || prev.season || "",
           price: data.data.sourcePrice || prev.price,
           estimatedRetail: data.data.estimatedRetail || prev.estimatedRetail,
         }));
@@ -314,15 +322,131 @@ export default function AdminSourcesPage() {
     }
   };
 
-  const handleApplyAlternateImage = async (imageSrc: string) => {
-    if (!editingItem || !imageSrc) return;
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        handleApplyAlternateImage(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleClipboardPasteImage = async () => {
+    try {
+      if (navigator.clipboard?.read) {
+        const clipboardItems = await navigator.clipboard.read();
+        for (const item of clipboardItems) {
+          const imageType = item.types.find((type) => type.startsWith("image/"));
+          if (imageType) {
+            const blob = await item.getType(imageType);
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const dataUrl = event.target?.result as string;
+              if (dataUrl) {
+                handleApplyAlternateImage(dataUrl);
+              }
+            };
+            reader.readAsDataURL(blob);
+            return;
+          }
+        }
+      }
+      // Fallback: check text for direct URL
+      const text = await navigator.clipboard.readText();
+      if (text && (text.startsWith("http") || text.startsWith("data:image"))) {
+        setCustomImageUrlInput(text);
+        handleApplyAlternateImage(text);
+      }
+    } catch (err) {
+      console.warn("Clipboard paste access denied or empty", err);
+    }
+  };
+
+  const handleDropImage = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result as string;
+          if (dataUrl) {
+            handleApplyAlternateImage(dataUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  // Global window paste listener for modal
+  useEffect(() => {
+    if (!editingItem) return;
+    const handleWindowPaste = (e: ClipboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
+      
+      // If user pasted image data anywhere (even if typing in input), prioritize image cutout if it's an image
+      if (e.clipboardData && e.clipboardData.items) {
+        for (let i = 0; i < e.clipboardData.items.length; i++) {
+          const item = e.clipboardData.items[i];
+          if (item.type.indexOf("image") !== -1) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                if (dataUrl) {
+                  handleApplyAlternateImage(dataUrl);
+                }
+              };
+              reader.readAsDataURL(file);
+            }
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("paste", handleWindowPaste);
+    return () => {
+      window.removeEventListener("paste", handleWindowPaste);
+    };
+  }, [editingItem, selectedCutoutModel, selectedImageSrc]);
+
+  const handleApplyAlternateImage = async (imageSrc?: string, modelOverride?: string) => {
+    if (!editingItem) return;
+    const targetSrc = imageSrc || selectedImageSrc || editingItem.rawImageSrc || editingItem.imageUrl || editingItem.localImage;
+    if (!targetSrc) return;
+    const modelToUse = modelOverride || selectedCutoutModel;
+    if (modelOverride) {
+      setSelectedCutoutModel(modelOverride);
+    }
     setIsApplyingCutout(true);
-    setSelectedImageSrc(imageSrc);
+    setSelectedImageSrc(targetSrc);
     try {
       const res = await fetch("/api/admin/cutout-preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageSrc, rotation: 0 }),
+        body: JSON.stringify({ imageSrc: targetSrc, rotation: 0, model: modelToUse }),
       });
       const data = await res.json();
       if (data.success && data.localCutoutUrl) {
@@ -332,7 +456,7 @@ export default function AdminSourcesPage() {
                 ...prev,
                 imageUrl: data.localCutoutUrl,
                 localImage: data.localCutoutUrl,
-                rawImageSrc: imageSrc,
+                rawImageSrc: targetSrc,
               }
             : null
         );
@@ -347,6 +471,7 @@ export default function AdminSourcesPage() {
   const openReviewModal = (item: DiscoveredItem) => {
     setEditingItem(item);
     setEditRotation(0);
+    setSelectedCutoutModel("isnet-general-use");
     const cleanTitle = item.title
       .replace(/^(can\s+(these|this|they|it)\s+(be|look)?\s*(close\s+to|like|good|accurate)?|is\s+this\s+(close\s+to|accurate|legit|real)|are\s+these\s+(close\s+to|accurate|legit|real)|how\s+do\s+these\s+look|thoughts\s+on(\s+this|\s+these)?|qc\s+on|review\s+on)\s*/i, "")
       .replace(new RegExp(`^${item.brand}\\s*-\\s*`, "i"), "")
@@ -358,6 +483,7 @@ export default function AdminSourcesPage() {
       title: cleanTitle || item.title,
       brand: item.brand || "Maison Margiela",
       category: item.category || "Outerwear",
+      season: item.season || "",
       price: item.sourcePrice || 50,
       estimatedRetail: item.estimatedRetail || (item.sourcePrice ? Math.round(item.sourcePrice * 8.5) : 450),
       tags: "archive, grail",
@@ -390,6 +516,7 @@ export default function AdminSourcesPage() {
           if (data.success && data.data?.sourcePrice) {
             setEditFormData((prev) => ({
               ...prev,
+              season: data.data.season || prev.season,
               price: data.data.sourcePrice,
               estimatedRetail: data.data.estimatedRetail || prev.estimatedRetail,
             }));
@@ -409,7 +536,7 @@ export default function AdminSourcesPage() {
       message: "Validating metadata & preparing high-resolution studio assets...",
       logs: [
         `[1/4] Preparing product: "${editFormData.brand} - ${editFormData.title}"`,
-        `[1/4] Category: ${editFormData.category} | Price: $${editFormData.price}`,
+        `[1/4] Category: ${editFormData.category} | Price: $${editFormData.price}${editFormData.season ? ` | Season: ${editFormData.season}` : ""}`,
         editRotation !== 0 ? `[1/4] Applying ${editRotation}° studio image rotation...` : `[1/4] Image orientation: Standard (0°)`,
       ],
     });
@@ -451,7 +578,9 @@ export default function AdminSourcesPage() {
           brand: editFormData.brand,
           title: editFormData.title,
           category: editFormData.category,
+          season: editFormData.season,
           price: editFormData.price,
+          estimatedRetail: editFormData.estimatedRetail,
           rawImageSrc: editingItem.rawImageSrc,
           localImage: editingItem.localImage || editingItem.imageUrl,
           rotation: editRotation,
@@ -1233,9 +1362,17 @@ export default function AdminSourcesPage() {
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <span className="px-2 py-0.5 bg-neutral-800 text-neutral-300 font-mono text-[10px] uppercase rounded">
-                          {item.brand}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 bg-neutral-800 text-neutral-300 font-mono text-[10px] uppercase rounded">
+                            {item.brand}
+                          </span>
+                          {item.season && (
+                            <span className="px-2 py-0.5 bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 font-mono text-[9px] uppercase rounded flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              {item.season}
+                            </span>
+                          )}
+                        </div>
                         <span className="font-mono text-xs font-bold text-emerald-400">
                           ${item.sourcePrice}
                         </span>
@@ -1273,17 +1410,23 @@ export default function AdminSourcesPage() {
                             {item.rawMarketUrl}
                           </a>
                         </div>
-                        <div className="truncate">
-                          <span className="text-neutral-400">Reddit: </span>
-                          <a
-                            href={item.redditPostUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-orange-400 hover:underline"
-                          >
-                            r/QualityReps Post
-                          </a>
-                        </div>
+                        {item.redditPostUrl && (() => {
+                          const subMatch = item.redditPostUrl.match(/r\/([a-zA-Z0-9_]+)/i);
+                          const subName = subMatch ? `r/${subMatch[1]}` : "Reddit";
+                          return (
+                            <div className="truncate">
+                              <span className="text-neutral-400">{subName}: </span>
+                              <a
+                                href={item.redditPostUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-orange-400 hover:underline"
+                              >
+                                {subName} Post ↗
+                              </a>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -1850,9 +1993,20 @@ export default function AdminSourcesPage() {
                 {/* Left Preview Column (5 cols) */}
                 <div className="md:col-span-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-mono uppercase text-neutral-400">
-                      Studiofoto Cutout
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-[10px] font-mono uppercase text-neutral-400 font-bold tracking-wider">
+                        Studiofoto Cutout
+                      </label>
+                      <span className="px-1.5 py-0.2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono rounded">
+                        {selectedCutoutModel === "isnet-general-use"
+                          ? "IS-Net HD"
+                          : selectedCutoutModel === "isnet-matte"
+                          ? "Soft Matte"
+                          : selectedCutoutModel === "silueta"
+                          ? "Silueta"
+                          : "Standard AI"}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -1884,7 +2038,83 @@ export default function AdminSourcesPage() {
                     </div>
                   </div>
 
-                  <div className="w-full h-64 bg-neutral-950 rounded-xl border border-neutral-800 relative flex items-center justify-center p-4 overflow-hidden group">
+                  {/* AI Cutout Model Switcher Bar */}
+                  <div className="p-1.5 bg-neutral-950/80 border border-neutral-800/80 rounded-lg flex items-center justify-between gap-1">
+                    <span className="text-[9px] font-mono uppercase text-neutral-500 px-1 hidden sm:inline">Engine:</span>
+                    <div className="flex items-center gap-1 w-full sm:w-auto overflow-x-auto">
+                      <button
+                        type="button"
+                        onClick={() => handleApplyAlternateImage(undefined, "isnet-general-use")}
+                        disabled={isApplyingCutout}
+                        title="Ultra-Sharp Deep Edge Extraction (Recommended)"
+                        className={`px-2 py-1 text-[10px] font-mono rounded flex items-center gap-1 transition-all ${
+                          selectedCutoutModel === "isnet-general-use"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold"
+                            : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 border border-neutral-800"
+                        }`}
+                      >
+                        <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                        <span>IS-Net (HD)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyAlternateImage(undefined, "u2net")}
+                        disabled={isApplyingCutout}
+                        title="Standard rembg AI Model"
+                        className={`px-2 py-1 text-[10px] font-mono rounded flex items-center gap-1 transition-all ${
+                          selectedCutoutModel === "u2net"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold"
+                            : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 border border-neutral-800"
+                        }`}
+                      >
+                        <Zap className="w-2.5 h-2.5 text-amber-400" />
+                        <span>Standard</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyAlternateImage(undefined, "isnet-matte")}
+                        disabled={isApplyingCutout}
+                        title="Alpha Matting for soft edges, knits & textured fabrics"
+                        className={`px-2 py-1 text-[10px] font-mono rounded flex items-center gap-1 transition-all ${
+                          selectedCutoutModel === "isnet-matte"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold"
+                            : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 border border-neutral-800"
+                        }`}
+                      >
+                        <Layers className="w-2.5 h-2.5 text-cyan-400" />
+                        <span>Soft Matte</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyAlternateImage(undefined, "silueta")}
+                        disabled={isApplyingCutout}
+                        title="Lightweight Silhouette Model"
+                        className={`px-2 py-1 text-[10px] font-mono rounded flex items-center gap-1 transition-all ${
+                          selectedCutoutModel === "silueta"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold"
+                            : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 border border-neutral-800"
+                        }`}
+                      >
+                        <Flame className="w-2.5 h-2.5 text-purple-400" />
+                        <span>Silueta</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Studio Cutout Preview Card with Drag & Drop */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingOver(true);
+                    }}
+                    onDragLeave={() => setIsDraggingOver(false)}
+                    onDrop={handleDropImage}
+                    className={`w-full h-64 bg-neutral-950 rounded-xl border relative flex items-center justify-center p-4 overflow-hidden group transition-all ${
+                      isDraggingOver
+                        ? "border-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50 scale-[1.01]"
+                        : "border-neutral-800"
+                    }`}
+                  >
                     <img
                       src={editingItem.imageUrl || editingItem.localImage || editingItem.rawImageSrc}
                       alt={editingItem.title}
@@ -1892,19 +2122,32 @@ export default function AdminSourcesPage() {
                         transform: `rotate(${editRotation}deg)`,
                         transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
-                      className="max-h-full max-w-full object-contain filter drop-shadow-xl"
+                      className="max-h-full max-w-full object-contain filter drop-shadow-xl select-none"
                       onError={(e) => {
                         if (editingItem.rawImageSrc && e.currentTarget.src !== editingItem.rawImageSrc) {
                           e.currentTarget.src = editingItem.rawImageSrc;
                         }
                       }}
                     />
-                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] uppercase rounded">
-                      Studio Cutout
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] uppercase rounded flex items-center gap-1">
+                      <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                      <span>
+                        Studio Cutout • {selectedCutoutModel === "isnet-general-use" ? "IS-Net HD" : selectedCutoutModel === "isnet-matte" ? "Soft Matte" : selectedCutoutModel === "silueta" ? "Silueta" : "Standard"}
+                      </span>
                     </div>
                     {editRotation !== 0 && (
                       <div className="absolute top-2 right-2 px-2 py-0.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] uppercase rounded flex items-center gap-1">
                         <span>Rotated: {editRotation}°</span>
+                      </div>
+                    )}
+
+                    {/* Drag & Drop Visual Indicator */}
+                    {isDraggingOver && (
+                      <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-30 border-2 border-dashed border-emerald-400 rounded-xl animate-in fade-in duration-150">
+                        <ImagePlus className="w-8 h-8 text-emerald-400 animate-bounce" />
+                        <span className="text-xs font-mono font-bold text-emerald-300 uppercase">
+                          Drop Image to Remove Background
+                        </span>
                       </div>
                     )}
 
@@ -1913,10 +2156,35 @@ export default function AdminSourcesPage() {
                       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-20">
                         <RefreshCw className="w-6 h-6 animate-spin text-emerald-400" />
                         <span className="text-xs font-mono font-bold text-emerald-300">
-                          Extracting Studio Cutout (AI rembg)...
+                          Extracting Studio Cutout ({selectedCutoutModel === "isnet-general-use" ? "IS-Net HD" : selectedCutoutModel === "isnet-matte" ? "Soft Matte" : selectedCutoutModel === "silueta" ? "Silueta" : "Standard AI"})...
                         </span>
                       </div>
                     )}
+                  </div>
+
+                  {/* Left Column Quick Upload & Paste Bar */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isApplyingCutout}
+                      className="px-2.5 py-1.5 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white rounded-lg text-[10px] font-mono flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+                      title="Upload custom image file from your computer"
+                    >
+                      <Upload className="w-3 h-3 text-emerald-400" />
+                      <span>Upload Custom Image</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleClipboardPasteImage}
+                      disabled={isApplyingCutout}
+                      className="px-2.5 py-1.5 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white rounded-lg text-[10px] font-mono flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+                      title="Paste image from clipboard or press Ctrl+V"
+                    >
+                      <Clipboard className="w-3 h-3 text-cyan-400" />
+                      <span>Paste Clipboard</span>
+                    </button>
                   </div>
 
                   <div className="space-y-1 pt-1 text-[11px] font-mono text-neutral-400">
@@ -1931,55 +2199,125 @@ export default function AdminSourcesPage() {
                         {editFormData.rawMarketUrl || editingItem.rawMarketUrl}
                       </a>
                     </div>
-                    {editingItem.redditPostUrl && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-neutral-500">Reddit:</span>
-                        <a
-                          href={editingItem.redditPostUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-orange-400 hover:underline"
-                        >
-                          r/QualityReps Thread ↗
-                        </a>
-                      </div>
-                    )}
+                    {editingItem.redditPostUrl && (() => {
+                      const subMatch = editingItem.redditPostUrl.match(/r\/([a-zA-Z0-9_]+)/i);
+                      const subName = subMatch ? `r/${subMatch[1]}` : "Reddit";
+                      return (
+                        <div className="flex items-center justify-between">
+                          <span className="text-neutral-500">{subName}:</span>
+                          <a
+                            href={editingItem.redditPostUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-400 hover:underline flex items-center gap-1"
+                          >
+                            <span>{subName} Thread</span>
+                            <span className="text-[9px]">↗</span>
+                          </a>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
                 {/* Right Form Fields Column (7 cols) */}
                 <div className="md:col-span-7 space-y-4">
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 font-bold">
                         Product Title / Name
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleAIIdentifyModel}
-                        disabled={isAutoIdentifyingTitle}
-                        className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors disabled:opacity-50"
-                        title="AI auto-identifies exact archive model name and cleans title"
-                      >
-                        {isAutoIdentifyingTitle ? (
-                          <RefreshCw className="w-2.5 h-2.5 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-2.5 h-2.5" />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(editFormData.title, "title")}
+                          className="text-[10px] font-mono text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-neutral-800"
+                          title="Copy full title to clipboard"
+                        >
+                          {copiedField === "title" ? (
+                            <>
+                              <Check className="w-2.5 h-2.5 text-emerald-400" />
+                              <span className="text-emerald-400 font-bold">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-2.5 h-2.5 text-neutral-500" />
+                              <span>Copy Title</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAIIdentifyModel}
+                          disabled={isAutoIdentifyingTitle}
+                          className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors disabled:opacity-50 px-1.5 py-0.5 rounded hover:bg-emerald-950/40"
+                          title="AI auto-identifies exact archive model name and cleans title"
+                        >
+                          {isAutoIdentifyingTitle ? (
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-2.5 h-2.5" />
+                          )}
+                          <span>AI Auto-Identify Model</span>
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      placeholder="e.g. Balenciaga AW18 World Food Programme (WFP) Printed Oversized T-Shirt"
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white leading-relaxed resize-y cursor-text"
+                    />
+                  </div>
+
+                  {/* Season / Runway Collection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 font-bold">
+                        Season / Runway Collection
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {editFormData.season && (
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(editFormData.season || "", "season")}
+                            className="text-[10px] font-mono text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-neutral-800"
+                            title="Copy season name"
+                          >
+                            {copiedField === "season" ? (
+                              <>
+                                <Check className="w-2.5 h-2.5 text-emerald-400" />
+                                <span className="text-emerald-400 font-bold">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-2.5 h-2.5 text-neutral-500" />
+                                <span>Copy Season</span>
+                              </>
+                            )}
+                          </button>
                         )}
-                        <span>AI Auto-Identify Model</span>
-                      </button>
+                        {editFormData.season && (
+                          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            <span>Verified Runway Era</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <input
                       type="text"
-                      value={editFormData.title}
-                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                      value={editFormData.season || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, season: e.target.value })}
+                      placeholder="e.g. AW18, AW16 'Nightmares and Dreams', SS03 'Consumed'..."
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white placeholder:text-neutral-600 cursor-text"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
                         Brand
                       </label>
                       <select
@@ -1996,7 +2334,7 @@ export default function AdminSourcesPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
                         Category
                       </label>
                       <select
@@ -2015,7 +2353,7 @@ export default function AdminSourcesPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
                         Source Price ($USD)
                       </label>
                       <input
@@ -2023,33 +2361,55 @@ export default function AdminSourcesPage() {
                         step="0.01"
                         value={editFormData.price}
                         onChange={(e) => setEditFormData({ ...editFormData, price: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1 font-bold">
                         Est. Retail ($USD)
                       </label>
                       <input
                         type="number"
                         value={editFormData.estimatedRetail}
                         onChange={(e) => setEditFormData({ ...editFormData, estimatedRetail: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-mono uppercase text-neutral-400 mb-1">
-                      Direct Marketplace URL (Weidian / Taobao / 1688)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-mono uppercase text-neutral-400 font-bold">
+                        Direct Marketplace URL (Weidian / Taobao / 1688)
+                      </label>
+                      {editFormData.rawMarketUrl && (
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(editFormData.rawMarketUrl || "", "url")}
+                          className="text-[10px] font-mono text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded hover:bg-neutral-800"
+                          title="Copy marketplace URL"
+                        >
+                          {copiedField === "url" ? (
+                            <>
+                              <Check className="w-2.5 h-2.5 text-emerald-400" />
+                              <span className="text-emerald-400 font-bold">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-2.5 h-2.5 text-neutral-500" />
+                              <span>Copy URL</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={editFormData.rawMarketUrl}
                       onChange={(e) => setEditFormData({ ...editFormData, rawMarketUrl: e.target.value })}
                       placeholder="https://item.taobao.com/..."
-                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
                     />
                   </div>
                 </div>
@@ -2057,6 +2417,14 @@ export default function AdminSourcesPage() {
 
               {/* STUDIO PHOTO PICKER & SEARCH */}
               <div className="pt-4 border-t border-neutral-800 space-y-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Camera className="w-4 h-4 text-emerald-400" />
@@ -2064,7 +2432,7 @@ export default function AdminSourcesPage() {
                       Studio Photo Picker & Search
                     </span>
                     <span className="text-[11px] font-mono text-neutral-500 hidden sm:inline">
-                      (Click any thumbnail or paste URL to generate instant studio cutout)
+                      (Click any thumbnail, upload file, or paste URL to generate studio cutout)
                     </span>
                   </div>
 
@@ -2080,7 +2448,7 @@ export default function AdminSourcesPage() {
                         }
                       }}
                       placeholder="Search piece studio photos..."
-                      className="px-2.5 py-1 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white w-48 sm:w-60 focus:outline-none focus:border-emerald-500"
+                      className="px-2.5 py-1 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white w-48 sm:w-60 focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
                     />
                     <button
                       type="button"
@@ -2098,24 +2466,52 @@ export default function AdminSourcesPage() {
                   </div>
                 </div>
 
-                {/* Paste Direct Image URL */}
-                <div className="flex items-center gap-2">
+                {/* Paste Direct Image URL & Upload Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="text"
                     value={customImageUrlInput}
                     onChange={(e) => setCustomImageUrlInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && customImageUrlInput.trim()) {
+                        e.preventDefault();
+                        handleApplyAlternateImage(customImageUrlInput);
+                      }
+                    }}
                     placeholder="Paste direct image URL from Sugargoo / Taobao / Web..."
-                    className="flex-1 px-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500"
+                    className="flex-1 px-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 selection:bg-emerald-500/40 selection:text-white"
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleApplyAlternateImage(customImageUrlInput)}
-                    disabled={isApplyingCutout || !customImageUrlInput.trim()}
-                    className="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 shrink-0"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Apply Cutout ✨</span>
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleApplyAlternateImage(customImageUrlInput)}
+                      disabled={isApplyingCutout || !customImageUrlInput.trim()}
+                      className="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-400 text-xs font-mono font-bold uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Apply Cutout ✨</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isApplyingCutout}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-mono uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      title="Upload local image file"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Upload</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClipboardPasteImage}
+                      disabled={isApplyingCutout}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-mono uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      title="Paste image directly from clipboard (Ctrl+V)"
+                    >
+                      <Clipboard className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Paste</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Alternative Studio Images Grid */}

@@ -73,8 +73,8 @@ export function logJobRecord({
     return {
       id: `job-${Date.now()}`,
       type,
-      pieceName,
-      status,
+      pieceName: pieceName || title || "System Worker",
+      status: status === "WARNING" ? "SUCCESS" : status,
       duration: "0ms",
       durationMs: 0,
       timestamp: new Date().toISOString(),

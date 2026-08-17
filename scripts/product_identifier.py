@@ -14,51 +14,79 @@ if sys.platform == "win32":
 
 # Designer House Dictionary with Synonyms & Slang
 LUXURY_BRANDS = [
-    ("Chrome Hearts", ["chrome hearts", "chrome", "ch", "matty boy", "dagger", "horseshoe", "sluntradiction", "vagilante", "baby-a"]),
-    ("Rick Owens", ["rick owens", "rick", "drkshdw", "geobasket", "ramones", "ro", "geth", "bolan", "tyrone", "turbodrk", "vns", "vans"]),
-    ("Enfants Riches Déprimés", ["erd", "enfants riches deprimes", "enfants riches déprimés", "enfants", "night of the long knives"]),
-    ("Balenciaga", ["balenciaga", "blcg", "bb", "3xl", "defender", "strike", "steroid", "cargo", "paris moon", "skater hoodie"]),
-    ("Undercover", ["undercover", "uc", "jun takahashi", "scab", "85", "68", "arts and crafts", "guruguru", "witches"]),
-    ("Vetements", ["vetements", "vet", "demna", "tfd", "total fucking darkness", "may the bridges", "bridges", "pirate bay"]),
-    ("Maison Margiela", ["maison margiela", "margiela", "mm6", "tabi", "gats", "gat", "german army trainer"]),
-    ("Vivienne Westwood", ["vivienne westwood", "vivienne", "westwood", "orb"]),
-    ("Dior", ["dior", "hedi slimane", "hedi", "dior homme", "clawmark", "cummerbund", "strip", "bleu clair", "luster"]),
-    ("Number (N)ine", ["number (n)ine", "number nine", "n(n)", "nn", "takahiro miyashita", "school of visual comedy", "give peace a chance"]),
-    ("Saint Michael", ["saint michael", "saint mxxxxxx", "saint m", "readymade"]),
-    ("Prada", ["prada", "prada sport", "linea rossa"]),
+    ("Chrome Hearts", ["chrome hearts", "chrome", "ch", "matty boy", "dagger", "horseshoe", "sluntradiction", "vagilante", "baby-a", "cemetery", "cross patch", "keeper ring", "floral ring", "paper chain", "roller"]),
+    ("Rick Owens", ["rick owens", "rick", "drkshdw", "geobasket", "geos", "ramones", "ro", "geth", "bolan", "banana", "tyrone", "turbodrk", "vns", "vans", "dunks", "creatch", "bauhaus", "pusher", "mastodon", "detroit", "kiss boot"]),
+    ("Enfants Riches Déprimés", ["erd", "enfants riches deprimes", "enfants riches déprimés", "enfants", "night of the long knives", "teenage death star", "aspirational lifestyle", "rehab", "louvre"]),
+    ("Balenciaga", ["balenciaga", "blcg", "balenci", "vpf", "bb", "3xl", "defender", "strike", "steroid", "cargo", "paris moon", "skater hoodie", "skater tee", "be different", "tape type", "gothic", "cagole"]),
+    ("Undercover", ["undercover", "uc", "jun takahashi", "scab", "85", "68", "arts and crafts", "arts & crafts", "guruguru", "witches", "but beautiful", "languid", "psycho color", "television"]),
+    ("Vetements", ["vetements", "vet", "demna", "tfd", "total fucking darkness", "may the bridges", "bridges", "pirate bay", "gun club", "champion", "metal", "polizei", "target", "sexual fantasies", "titanic", "reworked"]),
+    ("Maison Margiela", ["maison margiela", "margiela", "mm6", "tabi", "gats", "gat", "german army trainer", "artisanal", "replica", "five zip"]),
+    ("Vivienne Westwood", ["vivienne westwood", "vivienne", "westwood", "orb", "armour ring", "beret"]),
+    ("Dior", ["dior", "hedi slimane", "hedi", "dior homme", "clawmark", "cummerbund", "strip", "bleu clair", "luster", "navigate"]),
+    ("Number (N)ine", ["number (n)ine", "number nine", "n(n)", "nn", "takahiro miyashita", "school of visual comedy", "give peace a chance", "touch me im sick", "crying heart", "shield", "hybrid cargo", "time migration"]),
+    ("Saint Michael", ["saint michael", "saint mxxxxxx", "saint m", "readymade", "denim tears"]),
+    ("Prada", ["prada", "prada sport", "linea rossa", "americas cup", "re-nylon"]),
     ("Yohji Yamamoto", ["yohji yamamoto", "yohji", "pour homme", "y's"]),
     ("Alyx", ["alyx", "1017 alyx 9sm", "matthew williams", "rollercoaster"]),
-    ("Junya Watanabe", ["junya watanabe", "junya", "comme des garcons", "cdg"]),
-    ("Raf Simons", ["raf simons", "raf", "riot riot riot", "consumed", "virginia creeper", "closer", "poltergeist", "nebraska", "archive redux"]),
-    ("Bottega Veneta", ["bottega veneta", "bottega", "bv", "tire boot", "puddle"]),
-    ("Acne Studios", ["acne studios", "acne", "1981m", "1989", "super baggy"]),
+    ("Comme des Garçons", ["comme des garcons", "comme des garçons", "cdg", "homme plus", "play", "junya watanabe", "junya"]),
+    ("Raf Simons", ["raf simons", "raf", "riot riot riot", "consumed", "virginia creeper", "closer", "poltergeist", "nebraska", "archive redux", "joy division", "waves", "history of my world", "all shadows"]),
+    ("Bottega Veneta", ["bottega veneta", "bottega", "bv", "tire boot", "puddle", "intrecciato"]),
+    ("Acne Studios", ["acne studios", "acne", "1981m", "1989", "super baggy", "1996", "face patch"]),
     ("Miu Miu", ["miu miu", "miumiu"]),
-    ("Kapital", ["kapital", "bone", "skeleton", "damask"]),
-    ("Boris Bidjan Saberi", ["boris bidjan saberi", "bbs", "11 by bbs"]),
-    ("Carol Christian Poell", ["carol christian poell", "ccp", "drip sneaker", "prosthetic"]),
-    ("Helmut Lang", ["helmut lang", "helmut", "painter denim", "astro"]),
+    ("Kapital", ["kapital", "bone", "skeleton", "damask", "bandana", "century denim"]),
+    ("Boris Bidjan Saberi", ["boris bidjan saberi", "bbs", "11 by bbs", "bamba"]),
+    ("Carol Christian Poell", ["carol christian poell", "ccp", "drip sneaker", "prosthetic", "dead-end", "scarstitch", "tornado boot"]),
+    ("Helmut Lang", ["helmut lang", "helmut", "painter denim", "astro", "ballistic", "flak"]),
+    ("Kiko Kostadinov", ["kiko kostadinov", "kiko", "asics", "delva", "bindra", "tulcea", "gaetan"]),
+    ("Issey Miyake", ["issey miyake", "homme plisse", "issey", "pleats"]),
+    ("Celine", ["celine", "cel", "teen knight poem", "teddy", "triomphe"]),
+    ("Saint Laurent", ["saint laurent", "ysl", "slp", "l01", "wyatt", "crash", "babycat", "teddy jacket"]),
+    ("Louis Vuitton", ["louis vuitton", "lv", "virgil abloh", "millionaires", "trainer"]),
+    ("Ann Demeulemeester", ["ann demeulemeester", "ann d", "backlace"]),
+    ("Haider Ackermann", ["haider ackermann", "haider", "perth", "velvet bomber"]),
+    ("Jil Sander", ["jil sander", "jil"]),
+    ("Goyard", ["goyard", "saint louis", "cardholder", "anjou"]),
+    ("Bape", ["bape", "a bathing ape", "bapesta", "shark hoodie"]),
+    ("Supreme", ["supreme", "box logo", "bogo"]),
+    ("Arc'teryx", ["arcteryx", "arc'teryx", "beta lt", "alpha sv", "system_a"]),
 ]
 
 COMMON_ABBREVIATIONS = {
     r'\bro\b': 'Rick Owens',
     r'\bch\b': 'Chrome Hearts',
     r'\bblcg\b': 'Balenciaga',
+    r'\bbalenci\b': 'Balenciaga',
     r'\berd\b': 'Enfants Riches Déprimés',
     r'\buc\b': 'Undercover',
+    r'\bjun\b': 'Undercover Jun Takahashi',
+    r'\bjunya\b': 'Comme des Garçons Junya Watanabe',
+    r'\bcel\b': 'Celine',
+    r'\bslp\b': 'Saint Laurent',
+    r'\bysl\b': 'Saint Laurent',
+    r'\blv\b': 'Louis Vuitton',
+    r'\bann d\b': 'Ann Demeulemeester',
     r'\bmm\b': 'Maison Margiela',
+    r'\bmm6\b': 'Maison Margiela MM6',
     r'\bnn\b': 'Number (N)ine',
     r'\bv-?ns\b': 'DRKSHDW Vintage Low Sneakers',
     r'\bgats?\b': 'Replica German Army Trainer (GAT) Sneakers',
     r'\bgeos?\b': 'Geobasket High-Top Sneakers',
     r'\bramones?\b': 'Ramones Mainline Sneakers',
     r'\btfd\b': 'Total Fucking Darkness (TFD) Hoodie',
+    r'\bcdg\b': 'Comme des Garçons',
+    r'\bccp\b': 'Carol Christian Poell',
+    r'\bbbs\b': 'Boris Bidjan Saberi',
+    r'\bvpf\b': 'Balenciaga VPF T-Shirt',
+    r'\bplay\b': 'Comme des Garçons Play',
 }
 
 KNOWN_SELLER_NAMES = [
     "survival source", "david", "rog", "bound2", "cola", "mr lee", "mr.lee", "2december", "2dec",
     "aooko", "edward", "markpaing", "cloyad", "rick", "8billion", "lyfactory", "ly", "kappler",
     "godbless", "deeds", "nie", "jenny", "bape", "chaos", "captain", "kungfu", "1to1",
-    "madebykungfu", "pirit", "reondistrict", "dude9", "vetementshop", "artdemon", "daft"
+    "madebykungfu", "pirit", "reondistrict", "dude9", "vetementshop", "artdemon", "daft",
+    "bumbershit", "lucky8", "bole", "mkszy", "marxism", "cupid club", "satan made", "patternerpp",
+    "atomu", "whoisjacov", "richill", "swag", "ninja", "topacney", "topstoney", "topgivenchy"
 ]
 
 SUGARGOO_CNY_TO_USD_RATE = 0.14815  # 1 CNY = ~0.14815 USD on Sugargoo (1 USD = 6.75 CNY)
@@ -159,129 +187,713 @@ def clean_reddit_title(text: str) -> tuple[str, str, str]:
     return cleaned, brand_detected, category_detected
 
 
-def resolve_canonical_archetype_title(clean_query: str, brand: str, category: str, full_context: str = "") -> str:
+# Comprehensive Archive Runway & Model Knowledge Dictionary
+ARCHIVE_RUNWAY_MODELS = [
+    # --- RAF SIMONS ---
+    {
+        "brand": "Raf Simons",
+        "keywords": ["rs", "cropped", "sweater", "nightmares", "v-neck", "v neck", "oversized knit", "cropped oversized"],
+        "canonicalTitle": "Raf Simons AW16 'Nightmares and Dreams' Cropped Oversized 'RS' Knit Sweater",
+        "season": "AW16 'Nightmares and Dreams'",
+        "category": "Outerwear",
+        "estimatedRetail": 1450.0,
+        "archiveValue": 3200.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["riot", "camo", "patch bomber", "ma-1", "riot riot riot", "autumn winter 2001"],
+        "canonicalTitle": "Raf Simons AW01 'Riot! Riot! Riot!' Camo Patch Bomber Jacket",
+        "season": "AW01 'Riot! Riot! Riot!'",
+        "category": "Outerwear",
+        "estimatedRetail": 2200.0,
+        "archiveValue": 35000.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["consumed", "straps", "modular cargo", "parachute", "spring summer 2003"],
+        "canonicalTitle": "Raf Simons SS03 'Consumed' Modular Strap Cargo Bomber Jacket",
+        "season": "SS03 'Consumed'",
+        "category": "Outerwear",
+        "estimatedRetail": 1800.0,
+        "archiveValue": 8500.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["virginia creeper", "nebraska", "acid digested", "creeper"],
+        "canonicalTitle": "Raf Simons AW02 'Virginia Creeper' Nebraska Acid Digested Sweatshirt",
+        "season": "AW02 'Virginia Creeper'",
+        "category": "Hoodies",
+        "estimatedRetail": 850.0,
+        "archiveValue": 4500.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["closer", "joy division", "unknown pleasures", "fishtail", "peter saville", "parka"],
+        "canonicalTitle": "Raf Simons AW03 'Closer' Joy Division Unknown Pleasures Fishtail Parka",
+        "season": "AW03 'Closer'",
+        "category": "Outerwear",
+        "estimatedRetail": 2500.0,
+        "archiveValue": 20000.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["waves", "sleeping", "oversized waves hoodie"],
+        "canonicalTitle": "Raf Simons AW04 'Waves' Oversized Graphic Pullover Hoodie",
+        "season": "AW04 'Waves'",
+        "category": "Hoodies",
+        "estimatedRetail": 750.0,
+        "archiveValue": 3800.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["poltergeist", "history of my world", "all shadows"],
+        "canonicalTitle": "Raf Simons AW05 'History of My World' Poltergeist Sweater",
+        "season": "AW05 'History of My World'",
+        "category": "Outerwear",
+        "estimatedRetail": 950.0,
+        "archiveValue": 5500.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["i love ny", "ny sweater", "ny", "cropped ny"],
+        "canonicalTitle": "Raf Simons AW17 'I Love NY' Cropped Oversized Knit Sweater",
+        "season": "AW17 'New York'",
+        "category": "Outerwear",
+        "estimatedRetail": 1250.0,
+        "archiveValue": 2800.0,
+    },
+    {
+        "brand": "Raf Simons",
+        "keywords": ["replicant", "blade runner", "patch denim", "rs denim shirt"],
+        "canonicalTitle": "Raf Simons SS18 'Blade Runner Replicant' Patchwork Denim Shirt",
+        "season": "SS18 'Replicant'",
+        "category": "T-Shirts",
+        "estimatedRetail": 980.0,
+        "archiveValue": 1800.0,
+    },
+
+    # --- UNDERCOVER (JUN TAKAHASHI) ---
+    {
+        "brand": "Undercover",
+        "keywords": ["85", "arts & crafts", "arts and crafts", "85 denim", "distressed yarn"],
+        "canonicalTitle": "Undercover AW05 'Arts & Crafts' 85 Distressed Denim Jeans",
+        "season": "AW05 'Arts & Crafts'",
+        "category": "Denim",
+        "estimatedRetail": 750.0,
+        "archiveValue": 4200.0,
+    },
+    {
+        "brand": "Undercover",
+        "keywords": ["scab", "crust", "ethnic", "scab backpack", "seditionaries", "crust pants"],
+        "canonicalTitle": "Undercover SS03 'Scab' Ethnic Crust Patchwork Pants",
+        "season": "SS03 'Scab'",
+        "category": "Denim",
+        "estimatedRetail": 650.0,
+        "archiveValue": 3500.0,
+    },
+    {
+        "brand": "Undercover",
+        "keywords": ["68", "red yarn", "klaus", "chuuut", "the janitor"],
+        "canonicalTitle": "Undercover SS06 'T' 68 Red Yarn Distressed Denim Jeans",
+        "season": "SS06 'T'",
+        "category": "Denim",
+        "estimatedRetail": 680.0,
+        "archiveValue": 2800.0,
+    },
+    {
+        "brand": "Undercover",
+        "keywords": ["guruguru", "modular parka", "fur hood"],
+        "canonicalTitle": "Undercover AW06 'Guruguru' Modular Fur Hooded Parka",
+        "season": "AW06 'Guruguru'",
+        "category": "Outerwear",
+        "estimatedRetail": 1600.0,
+        "archiveValue": 3200.0,
+    },
+    {
+        "brand": "Undercover",
+        "keywords": ["witches", "cross knit", "cross fleece"],
+        "canonicalTitle": "Undercover AW02 'Witches' Cross Intarsia Knit Sweater",
+        "season": "AW02 'Witches'",
+        "category": "Outerwear",
+        "estimatedRetail": 550.0,
+        "archiveValue": 2400.0,
+    },
+    {
+        "brand": "Undercover",
+        "keywords": ["but beautiful", "hand stitched", "patti smith"],
+        "canonicalTitle": "Undercover AW04 'But Beautiful' Hand-Stitched Reconstructed Jacket",
+        "season": "AW04 'But Beautiful'",
+        "category": "Outerwear",
+        "estimatedRetail": 1400.0,
+        "archiveValue": 3600.0,
+    },
+
+    # --- NUMBER (N)INE (TAKAHIRO MIYASHITA) ---
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["hybrid", "cargo", "cargo sweatpants", "hybrid cargo"],
+        "canonicalTitle": "Number (N)ine AW04 'Give Peace A Chance' Hybrid Cargo Sweatpants",
+        "season": "AW04 'Give Peace A Chance'",
+        "category": "Denim",
+        "estimatedRetail": 620.0,
+        "archiveValue": 2800.0,
+    },
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["shield", "skull hoodie", "tribal", "give peace a chance"],
+        "canonicalTitle": "Number (N)ine AW04 'Give Peace A Chance' Shield Skull Tribal Hoodie",
+        "season": "AW04 'Give Peace A Chance'",
+        "category": "Hoodies",
+        "estimatedRetail": 580.0,
+        "archiveValue": 2200.0,
+    },
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["high streets", "docking", "flannel", "grunge", "corduroy"],
+        "canonicalTitle": "Number (N)ine AW05 'The High Streets' Distressed Docking Flannel",
+        "season": "AW05 'The High Streets'",
+        "category": "Outerwear",
+        "estimatedRetail": 680.0,
+        "archiveValue": 2500.0,
+    },
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["crying heart", "shadow", "heart tee", "crying heart longsleeve"],
+        "canonicalTitle": "Number (N)ine SS06 'Welcome to the Shadow' Crying Heart Longsleeve T-Shirt",
+        "season": "SS06 'Welcome to the Shadow'",
+        "category": "T-Shirts",
+        "estimatedRetail": 320.0,
+        "archiveValue": 1400.0,
+    },
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["school of visual comedy", "time migration", "skull patch"],
+        "canonicalTitle": "Number (N)ine SS01 'Time Migration' School of Visual Comedy Hoodie",
+        "season": "SS01 'Time Migration'",
+        "category": "Hoodies",
+        "estimatedRetail": 480.0,
+        "archiveValue": 1900.0,
+    },
+    {
+        "brand": "Number (N)ine",
+        "keywords": ["touch me", "kurt", "sick", "grunge cardigan"],
+        "canonicalTitle": "Number (N)ine AW03 'Touch Me I'm Sick' Distressed Grunge Cardigan",
+        "season": "AW03 'Touch Me I'm Sick'",
+        "category": "Outerwear",
+        "estimatedRetail": 580.0,
+        "archiveValue": 2100.0,
+    },
+
+    # --- HELMUT LANG ---
+    {
+        "brand": "Helmut Lang",
+        "keywords": ["painter", "painter denim", "splatter", "paint denim"],
+        "canonicalTitle": "Helmut Lang 1998 Classic Raw Painter Denim Jeans",
+        "season": "AW1998",
+        "category": "Denim",
+        "estimatedRetail": 380.0,
+        "archiveValue": 1600.0,
+    },
+    {
+        "brand": "Helmut Lang",
+        "keywords": ["astro", "astro biker", "flight jacket", "biker jacket"],
+        "canonicalTitle": "Helmut Lang 1999 Astro Biker Flight Jacket",
+        "season": "AW1999",
+        "category": "Outerwear",
+        "estimatedRetail": 1200.0,
+        "archiveValue": 5500.0,
+    },
+    {
+        "brand": "Helmut Lang",
+        "keywords": ["ballistic", "flak", "police vest"],
+        "canonicalTitle": "Helmut Lang 1999 Ballistic Police Flak Vest",
+        "season": "AW1999",
+        "category": "Outerwear",
+        "estimatedRetail": 850.0,
+        "archiveValue": 3200.0,
+    },
+    {
+        "brand": "Helmut Lang",
+        "keywords": ["parachute", "strap cargo", "bond straps"],
+        "canonicalTitle": "Helmut Lang SS03 Parachute Strap Cargo Trousers",
+        "season": "SS03",
+        "category": "Denim",
+        "estimatedRetail": 650.0,
+        "archiveValue": 2400.0,
+    },
+
+    # --- DIOR HOMME (HEDI SLIMANE) ---
+    {
+        "brand": "Dior",
+        "keywords": ["clawmark", "claw", "strip"],
+        "canonicalTitle": "Dior Homme SS04 'Strip' Clawmark Distressed Denim Jeans",
+        "season": "SS04 'Strip'",
+        "category": "Denim",
+        "estimatedRetail": 750.0,
+        "archiveValue": 3800.0,
+    },
+    {
+        "brand": "Dior",
+        "keywords": ["luster", "waxed", "coated black"],
+        "canonicalTitle": "Dior Homme AW03 'Luster' Waxed Coated Black Denim Jeans",
+        "season": "AW03 'Luster'",
+        "category": "Denim",
+        "estimatedRetail": 680.0,
+        "archiveValue": 2400.0,
+    },
+    {
+        "brand": "Dior",
+        "keywords": ["navigate", "navigate boot", "combat boot", "pebble grain"],
+        "canonicalTitle": "Dior Homme AW07 'Navigate' Pebble Grain Leather Combat Boots",
+        "season": "AW07 'Navigate'",
+        "category": "Footwear",
+        "estimatedRetail": 1100.0,
+        "archiveValue": 3500.0,
+    },
+    {
+        "brand": "Dior",
+        "keywords": ["victim of the crime", "napoleonic"],
+        "canonicalTitle": "Dior Homme AW04 'Victim of the Crime' Napoleonic Military Jacket",
+        "season": "AW04 'Victim of the Crime'",
+        "category": "Outerwear",
+        "estimatedRetail": 2400.0,
+        "archiveValue": 4500.0,
+    },
+
+    # --- VETEMENTS ---
+    {
+        "brand": "Vetements",
+        "keywords": ["tfd", "total fucking darkness", "darkness", "gun club"],
+        "canonicalTitle": "Vetements AW16 'Total Fucking Darkness' (TFD) Heavy Oversized Hoodie",
+        "season": "AW16",
+        "category": "Hoodies",
+        "estimatedRetail": 1250.0,
+        "archiveValue": 2800.0,
+    },
+    {
+        "brand": "Vetements",
+        "keywords": ["may the bridges", "bridges", "light before"],
+        "canonicalTitle": "Vetements SS16 'May The Bridges I Burn' Heavy Zip-Up Hoodie",
+        "season": "SS16",
+        "category": "Hoodies",
+        "estimatedRetail": 1150.0,
+        "archiveValue": 2400.0,
+    },
+    {
+        "brand": "Vetements",
+        "keywords": ["titanic", "coming soon"],
+        "canonicalTitle": "Vetements SS16 'Coming Soon' Titanic Movie Oversized Hoodie",
+        "season": "SS16",
+        "category": "Hoodies",
+        "estimatedRetail": 980.0,
+        "archiveValue": 3200.0,
+    },
+    {
+        "brand": "Vetements",
+        "keywords": ["pirate bay", "piratebay"],
+        "canonicalTitle": "Vetements AW17 'Pirate Bay' Torrent Heavy Oversized Hoodie",
+        "season": "AW17",
+        "category": "Hoodies",
+        "estimatedRetail": 1200.0,
+        "archiveValue": 2200.0,
+    },
+    {
+        "brand": "Vetements",
+        "keywords": ["metal", "skull", "heavy metal"],
+        "canonicalTitle": "Vetements AW16 Metal Logo Heavyweight Oversized Hoodie",
+        "season": "AW16",
+        "category": "Hoodies",
+        "estimatedRetail": 1100.0,
+        "archiveValue": 2600.0,
+    },
+
+    # --- BALENCIAGA ---
+    {
+        "brand": "Balenciaga",
+        "keywords": ["wfp", "world food programme"],
+        "canonicalTitle": "Balenciaga AW18 World Food Programme (WFP) Printed Oversized T-Shirt",
+        "season": "AW18",
+        "category": "T-Shirts",
+        "estimatedRetail": 550.0,
+        "archiveValue": 550.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["skater", "skater hoodie", "skater zip", "skater distressed"],
+        "canonicalTitle": "Balenciaga SS24 Skater Extreme Distressed Oversized Hoodie",
+        "season": "SS24",
+        "category": "Hoodies",
+        "estimatedRetail": 1950.0,
+        "archiveValue": 1950.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["skater denim", "skater jeans", "skater pants"],
+        "canonicalTitle": "Balenciaga SS24 Skater Extreme Distressed Ultra Wide-Leg Jeans",
+        "season": "SS24",
+        "category": "Denim",
+        "estimatedRetail": 1750.0,
+        "archiveValue": 1750.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["paris moon", "moon tee"],
+        "canonicalTitle": "Balenciaga SS24 Paris Moon Vintage Washed Distressed T-Shirt",
+        "season": "SS24",
+        "category": "T-Shirts",
+        "estimatedRetail": 750.0,
+        "archiveValue": 750.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["be different", "apple"],
+        "canonicalTitle": "Balenciaga FW22 'Be Different' Washed Oversized Apple Hoodie",
+        "season": "FW22 'The Mud Show'",
+        "category": "Hoodies",
+        "estimatedRetail": 1150.0,
+        "archiveValue": 1150.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["mud", "mud washed", "mud hoodie", "the mud show"],
+        "canonicalTitle": "Balenciaga FW22 Mud Washed Heavy Distressed Zip-Up Hoodie",
+        "season": "FW22 'The Mud Show'",
+        "category": "Hoodies",
+        "estimatedRetail": 1650.0,
+        "archiveValue": 1650.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["3xl", "3xl sneaker", "runner"],
+        "canonicalTitle": "Balenciaga 3XL Distressed Chunky Runner Sneakers",
+        "season": "SS23",
+        "category": "Footwear",
+        "estimatedRetail": 1150.0,
+        "archiveValue": 1150.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["defender", "tire tread", "bouncing"],
+        "canonicalTitle": "Balenciaga Defender Tire Tread Heavy Sneakers",
+        "season": "FW22",
+        "category": "Footwear",
+        "estimatedRetail": 1250.0,
+        "archiveValue": 1250.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["strike", "strike boot", "20mm"],
+        "canonicalTitle": "Balenciaga Strike 20mm Heavy Distressed Canvas Combat Boots",
+        "season": "FW21",
+        "category": "Footwear",
+        "estimatedRetail": 1350.0,
+        "archiveValue": 1350.0,
+    },
+    {
+        "brand": "Balenciaga",
+        "keywords": ["steroid", "steroid derby", "steroid boot"],
+        "canonicalTitle": "Balenciaga Steroid Heavy Molded Derby Shoes",
+        "season": "SS23",
+        "category": "Footwear",
+        "estimatedRetail": 1450.0,
+        "archiveValue": 1450.0,
+    },
+
+    # --- ENFANTS RICHES DÉPRIMÉS ---
+    {
+        "brand": "Enfants Riches Déprimés",
+        "keywords": ["night of the long knives", "long knives", "intarsia knit"],
+        "canonicalTitle": "Enfants Riches Déprimés AW19 'Night of the Long Knives' Intarsia Knit Sweater",
+        "season": "AW19",
+        "category": "Outerwear",
+        "estimatedRetail": 2850.0,
+        "archiveValue": 6500.0,
+    },
+    {
+        "brand": "Enfants Riches Déprimés",
+        "keywords": ["teenage death star", "death star"],
+        "canonicalTitle": "Enfants Riches Déprimés SS20 'Teenage Death Star' Distressed Zip-Up Hoodie",
+        "season": "SS20",
+        "category": "Hoodies",
+        "estimatedRetail": 1450.0,
+        "archiveValue": 3200.0,
+    },
+    {
+        "brand": "Enfants Riches Déprimés",
+        "keywords": ["aspirational lifestyle"],
+        "canonicalTitle": "Enfants Riches Déprimés AW21 'Aspirational Lifestyle' Vintage Distressed T-Shirt",
+        "season": "AW21",
+        "category": "T-Shirts",
+        "estimatedRetail": 650.0,
+        "archiveValue": 1200.0,
+    },
+    {
+        "brand": "Enfants Riches Déprimés",
+        "keywords": ["luxury rehab", "rehab"],
+        "canonicalTitle": "Enfants Riches Déprimés SS21 'Luxury Rehab' Vintage Sun-Faded T-Shirt",
+        "season": "SS21",
+        "category": "T-Shirts",
+        "estimatedRetail": 580.0,
+        "archiveValue": 950.0,
+    },
+
+    # --- CELINE ---
+    {
+        "brand": "Celine",
+        "keywords": ["teen knight poem", "teen knight", "knight poem"],
+        "canonicalTitle": "Celine Homme AW21 'Teen Knight Poem' Embroidered Oversized Hoodie",
+        "season": "AW21 'Teen Knight Poem'",
+        "category": "Hoodies",
+        "estimatedRetail": 1150.0,
+        "archiveValue": 1850.0,
+    },
+    {
+        "brand": "Celine",
+        "keywords": ["dancing kid", "the dancing kid"],
+        "canonicalTitle": "Celine Homme SS21 'The Dancing Kid' Checkered Flannel Cardigan",
+        "season": "SS21 'The Dancing Kid'",
+        "category": "Outerwear",
+        "estimatedRetail": 1450.0,
+        "archiveValue": 2100.0,
+    },
+    {
+        "brand": "Celine",
+        "keywords": ["teddy", "teddy jacket", "wool teddy"],
+        "canonicalTitle": "Celine Classic Wool & Calfskin Leather Trimmed Teddy Bomber Jacket",
+        "season": "Permanent Collection",
+        "category": "Outerwear",
+        "estimatedRetail": 2850.0,
+        "archiveValue": 2850.0,
+    },
+
+    # --- SAINT LAURENT PARIS ---
+    {
+        "brand": "Saint Laurent",
+        "keywords": ["crash", "little crash", "d02 crash", "do2 crash"],
+        "canonicalTitle": "Saint Laurent Paris FW13 'Little Crash' D02 Skinny Denim Jeans",
+        "season": "FW13",
+        "category": "Denim",
+        "estimatedRetail": 890.0,
+        "archiveValue": 2400.0,
+    },
+    {
+        "brand": "Saint Laurent",
+        "keywords": ["babycat", "baby cat", "leopard teddy"],
+        "canonicalTitle": "Saint Laurent Paris FW13 Babycat Patterned Wool Teddy Jacket",
+        "season": "FW13",
+        "category": "Outerwear",
+        "estimatedRetail": 2450.0,
+        "archiveValue": 4500.0,
+    },
+    {
+        "brand": "Saint Laurent",
+        "keywords": ["l01", "l01 biker", "lambskin biker"],
+        "canonicalTitle": "Saint Laurent Paris L01 Classic Lambskin Motorcycle Biker Jacket",
+        "season": "Permanent Collection",
+        "category": "Outerwear",
+        "estimatedRetail": 4990.0,
+        "archiveValue": 4990.0,
+    },
+    {
+        "brand": "Saint Laurent",
+        "keywords": ["wyatt", "harness", "wyatt 40"],
+        "canonicalTitle": "Saint Laurent Paris Wyatt 40mm Harness Leather / Suede Ankle Boots",
+        "season": "Permanent Collection",
+        "category": "Footwear",
+        "estimatedRetail": 1250.0,
+        "archiveValue": 1250.0,
+    },
+
+    # --- KAPITAL ---
+    {
+        "brand": "Kapital",
+        "keywords": ["bone", "skeleton", "skeleton fleece", "bone fleece"],
+        "canonicalTitle": "Kapital Kountry Reversible Bone Skeleton Fleece Zip-Up Jacket",
+        "season": "Kountry Archive",
+        "category": "Outerwear",
+        "estimatedRetail": 650.0,
+        "archiveValue": 1650.0,
+    },
+    {
+        "brand": "Kapital",
+        "keywords": ["damask", "damask fleece"],
+        "canonicalTitle": "Kapital 14oz Damask Patterned Century Denim Fleece Jacket",
+        "season": "Mainline Collection",
+        "category": "Outerwear",
+        "estimatedRetail": 750.0,
+        "archiveValue": 1450.0,
+    },
+    {
+        "brand": "Kapital",
+        "keywords": ["century denim", "kakishibu", "sashiko"],
+        "canonicalTitle": "Kapital Century Denim Kakishibu No. 5-S Sashiko Embroidered Jeans",
+        "season": "Century Denim Archive",
+        "category": "Denim",
+        "estimatedRetail": 580.0,
+        "archiveValue": 1100.0,
+    },
+
+    # --- VIVIENNE WESTWOOD ---
+    {
+        "brand": "Vivienne Westwood",
+        "keywords": ["orb skull", "skull orb", "man ss03", "skull shirt"],
+        "canonicalTitle": "Vivienne Westwood Man SS03 'Orb & Skull' Embroidered Cotton Shirt",
+        "season": "SS03",
+        "category": "T-Shirts",
+        "estimatedRetail": 650.0,
+        "archiveValue": 1450.0,
+    },
+    {
+        "brand": "Vivienne Westwood",
+        "keywords": ["armour ring", "armor ring", "4 tier"],
+        "canonicalTitle": "Vivienne Westwood .925 Solid Sterling Silver 4-Tier Armour Ring",
+        "season": "Jewelry Archive",
+        "category": "Jewelry",
+        "estimatedRetail": 450.0,
+        "archiveValue": 450.0,
+    },
+    {
+        "brand": "Vivienne Westwood",
+        "keywords": ["pearl choker", "3 row pearl", "orb necklace"],
+        "canonicalTitle": "Vivienne Westwood 3-Row Pearl Bas Relief Crystal Orb Choker Necklace",
+        "season": "Jewelry Archive",
+        "category": "Jewelry",
+        "estimatedRetail": 590.0,
+        "archiveValue": 590.0,
+    },
+    {
+        "brand": "Vivienne Westwood",
+        "keywords": ["beret", "orb beret", "wool beret"],
+        "canonicalTitle": "Vivienne Westwood Planet Orb Embroidered Wool Beret",
+        "season": "Accessories",
+        "category": "Accessories",
+        "estimatedRetail": 250.0,
+        "archiveValue": 350.0,
+    },
+
+    # --- CAROL CHRISTIAN POELL ---
+    {
+        "brand": "Carol Christian Poell",
+        "keywords": ["drip", "drip sneaker", "dipped sneaker"],
+        "canonicalTitle": "Carol Christian Poell Drip-Rubber Dipped Low Sneakers",
+        "season": "Artisanal Archive",
+        "category": "Footwear",
+        "estimatedRetail": 2200.0,
+        "archiveValue": 3500.0,
+    },
+    {
+        "brand": "Carol Christian Poell",
+        "keywords": ["tornado", "tornado boot", "titanium"],
+        "canonicalTitle": "Carol Christian Poell Titanium Insert Tornado Leather Boots",
+        "season": "Artisanal Archive",
+        "category": "Footwear",
+        "estimatedRetail": 2800.0,
+        "archiveValue": 4200.0,
+    },
+    {
+        "brand": "Carol Christian Poell",
+        "keywords": ["scarstitch", "scar stitch"],
+        "canonicalTitle": "Carol Christian Poell Scarstitch Horsehide Leather Jacket",
+        "season": "Artisanal Archive",
+        "category": "Outerwear",
+        "estimatedRetail": 5500.0,
+        "archiveValue": 8500.0,
+    },
+]
+
+
+def resolve_canonical_archetype_title(clean_query: str, brand: str, category: str, full_context: str = "") -> tuple[str, str, float, float]:
     """
     Resolves canonical luxury archive piece model names based on designer house models & archetypes.
-    Guarantees output is formatted strictly as: Brand + Exact Model / Detail + Piece Type.
+    Returns: (canonicalTitle, season, estimatedRetail, archiveValue)
     """
     ctx = f"{clean_query} {full_context}".lower()
 
+    # 1. First priority: Check exact Runway & Archive Match Matrix
+    for item in ARCHIVE_RUNWAY_MODELS:
+        if item["brand"].lower() in brand.lower() or brand.lower() in item["brand"].lower():
+            matched_kws = [kw for kw in item["keywords"] if kw in ctx]
+            if len(matched_kws) >= 1:
+                return (
+                    item["canonicalTitle"],
+                    item["season"],
+                    item["estimatedRetail"],
+                    item["archiveValue"],
+                )
+
+    # 2. Chrome Hearts deep matching
     if brand == "Chrome Hearts":
         if any(kw in ctx for kw in ["glasses", "sunglasses", "optical", "frame", "shades", "eyewear"]):
             if "sluntradiction" in ctx:
-                return "Chrome Hearts Sluntradiction Optical Glasses"
+                return ("Chrome Hearts Sluntradiction Optical Eyeglasses (.925 Sterling Silver)", "Eyewear Archive", 1650.0, 1850.0)
             elif "vagilante" in ctx:
-                return "Chrome Hearts Vagilante Eyeglasses"
+                return ("Chrome Hearts Vagilante .925 Sterling Silver Eyeglasses", "Eyewear Archive", 1550.0, 1750.0)
             elif "baby" in ctx:
-                return "Chrome Hearts Baby-A Optical Frames"
+                return ("Chrome Hearts Baby-A Acetate & Sterling Silver Optical Frames", "Eyewear Archive", 1450.0, 1600.0)
             elif "deep" in ctx:
-                return "Chrome Hearts Deep II Sunglasses"
+                return ("Chrome Hearts Deep II Titanium Sunglasses", "Eyewear Archive", 1750.0, 1900.0)
             elif "bone" in ctx:
-                return "Chrome Hearts Bone Prone Eyeglasses"
+                return ("Chrome Hearts Bone Prone Titanium Optical Frames", "Eyewear Archive", 1600.0, 1800.0)
             elif "dagger" in ctx:
-                return "Chrome Hearts Dagger Floral Optical Glasses"
+                return ("Chrome Hearts Dagger Floral .925 Silver Optical Glasses", "Eyewear Archive", 1550.0, 1750.0)
             else:
-                return "Chrome Hearts Sterling Silver Cross Eyeglasses"
+                return ("Chrome Hearts .925 Sterling Silver Cross Eyeglasses", "Eyewear Archive", 1450.0, 1600.0)
         elif any(kw in ctx for kw in ["ring", "necklace", "pendant", "bracelet", "chain"]):
             if "dagger" in ctx:
-                return "Chrome Hearts .925 Sterling Silver Dagger Ring" if "ring" in ctx else "Chrome Hearts Dagger Pendant Necklace"
+                return ("Chrome Hearts .925 Solid Sterling Silver Dagger Ring" if "ring" in ctx else "Chrome Hearts Dagger Pendant Necklace", "Fine Jewelry", 850.0, 850.0)
             elif "floral" in ctx:
-                return "Chrome Hearts Floral Cross Ring"
+                return ("Chrome Hearts .925 Solid Sterling Silver Floral Cross Ring", "Fine Jewelry", 890.0, 890.0)
             elif "keeper" in ctx:
-                return "Chrome Hearts Keeper Ring"
+                return ("Chrome Hearts .925 Solid Sterling Silver Keeper Ring", "Fine Jewelry", 980.0, 980.0)
             elif "cemetery" in ctx:
-                return "Chrome Hearts Cemetery Cross Ring"
+                return ("Chrome Hearts .925 Solid Sterling Silver Cemetery Cross Ring", "Fine Jewelry", 1250.0, 1250.0)
             elif "paper" in ctx:
-                return "Chrome Hearts Paper Chain Bracelet"
+                return ("Chrome Hearts Paper Chain .925 Sterling Silver Bracelet", "Fine Jewelry", 1150.0, 1150.0)
             else:
-                return "Chrome Hearts .925 Sterling Silver Cross Ring" if "ring" in ctx else "Chrome Hearts Cross Pendant Necklace"
+                return ("Chrome Hearts .925 Sterling Silver Cross Ring" if "ring" in ctx else "Chrome Hearts Cross Pendant Necklace", "Fine Jewelry", 850.0, 850.0)
         elif any(kw in ctx for kw in ["hoodie", "zip", "sweatshirt"]):
             if "matty" in ctx:
-                return "Chrome Hearts Matty Boy Brain Graphic Hoodie"
+                return ("Chrome Hearts x Matty Boy Brain / Chomper Graphic Hoodie", "Special Edition", 1450.0, 2600.0)
             elif "floral" in ctx or "horseshoe" in ctx:
-                return "Chrome Hearts Horseshoe Floral Sleeve Zip-Up Hoodie"
+                return ("Chrome Hearts Classic Horseshoe Floral Sleeve Zip-Up Hoodie", "Permanent Archive", 1150.0, 1450.0)
             else:
-                return "Chrome Hearts Multi-Cross Patch Zip-Up Hoodie"
+                return ("Chrome Hearts Multi-Cross Patch Zip-Up Hoodie", "Permanent Archive", 1350.0, 1850.0)
         elif any(kw in ctx for kw in ["denim", "jean", "pants"]):
-            return "Chrome Hearts Cross Patch Vintage 501 Denim Jeans"
+            return ("Chrome Hearts Custom Leather Cross Patch Vintage Levi's 501 Denim", "Artisanal Denim", 3500.0, 8500.0)
         elif any(kw in ctx for kw in ["tee", "t-shirt", "shirt", "longsleeve"]):
-            return "Chrome Hearts Horseshoe Logo Longsleeve T-Shirt"
+            return ("Chrome Hearts Horseshoe Logo Longsleeve T-Shirt", "Permanent Archive", 450.0, 650.0)
 
+    # 3. Rick Owens deep matching
     elif brand == "Rick Owens":
         if any(kw in ctx for kw in ["vans", "vns", "vintage sneaker", "low"]):
-            return "Rick Owens DRKSHDW Vintage Low Sneakers"
+            return ("Rick Owens DRKSHDW Vintage Low Sneakers", "DRKSHDW Archive", 690.0, 690.0)
         elif any(kw in ctx for kw in ["ramone", "ramones"]):
-            return "Rick Owens Mainline Leather Ramones High-Top Sneakers"
+            return ("Rick Owens Mainline Leather Ramones High-Top Sneakers", "Mainline Archive", 980.0, 980.0)
         elif any(kw in ctx for kw in ["geo", "geobasket"]):
-            return "Rick Owens Geobasket High-Top Leather Sneakers"
+            return ("Rick Owens Geobasket High-Top Leather Sneakers", "Mainline Archive", 1150.0, 1150.0)
         elif any(kw in ctx for kw in ["bolan", "banana"]):
-            return "Rick Owens DRKSHDW Bolan Banana Wide Leg Jeans"
+            return ("Rick Owens DRKSHDW Bolan Banana Wide Leg Jeans", "SS23 EDFU", 850.0, 1100.0)
         elif any(kw in ctx for kw in ["tyrone"]):
-            return "Rick Owens Tyrone Cut Waxed Distressed Jeans"
+            return ("Rick Owens Tyrone Cut Waxed Distressed Skinny Jeans", "Mainline Archive", 780.0, 950.0)
         elif any(kw in ctx for kw in ["bauhaus"]):
-            return "Rick Owens Bauhaus Leather Zip Cargo Pants"
+            return ("Rick Owens Bauhaus Leather Zip Cargo Pants", "FW20 PERFORMA", 1450.0, 1850.0)
         elif any(kw in ctx for kw in ["creatch"]):
-            return "Rick Owens Creatch Cargo Drawstring Pants"
+            return ("Rick Owens Creatch Cargo Drawstring Pants", "DRKSHDW Archive", 690.0, 850.0)
         elif any(kw in ctx for kw in ["mountain", "hoodie", "zip"]):
-            return "Rick Owens Mountain Asymmetric Zip Hoodie"
+            return ("Rick Owens Mountain Asymmetric Zip Hoodie", "DRKSHDW Archive", 620.0, 750.0)
         elif any(kw in ctx for kw in ["tommy", "tee", "shirt"]):
-            return "Rick Owens Tommy Oversized T-Shirt"
+            return ("Rick Owens Tommy Oversized T-Shirt", "Mainline Archive", 380.0, 480.0)
         elif any(kw in ctx for kw in ["kiss", "boot"]):
-            return "Rick Owens Kiss 100mm Beveled Platform Boots"
+            return ("Rick Owens Kiss 100mm Beveled Platform Boots", "FW19 LARRY", 1950.0, 2400.0)
 
-    elif brand == "Balenciaga":
-        if any(kw in ctx for kw in ["3xl"]):
-            return "Balenciaga 3XL Distressed Chunky Sneakers"
-        elif any(kw in ctx for kw in ["defender", "bouncing"]):
-            return "Balenciaga Defender Tire Tread Sneakers"
-        elif any(kw in ctx for kw in ["strike"]):
-            return "Balenciaga Strike 20mm Combat Boots"
-        elif any(kw in ctx for kw in ["steroid"]):
-            return "Balenciaga Steroid Heavy Derby Shoes"
-        elif any(kw in ctx for kw in ["cargo"]):
-            return "Balenciaga Cargo Super Oversized Sneakers"
-        elif any(kw in ctx for kw in ["mud", "dirty"]):
-            return "Balenciaga Mud Washed Heavy Distressed Hoodie"
-        elif any(kw in ctx for kw in ["tape"]):
-            return "Balenciaga Tape Type Logo Oversized Hoodie"
-        elif any(kw in ctx for kw in ["skater"]):
-            return "Balenciaga Skater Ultra Wide-Leg Denim Jeans"
-
-    elif brand == "Vetements":
-        if any(kw in ctx for kw in ["tfd", "total fucking darkness", "darkness"]):
-            return "Vetements Total Fucking Darkness (TFD) Oversized Hoodie"
-        elif any(kw in ctx for kw in ["pirate", "piratebay"]):
-            return "Vetements Pirate Bay Heavy Graphic Hoodie"
-        elif any(kw in ctx for kw in ["bridges"]):
-            return "Vetements May The Bridges I Burn Zip-Up Hoodie"
-        elif any(kw in ctx for kw in ["metal", "skull"]):
-            return "Vetements Metal Logo Heavy Oversized Hoodie"
-        elif any(kw in ctx for kw in ["titanic"]):
-            return "Vetements Coming Soon Titanic Oversized Hoodie"
-
-    elif brand == "Enfants Riches Déprimés":
-        if any(kw in ctx for kw in ["knit", "sweater", "night of the long knives"]):
-            return "Enfants Riches Déprimés Night of the Long Knives Knit Sweater"
-        elif any(kw in ctx for kw in ["tee", "t-shirt", "shirt"]):
-            return "Enfants Riches Déprimés Distressed Punk Graphic T-Shirt"
-        elif any(kw in ctx for kw in ["hoodie"]):
-            return "Enfants Riches Déprimés Teenage Death Star Distressed Hoodie"
-
-    elif brand == "Undercover":
-        if any(kw in ctx for kw in ["85", "arts and crafts", "arts & crafts"]):
-            return "Undercover AW05 'Arts & Crafts' 85 Distressed Denim Jeans"
-        elif any(kw in ctx for kw in ["scab"]):
-            return "Undercover SS03 'Scab' Ethnic Crust Patchwork Pants"
-        elif any(kw in ctx for kw in ["68"]):
-            return "Undercover 68 Red Yarn Distressed Denim Jeans"
-        elif any(kw in ctx for kw in ["guruguru"]):
-            return "Undercover AW06 'Guruguru' Modular Parka"
-
+    # 4. Maison Margiela deep matching
     elif brand == "Maison Margiela":
         if any(kw in ctx for kw in ["gat", "gats", "trainer", "replica"]):
-            return "Maison Margiela Replica German Army Trainer (GAT) Sneakers"
+            return ("Maison Margiela Replica German Army Trainer (GAT) Sneakers", "Iconic Permanent Collection", 590.0, 590.0)
         elif any(kw in ctx for kw in ["tabi"]):
-            return "Maison Margiela Tabi Split-Toe Leather Ankle Boots"
+            return ("Maison Margiela Tabi Split-Toe Leather Ankle Boots", "Iconic Permanent Collection", 1150.0, 1150.0)
+        elif any(kw in ctx for kw in ["five zip", "5 zip", "5-zip"]):
+            return ("Maison Margiela 5-Zip Iconic Leather Biker Jacket", "Permanent Collection", 2800.0, 2800.0)
 
     # Default formatted canonical archetype
     words = [w for w in clean_query.split() if w.lower() not in brand.lower()]
@@ -289,7 +901,7 @@ def resolve_canonical_archetype_title(clean_query: str, brand: str, category: st
     if not sub_title:
         sub_title = category
 
-    return f"{brand} {sub_title}"
+    return (f"{brand} {sub_title}", "", 650.0, 650.0)
 
 
 def fetch_live_weidian_price(item_id: str) -> dict:
@@ -421,8 +1033,10 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None, m
     if comment_clues:
         full_ctx += " " + " ".join(comment_clues[:2])
         
-    # Generate canonical archetype fallback title first
-    canonical_fallback = resolve_canonical_archetype_title(clean_query, brand_detected, category_detected, full_ctx)
+    # Generate canonical archetype fallback title & runway season first
+    canonical_fallback, runway_season, est_retail_val, archive_val = resolve_canonical_archetype_title(
+        clean_query, brand_detected, category_detected, full_ctx
+    )
     
     # Resolve exact live Sugargoo source price
     source_price = resolve_exact_source_price(market_url, f"{query_or_title} {full_ctx}", category_detected)
@@ -430,8 +1044,9 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None, m
     res_data = {
         "brand": brand_detected,
         "canonicalTitle": canonical_fallback,
-        "season": "",
-        "estimatedRetail": 650.0,
+        "season": runway_season,
+        "estimatedRetail": est_retail_val or 650.0,
+        "archiveValue": archive_val or est_retail_val or 650.0,
         "sourcePrice": source_price,
         "studioImageUrl": "",
         "category": category_detected,
@@ -473,7 +1088,6 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None, m
                 has_brand = brand_detected.lower() in t_lower
                 has_fashion_kw = any(fkw in t_lower for fkw in FASHION_KEYWORDS)
                 
-                # Must contain the brand name OR a strong piece keyword, and must not be too short/long
                 if (has_brand and has_fashion_kw) and len(t_clean.split()) >= 2 and len(t_clean) <= 80:
                     candidate_titles.append((t_clean, murl))
             except Exception:
@@ -487,32 +1101,36 @@ def identify_product_metadata(query_or_title: str, comments: list[str] = None, m
                     best_img = cimg
                     break
             
-            # Ensure brand is in title
-            if not best_title.lower().startswith(brand_detected.lower()):
-                best_title = f"{brand_detected} {best_title}"
+            # If we don't have an exact runway match from our curated dictionary, use web title
+            if not runway_season:
+                if not best_title.lower().startswith(brand_detected.lower()):
+                    best_title = f"{brand_detected} {best_title}"
+                res_data["canonicalTitle"] = best_title.strip()
                 
-            res_data["canonicalTitle"] = best_title.strip()
-            res_data["studioImageUrl"] = best_img
+                season_match = re.search(r'\b(SS\d{2}|FW\d{2}|AW\d{2}|20[12]\d)\b', best_title, re.IGNORECASE)
+                if season_match:
+                    res_data["season"] = season_match.group(1).upper()
             
-            season_match = re.search(r'\b(SS\d{2}|FW\d{2}|AW\d{2}|20[12]\d)\b', best_title, re.IGNORECASE)
-            if season_match:
-                res_data["season"] = season_match.group(1).upper()
+            res_data["studioImageUrl"] = best_img
                 
     except Exception as e:
         print(f"[IDENTIFIER WARNING] {e}", flush=True)
 
-    # Estimate realistic retail price based on brand and category
-    category_defaults = {
-        "Rick Owens": {"Sneakers": 790.0, "Footwear": 790.0, "Outerwear": 1850.0, "Hoodies": 690.0, "Denim": 820.0, "T-Shirts": 350.0},
-        "Chrome Hearts": {"Hoodies": 1450.0, "Jewelry": 850.0, "Outerwear": 2900.0, "Denim": 2400.0, "T-Shirts": 450.0, "Accessories": 1200.0},
-        "Balenciaga": {"Sneakers": 990.0, "Footwear": 990.0, "Hoodies": 950.0, "Outerwear": 2200.0, "Denim": 890.0, "T-Shirts": 550.0},
-        "Enfants Riches Déprimés": {"T-Shirts": 490.0, "Hoodies": 1200.0, "Outerwear": 2800.0, "Denim": 1100.0},
-        "Undercover": {"Outerwear": 1200.0, "T-Shirts": 250.0, "Denim": 750.0, "Hoodies": 450.0},
-        "Maison Margiela": {"Sneakers": 590.0, "Footwear": 590.0, "Outerwear": 1600.0, "T-Shirts": 390.0, "Denim": 650.0},
-    }
-    
-    brand_table = category_defaults.get(brand_detected, {})
-    res_data["estimatedRetail"] = brand_table.get(category_detected, 650.0)
+    # Estimate realistic retail price based on brand and category if not already set
+    if not res_data.get("estimatedRetail") or res_data.get("estimatedRetail") == 650.0:
+        category_defaults = {
+            "Rick Owens": {"Sneakers": 790.0, "Footwear": 790.0, "Outerwear": 1850.0, "Hoodies": 690.0, "Denim": 820.0, "T-Shirts": 350.0},
+            "Chrome Hearts": {"Hoodies": 1450.0, "Jewelry": 850.0, "Outerwear": 2900.0, "Denim": 2400.0, "T-Shirts": 450.0, "Accessories": 1200.0},
+            "Balenciaga": {"Sneakers": 990.0, "Footwear": 990.0, "Hoodies": 950.0, "Outerwear": 2200.0, "Denim": 890.0, "T-Shirts": 550.0},
+            "Enfants Riches Déprimés": {"T-Shirts": 490.0, "Hoodies": 1200.0, "Outerwear": 2800.0, "Denim": 1100.0},
+            "Undercover": {"Outerwear": 1200.0, "T-Shirts": 250.0, "Denim": 750.0, "Hoodies": 450.0},
+            "Maison Margiela": {"Sneakers": 590.0, "Footwear": 590.0, "Outerwear": 1600.0, "T-Shirts": 390.0, "Denim": 650.0},
+            "Raf Simons": {"Outerwear": 1450.0, "Hoodies": 850.0, "T-Shirts": 420.0, "Denim": 680.0},
+        }
+        brand_table = category_defaults.get(brand_detected, {})
+        res_data["estimatedRetail"] = brand_table.get(category_detected, 650.0)
+
+    return res_data
 
     return res_data
 

@@ -5,11 +5,11 @@ import json
 import time
 import asyncio
 import urllib.parse
+import urllib.request
 from PIL import Image
-import rembg
 import requests
 from playwright.async_api import async_playwright
-from product_identifier import identify_product_metadata, resolve_exact_source_price
+from product_identifier import identify_product_metadata, resolve_exact_source_price, LUXURY_BRANDS
 from image_cutout_pipeline import process_and_cutout_image, fetch_marketplace_store_photos
 from job_logger import log_job
 
@@ -57,48 +57,21 @@ def emit_progress(percent: int, message: str, current: int, total: int, found_co
     print(f"[AF_PROGRESS] {json.dumps(data)}", flush=True)
 
 
-
-# Known Designer & Archive Brands Dictionary for accurate tagging
-KNOWN_BRANDS = [
-    ("Enfants Riches Déprimés", ["erd", "enfants riches deprimes", "enfants riches déprimés", "enfants"]),
-    ("Rick Owens", ["rick owens", "rick", "drkshdw", "geobasket", "ramones", "geth", "tyrone", "bolan", "dunk", "vns", "vans", "ro"]),
-    ("Chrome Hearts", ["chrome hearts", "chrome", "ch", "matty boy", "dagger"]),
-    ("Balenciaga", ["balenciaga", "blcg", "bb", "steroid", "defender", "strike", "3xl", "cargo"]),
-    ("Undercover", ["undercover", "uc", "jun takahashi", "scab", "85", "68", "arts and crafts", "guruguru"]),
-    ("Vetements", ["vetements", "vet", "demna", "tfd", "total fucking darkness", "may the bridges", "bridges"]),
-    ("Maison Margiela", ["maison margiela", "margiela", "mm6", "tabi", "gats", "german army trainer"]),
-    ("Vivienne Westwood", ["vivienne westwood", "vivienne", "westwood", "orb"]),
-    ("Dior", ["dior", "hedi slimane", "hedi", "dior homme", "clawmark", "cummerbund", "bleu clair", "strip"]),
-    ("Number (N)ine", ["number (n)ine", "number nine", "number (n) nine", "n(n)", "nn", "takahiro miyashita", "school of visual comedy", "touch me im sick"]),
-    ("Saint Michael", ["saint michael", "saint mxxxxxx", "saint m"]),
-    ("Prada", ["prada", "prada sport", "linea rossa"]),
-    ("Yohji Yamamoto", ["yohji yamamoto", "yohji", "pour homme", "y's"]),
-    ("Alyx", ["alyx", "1017 alyx 9sm", "matthew williams"]),
-    ("Junya Watanabe", ["junya watanabe", "junya", "comme des garcons", "cdg"]),
-    ("Raf Simons", ["raf simons", "raf", "riot riot riot", "consumed", "virginia creeper", "closer", "poltergeist", "nebraska"]),
-    ("Bottega Veneta", ["bottega veneta", "bottega", "bv", "tire boot", "puddle"]),
-    ("Acne Studios", ["acne studios", "acne", "1981m", "1989", "super baggy"]),
-    ("Miu Miu", ["miu miu", "miumiu"]),
-    ("Kapital", ["kapital", "bone", "skeleton", "damask"]),
-    ("Boris Bidjan Saberi", ["boris bidjan saberi", "bbs", "11 by bbs"]),
-    ("Carol Christian Poell", ["carol christian poell", "ccp", "drip sneaker", "prosthetic"]),
-    ("Helmut Lang", ["helmut lang", "helmut", "painter denim", "astro"]),
-]
+# Synchronized Luxury Brands Dictionary
+KNOWN_BRANDS = LUXURY_BRANDS
 
 CATEGORY_KEYWORDS = {
-    "Outerwear": ["jacket", "bomber", "coat", "parka", "puffer", "windbreaker", "leather jacket", "blazer", "cardigan", "knit", "sweater"],
+    "Outerwear": ["jacket", "bomber", "coat", "parka", "puffer", "windbreaker", "leather jacket", "blazer", "cardigan", "knit", "sweater", "vest"],
     "Hoodies": ["hoodie", "zip-up", "zip up", "pullover", "sweatshirt"],
-    "Denim": ["jeans", "denim", "pants", "trousers", "cords", "sweatpants", "cargo", "shorts"],
-    "T-Shirts": ["tee", "t-shirt", "tshirt", "tank", "longsleeve", "jersey"],
-    "Footwear": ["shoes", "boots", "sneakers", "derbies", "loafers", "vans", "vns", "ramones", "geobasket", "tabi", "3xl", "defender", "strikes"],
+    "Denim": ["jeans", "denim", "pants", "trousers", "cords", "sweatpants", "cargo", "shorts", "banana", "bolan", "tyrone"],
+    "T-Shirts": ["tee", "t-shirt", "tshirt", "tank", "longsleeve", "jersey", "top", "shirt"],
+    "Footwear": ["shoes", "boots", "sneakers", "derbies", "loafers", "vans", "vns", "ramones", "geobasket", "tabi", "3xl", "defender", "strikes", "kiss boot", "gat"],
     "Jewelry": ["ring", "necklace", "pendant", "bracelet", "chain", "earring", "cross", "wallet chain"],
-    "Accessories": ["bag", "backpack", "tote", "hat", "beanie", "cap", "belt", "sunglasses", "glasses", "scarf", "wallet"]
+    "Accessories": ["bag", "backpack", "tote", "hat", "beanie", "cap", "belt", "sunglasses", "glasses", "scarf", "wallet", "shades", "frames"]
 }
 
 IGNORE_TITLES = [
-    "megathread", "rules", "discord", "seller ban", "guide", "easter mega", "announcement", "winner", "essential guide",
-    "lc", "legit check", "legit-check", "is this real", "real or fake", "authentication", "can i get a lc", "please lc", 
-    "help lc", "pls lc", "fitpic", "fit pic", "discussion", "question", "general question", "w2c", "where to cop", "wtc",
+    "megathread", "rules", "discord", "seller ban", "easter mega", "winner", "essential guide",
     "blowjob", "nsfw", "porn", "hentai", "shitpost", "meme", "scam", "drama", "giveaway", "mod post", "gifs"
 ]
 
@@ -181,8 +154,8 @@ def clean_text_and_extract_links(text: str) -> list[str]:
     cleaned = re.sub(r'detail\s*\.\s*tmall\s*\.\s*com', 'detail.tmall.com', cleaned, flags=re.IGNORECASE)
 
     patterns = [
-        r'https?://[^\s"\'<>()]+(?:item\.taobao\.com|weidian\.com|detail\.1688\.com|detail\.tmall\.com|x\.yupoo\.com)[^\s"\'<>()]*',
-        r'(?:item\.taobao\.com|weidian\.com|detail\.1688\.com|detail\.tmall\.com|x\.yupoo\.com)[^\s"\'<>()]+'
+        r'https?://[^\s"\'<>()]+(?:item\.taobao\.com|weidian\.com|detail\.1688\.com|detail\.tmall\.com|k\.youshop10\.com|x\.yupoo\.com)[^\s"\'<>()]*',
+        r'(?:item\.taobao\.com|weidian\.com|detail\.1688\.com|detail\.tmall\.com|k\.youshop10\.com|x\.yupoo\.com)[^\s"\'<>()]+'
     ]
     
     links = []
@@ -195,8 +168,6 @@ def clean_text_and_extract_links(text: str) -> list[str]:
             links.append(m)
             
     return list(dict.fromkeys(links))
-
-from image_cutout_pipeline import process_and_cutout_image
 
 def resolve_and_clean_market_url(raw_url: str) -> str:
     cleaned = raw_url.strip()
@@ -233,49 +204,106 @@ def detect_category(text: str) -> str:
                 return cat
     return "Outerwear"
 
-def estimate_price(brand: str, category: str, text: str) -> float:
-    yuan_match = re.search(r'(\d{2,4})\s*(?:y|yuan|rmb|¥|元)', text, re.IGNORECASE)
-    if yuan_match:
-        yuan = float(yuan_match.group(1))
-        usd = round(yuan * 0.14, 2)
-        if 10 <= usd <= 350:
-            return usd
-            
-    usd_match = re.search(r'\$\s*(\d{2,3})', text)
-    if usd_match:
-        usd = float(usd_match.group(1))
-        if 10 <= usd <= 350:
-            return usd
-
-    defaults = {
-        "Outerwear": 89.0,
-        "Hoodies": 59.0,
-        "Denim": 65.0,
-        "T-Shirts": 34.0,
-        "Footwear": 115.0,
-        "Jewelry": 42.0,
-        "Accessories": 48.0
-    }
-    return defaults.get(category, 59.0)
-
 def slugify(text: str) -> str:
     s = text.lower()
     s = re.sub(r'[^a-z0-9]+', '-', s).strip('-')
     return s[:60]
 
-def create_image_cutout_from_url(img_url: str, output_path: str, query_fallback: str = "") -> bool:
-    return process_and_cutout_image(img_url, output_path, query_fallback=query_fallback)
 
-async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
-    print(f"=== STARTING r/QualityReps AUTO-SCAN (Limit: {max_posts}) ===", flush=True)
+def parse_multi_item_post(title: str, body_text: str, comments: list[str], post_images: list[str]) -> list[dict]:
+    """
+    Intelligently extracts each piece from Single-Find, Haul, or Multi-Item Gallery posts.
+    Maps line-by-line comment clues to the correct marketplace link and gallery image.
+    """
+    candidates = []
+    seen_links = set()
+
+    all_lines = []
+    if body_text:
+        all_lines.extend(body_text.split('\n'))
+    for c in comments:
+        all_lines.extend(c.split('\n'))
+
+    # 1. Line-by-Line / Paragraph Matching
+    for line in all_lines:
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        line_links = clean_text_and_extract_links(line_clean)
+        for link in line_links:
+            clean_l = resolve_and_clean_market_url(link)
+            if clean_l.lower() in seen_links:
+                continue
+            seen_links.add(clean_l.lower())
+
+            # Extract surrounding text as title hint
+            title_hint = line_clean
+            for l in line_links:
+                title_hint = title_hint.replace(l, ' ')
+            title_hint = re.sub(r'https?://\S+', ' ', title_hint)
+            title_hint = re.sub(r'\[.*?\]|\(.*?\)|【.*?】', ' ', title_hint)
+            title_hint = re.sub(r'^\s*[\d\.\-\:\*\#]+\s*', ' ', title_hint).strip()
+            
+            clean_sub_hint = re.sub(r'\b(w2c|link|wtc|item|pic|here|buy|for)\b', '', title_hint, flags=re.IGNORECASE).strip(' :-\t\r\n.,#')
+
+            # Check if there was a numbered index like '1.', 'Pic 2', 'Image 3', '#4'
+            img_index = None
+            num_match = re.search(r'^(?:#|pic|img|image|item|slide)?\s*(\d+)[\.\:\-\s]', line_clean, re.IGNORECASE)
+            if num_match:
+                try:
+                    idx = int(num_match.group(1)) - 1
+                    if 0 <= idx < len(post_images):
+                        img_index = idx
+                except Exception:
+                    pass
+
+            assigned_img = post_images[img_index] if (img_index is not None and img_index < len(post_images)) else (
+                post_images[len(candidates)] if len(candidates) < len(post_images) else (post_images[0] if post_images else "")
+            )
+
+            # If title hint is too short or generic, augment with post title
+            if len(clean_sub_hint.split()) < 2:
+                title_hint = f"{title}" if len(line_links) == 1 else f"{title} (Piece {len(candidates) + 1})"
+
+            candidates.append({
+                "market_link": clean_l,
+                "title_hint": title_hint,
+                "image_src": assigned_img,
+                "item_index": len(candidates) + 1
+            })
+
+    # 2. Fallback: Full Text Link Scan if no line matches were produced
+    if not candidates:
+        full_text = f"{title} {body_text} " + " ".join(comments)
+        general_links = clean_text_and_extract_links(full_text)
+        for g_idx, g_link in enumerate(general_links):
+            clean_gl = resolve_and_clean_market_url(g_link)
+            if clean_gl.lower() in seen_links:
+                continue
+            seen_links.add(clean_gl.lower())
+            assigned_img = post_images[g_idx] if g_idx < len(post_images) else (post_images[0] if post_images else "")
+            candidates.append({
+                "market_link": clean_gl,
+                "title_hint": f"{title} (Piece {g_idx + 1})" if len(general_links) > 1 else title,
+                "image_src": assigned_img,
+                "item_index": g_idx + 1
+            })
+
+    return candidates
+
+
+async def scan_qualityreps(max_posts: int = 25, auto_add: bool = False):
+    print(f"=== STARTING HIGH-YIELD REDDIT ARCHIVE SCANNER (Target: {max_posts} Grails) ===", flush=True)
     
     with open(SHEET_PRODUCTS_PATH, "r", encoding="utf-8") as f:
         existing_products = json.load(f)
         
     existing_urls = set()
     for p in existing_products:
-        existing_urls.add(p.get("sugargooUrl", "").lower())
-        existing_urls.add(p.get("affiliateLink", "").lower())
+        if p.get("sugargooUrl"):
+            existing_urls.add(p.get("sugargooUrl", "").lower())
+        if p.get("affiliateLink"):
+            existing_urls.add(p.get("affiliateLink", "").lower())
         if p.get("rawMarketUrl"):
             existing_urls.add(p.get("rawMarketUrl", "").lower())
 
@@ -288,53 +316,48 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
         
-        # Dynamic high-yield search queries targeting actual store links and verified drops
-        all_search_queries = [
-            "flair%3AFIND+OR+flair%3AGRAIL",
-            "flair%3AQC+OR+flair%3ARELEASE",
-            "Rick+Owens+(weidian+OR+taobao+OR+1688)",
-            "Chrome+Hearts+(weidian+OR+taobao+OR+1688)",
-            "Enfants+Riches+Deprimes+OR+ERD+(weidian+OR+taobao)",
-            "Balenciaga+(weidian+OR+taobao+OR+1688)",
-            "Maison+Margiela+(weidian+OR+taobao)",
-            "Undercover+OR+Scab+OR+85+(weidian+OR+taobao)",
-            "Raf+Simons+OR+Consumed+OR+Riot+(weidian+OR+taobao)",
-            "Carol+Christian+Poell+OR+CCP+(weidian+OR+taobao)",
-            "Acne+Studios+(weidian+OR+taobao)",
-            "Kapital+(weidian+OR+taobao)",
-            "Vivienne+Westwood+(weidian+OR+taobao)",
-            "Yohji+Yamamoto+(weidian+OR+taobao)"
-        ]
-        import random
-        random.shuffle(all_search_queries)
-
-        urls_to_scan = [
-            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND&sort=new",
-            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[0]}&sort=new",
-            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[1]}&sort=relevance",
-            f"https://www.reddit.com/r/QualityReps/search/?q={all_search_queries[2]}&sort=top&t=year",
-            f"https://www.reddit.com/r/DesignerReps/search/?q={all_search_queries[3]}&sort=new",
-            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND&sort=top&t=all"
+        # Expanded multi-subreddit feeds & high-yield search matrix
+        dynamic_feeds = [
+            # 1. Finds & Direct Releases
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AFIND+OR+flair%3AGRAIL&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3ARELEASE&sort=new",
+            # 2. Hauls & In-Hand Reviews (High multi-piece volume)
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AHAUL+OR+flair%3AREVIEW&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=flair%3AQC&sort=new",
+            # 3. DesignerReps Finds & Reviews
+            "https://www.reddit.com/r/DesignerReps/search/?q=flair%3AFIND+OR+flair%3AREVIEW+OR+flair%3AHAUL&sort=new",
+            # 4. Designer Brand Searches with Store Links
+            "https://www.reddit.com/r/QualityReps/search/?q=(Rick+Owens+OR+DRKSHDW)+(weidian+OR+taobao+OR+1688)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Enfants+Riches+Deprimes+OR+ERD)+(weidian+OR+taobao)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Balenciaga+OR+BLCG)+(weidian+OR+taobao+OR+1688)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Chrome+Hearts+OR+CH)+(weidian+OR+taobao+OR+1688)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Undercover+OR+Vetements+OR+Margiela)+(weidian+OR+taobao)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Number+Nine+OR+Kapital+OR+Raf+Simons)+(weidian+OR+taobao)&sort=new",
+            "https://www.reddit.com/r/QualityReps/search/?q=(Acne+Studios+OR+CCP+OR+Kiko)+(weidian+OR+taobao)&sort=new",
+            # 5. Live Latest Subreddit Chronological Feed
+            "https://www.reddit.com/r/QualityReps/new/",
+            "https://www.reddit.com/r/DesignerReps/new/"
         ]
         
         post_links = []
         emit_progress(3, "Connecting stealth browser to high-yield Grail feeds...", 0, max_posts, 0, "INIT")
-        for u_idx, u in enumerate(urls_to_scan):
-            feed_pct = int(5 + (u_idx / len(urls_to_scan)) * 12)
+        
+        for u_idx, u in enumerate(dynamic_feeds):
+            feed_pct = int(4 + (u_idx / len(dynamic_feeds)) * 14)
             feed_name = u.split('?')[0].replace("https://www.reddit.com/r/", "r/")
-            emit_progress(feed_pct, f"Crawling feed ({u_idx+1}/{len(urls_to_scan)}): {feed_name}...", 0, max_posts, 0, "FEED_FETCH")
+            emit_progress(feed_pct, f"Crawling feed ({u_idx+1}/{len(dynamic_feeds)}): {feed_name}...", 0, max_posts, 0, "FEED_FETCH")
             print(f"Fetching feed: {u}", flush=True)
             try:
-                await page.goto(u, timeout=35000)
-                await page.wait_for_timeout(2500)
-                # Scroll down to load more dynamic content
-                for _ in range(5):
+                await page.goto(u, timeout=30000)
+                await page.wait_for_timeout(2000)
+                # Scroll down to load dynamic posts
+                for _ in range(4):
                     await page.keyboard.press("PageDown")
-                    await page.wait_for_timeout(800)
+                    await page.wait_for_timeout(600)
                     
                 links = await page.evaluate('''() => {
                     const anchors = Array.from(document.querySelectorAll('a[href*="/comments/"]'));
@@ -354,149 +377,158 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
             except Exception as e:
                 print(f"Error fetching feed {u}: {e}", flush=True)
                 
-        emit_progress(18, f"Extracted {len(post_links)} unseen candidate posts. Starting Grail analysis...", 0, max_posts, 0, "CANDIDATE_POOL")
-        print(f"Found {len(post_links)} unseen candidate posts. Processing up to {max_posts}...", flush=True)
+        emit_progress(18, f"Extracted {len(post_links)} unseen candidate threads. Starting deep Haul & Find extraction...", 0, max_posts, 0, "CANDIDATE_POOL")
+        print(f"Found {len(post_links)} unseen candidate threads. Processing...", flush=True)
 
         valid_count = 0
-        total_eval_target = min(len(post_links), max_posts * 3)
+        total_eval_target = min(len(post_links), max_posts * 4)
+        
         for idx, post_url in enumerate(post_links):
             if valid_count >= max_posts:
                 break
                 
             if post_url in scanned_posts_set:
-                print(f"Skipping already scanned post (History Cache): {post_url}", flush=True)
                 continue
                 
             # Record post as scanned
             scanned_posts_set.add(post_url)
-            scanner_history["scanned_reddit_posts"] = list(scanned_posts_set)[-1000:]
+            scanner_history["scanned_reddit_posts"] = list(scanned_posts_set)[-1500:]
             save_scanner_history(scanner_history)
 
             progress_base = 20 + int((idx / max(1, total_eval_target)) * 75)
             progress_base = min(95, progress_base)
             
-            emit_progress(progress_base, f"Inspecting post [{idx+1}/{len(post_links)}]: resolving threads & comments...", idx+1, max_posts, valid_count, "INSPECT_POST")
-            print(f"\n--- [{idx+1}/{len(post_links)}] Processing {post_url} ---", flush=True)
+            emit_progress(progress_base, f"Inspecting thread [{idx+1}/{len(post_links)}]: resolving comments & gallery...", idx+1, max_posts, valid_count, "INSPECT_POST")
+            print(f"\n--- [{idx+1}/{len(post_links)}] Inspecting {post_url} ---", flush=True)
+            
             post_page = await context.new_page()
             try:
                 await post_page.goto(post_url, timeout=25000)
-                await post_page.wait_for_timeout(2500)
+                await post_page.wait_for_timeout(2000)
                 
                 title_el = await post_page.query_selector("h1")
                 title = (await title_el.inner_text()).strip() if title_el else ""
                 
-                if any(ig in title.lower() for ig in IGNORE_TITLES) or title.lower().startswith("lc ") or "[lc]" in title.lower() or "legit check" in title.lower():
-                    print(f"Skipping announcement/guide/LC thread: '{title}'", flush=True)
+                if any(ig in title.lower() for ig in IGNORE_TITLES):
+                    print(f"Skipping ignored topic thread: '{title}'", flush=True)
                     continue
 
-                    
                 body_el = await post_page.query_selector("shreddit-post, div[data-testid='post-container']")
                 body_text = (await body_el.inner_text()) if body_el else ""
                 
-                # Extract comments list for model identification
+                # Extract all comments list for context and link clues
                 comments_list = await post_page.eval_on_selector_all(
                     "shreddit-comment p, div[data-testid='comment'] p",
-                    "els => els.map(e => e.innerText || '').filter(t => t.length > 5)"
+                    "els => els.map(e => e.innerText || '').filter(t => t.length > 3)"
                 )
                 
-                # Fetch all hrefs
-                all_hrefs = await post_page.eval_on_selector_all("a", "els => els.map(e => e.href)")
-                
-                # Combine full text to extract market links
-                full_text = f"{title} {body_text} " + " ".join(comments_list) + " " + " ".join(all_hrefs)
-                extracted_links = clean_text_and_extract_links(full_text)
-                
-                # Extract post images - filter out avatars/stickers
+                # Extract all post & gallery images
                 raw_post_images = await post_page.eval_on_selector_all(
-                    "img[src*='preview.redd.it'], img[src*='i.redd.it']",
+                    "img[src*='preview.redd.it'], img[src*='i.redd.it'], shreddit-gallery-carousel img, div[data-testid='post-container'] img",
                     "els => els.map(e => e.src)"
                 )
-                post_images = [
-                    img for img in raw_post_images 
-                    if not any(bad in img.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "award", "marketing", "icon"])
-                ]
                 
-                if not extracted_links:
-                    print(f"No market links detected for '{title}'.", flush=True)
-                    continue
-                    
-                # Run AI Fashion Lens / Archive Model Identifier
-                emit_progress(progress_base + 1, f"AI Model Identification for: '{title[:35]}...'", idx+1, max_posts, valid_count, "MODEL_ID")
-                identified = identify_product_metadata(title, comments=comments_list)
-                brand = identified.get("brand") or detect_brand(title + " " + body_text)
-                canonical_title = identified.get("canonicalTitle") or title
-                canonical_title = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C|LC', '', canonical_title).strip()
+                clean_post_images = []
+                for img in raw_post_images:
+                    if not any(bad in img.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "award", "marketing", "icon", "upvote", "downvote"]):
+                        clean_img = img.replace("&amp;", "&")
+                        if clean_img not in clean_post_images:
+                            clean_post_images.append(clean_img)
+
+                # Parse multi-item haul / single find
+                candidates = parse_multi_item_post(title, body_text, comments_list, clean_post_images)
                 
-                # REJECT generic garbage and non-designer titles
-                if brand in ["Archive Collection", "Archive Finds", "General"] or "Archive Piece" in canonical_title:
-                    print(f"Skipping unverified generic item: '{canonical_title}'", flush=True)
-                    continue
-                    
-                # REJECT haul / bulk posts without single isolated piece
-                if any(hkw in title.lower() for hkw in ["haul", "10kg", "5kg", "7kg", "4kg", "megathread", "giveaway", "discussion"]):
-                    print(f"Skipping multi-item haul/announcement thread: '{title}'", flush=True)
+                if not candidates:
+                    print(f"No marketplace store links found for '{title}'.", flush=True)
                     continue
 
-                # DEDUPLICATION: Check if product with identical brand & title already exists
-                existing_titles = {
-                    (p.get("brand", "").lower().strip(), p.get("name", "").lower().strip())
-                    for p in existing_products + discovered_items
-                }
-                if (brand.lower().strip(), canonical_title.lower().strip()) in existing_titles:
-                    print(f"Skipping duplicate product in catalog: {brand} - {canonical_title}", flush=True)
-                    continue
-                
-                category = identified.get("category") or detect_category(canonical_title + " " + title + " " + body_text)
-                season = identified.get("season", "")
-                
-                # Ingest only the primary single piece link to avoid duplicate variants
-                for link_idx, market_link in enumerate(extracted_links[:1]):
-                    # Check for valid marketplace product ID
+                print(f"-> Detected {len(candidates)} candidate item(s) in thread '{title}'", flush=True)
+
+                # Process each item in the haul/post (up to 8 items per thread)
+                for item_candidate in candidates[:8]:
+                    if valid_count >= max_posts:
+                        break
+
+                    market_link = item_candidate["market_link"]
+                    title_hint = item_candidate["title_hint"]
+                    candidate_img = item_candidate["image_src"]
+                    
+                    # 1. Validate Marketplace URL format
                     is_valid_market_link = (
                         ("weidian.com" in market_link and ("itemid" in market_link.lower() or "item.html?id=" in market_link.lower())) or
                         ("taobao.com" in market_link and "id=" in market_link.lower()) or
+                        ("tmall.com" in market_link and "id=" in market_link.lower()) or
                         ("1688.com" in market_link and ("offer/" in market_link.lower() or "detail/" in market_link.lower()))
                     )
                     if not is_valid_market_link:
-                        print(f"Skipping invalid store link (missing product ID): {market_link}", flush=True)
+                        print(f"Skipping non-product market link: {market_link}", flush=True)
                         continue
 
                     if market_link.lower() in blacklisted_links_set:
                         print(f"Skipping blacklisted market link: {market_link}", flush=True)
                         continue
 
-                    # 0. Live Availability & Dead-Link Check on Marketplace (Taobao/Weidian)
+                    affiliate_link = convert_to_sugargoo_affiliate(market_link)
+                    if affiliate_link.lower() in existing_urls:
+                        print(f"Piece already exists in catalog: {market_link}", flush=True)
+                        continue
+
+                    # 2. Live Store Listing Availability Check
                     is_live, live_msg = verify_market_link_live(market_link)
                     if not is_live:
-                        print(f"Skipping dead/delisted marketplace listing ({live_msg}): {market_link}", flush=True)
+                        print(f"Skipping dead/delisted listing ({live_msg}): {market_link}", flush=True)
                         blacklisted_links_set.add(market_link.lower())
-                        scanner_history["blacklisted_links"] = list(blacklisted_links_set)[-1000:]
+                        scanner_history["blacklisted_links"] = list(blacklisted_links_set)[-1500:]
                         save_scanner_history(scanner_history)
                         continue
 
-                    # Live exact Sugargoo price resolution from Weidian/Taobao API
-                    price = resolve_exact_source_price(market_link, full_text, category)
+                    # 3. Model Identification & Brand Resolution
+                    emit_progress(progress_base + 1, f"Fashion Lens: Identifying '{title_hint[:35]}...'", idx+1, max_posts, valid_count, "MODEL_ID", title_hint)
+                    identified = identify_product_metadata(title_hint, comments=comments_list, market_url=market_link)
+                    
+                    brand = identified.get("brand") or detect_brand(title_hint + " " + title + " " + body_text)
+                    canonical_title = identified.get("canonicalTitle") or title_hint
+                    canonical_title = re.sub(r'\[.*?\]|\(.*?\)|QC|FIND|W2C|LC|RELEASE|REVIEW|HAUL', '', canonical_title).strip()
+                    
+                    if brand in ["Archive Collection", "Archive Finds", "General"] or "Archive Piece" in canonical_title:
+                        # Try detecting from full thread text
+                        brand_retry = detect_brand(title + " " + body_text + " " + " ".join(comments_list))
+                        if brand_retry != "Archive Collection":
+                            brand = brand_retry
+                            canonical_title = f"{brand} {canonical_title.replace('Archive Piece', '').strip()}".strip()
+                        else:
+                            print(f"Skipping unverified non-designer item: '{canonical_title}'", flush=True)
+                            continue
+
+                    # Deduplication check by Brand + Title
+                    existing_titles = {
+                        (p.get("brand", "").lower().strip(), p.get("name", "").lower().strip())
+                        for p in existing_products + discovered_items
+                    }
+                    if (brand.lower().strip(), canonical_title.lower().strip()) in existing_titles:
+                        print(f"Skipping duplicate piece in catalog: {brand} - {canonical_title}", flush=True)
+                        continue
+
+                    category = identified.get("category") or detect_category(canonical_title + " " + title_hint)
+                    season = identified.get("season", "")
+
+                    # 4. Live Sugargoo Price Resolution
+                    price = resolve_exact_source_price(market_link, f"{title_hint} {title}", category)
                     estimated_retail = identified.get("estimatedRetail") or round(price * 8.5, 0)
                     if estimated_retail < price * 2:
                         estimated_retail = round(price * 5.0, 0)
 
-                    affiliate_link = convert_to_sugargoo_affiliate(market_link)
-                    
-                    if affiliate_link.lower() in existing_urls:
-                        print(f"Item already in catalog: {market_link}", flush=True)
-                        continue
-                        
-                    slug = slugify(f"{brand}-{canonical_title}-{int(time.time()) % 10000 + link_idx}")
+                    slug = slugify(f"{brand}-{canonical_title}-{int(time.time()) % 10000 + item_candidate['item_index']}")
                     item_id = str(len(existing_products) + len(discovered_items) + 1)
-                    
-                    # 1. First priority: Direct seller studio photos from Weidian/Taobao/1688
+
+                    # 5. Image Sourcing: Priority 1 = Direct Seller Studio Photos, Priority 2 = Post Gallery Photo
                     store_photos = fetch_marketplace_store_photos(market_link)
-                    img_src = store_photos[0] if store_photos else (post_images[0] if post_images else "")
+                    img_src = store_photos[0] if store_photos else (candidate_img if candidate_img else "")
                     
-                    if not img_src or any(bad in img_src.lower() for bad in ["snoo", "snoovatar", "avatar", "badge", "marketing", "filesor", "pimpandhost", "tumblr", ".gif"]):
-                        print(f"Skipping item with no authentic store or Reddit QC photo: '{canonical_title}'", flush=True)
+                    if not img_src:
+                        print(f"Skipping item with no authentic photo: '{canonical_title}'", flush=True)
                         continue
-                    
+
                     item = {
                         "id": item_id,
                         "title": canonical_title,
@@ -530,17 +562,18 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                         "rawImageSrc": img_src,
                         "notes": f"Auto-sourced from r/QualityReps ({post_url})"
                     }
-                    
+
+                    # 6. High-Precision Studio Cutout Generation
                     out_png = os.path.join(PRODUCTS_IMG_DIR, f"{slug}.png")
-                    emit_progress(progress_base + 2, f"Fetching studio flat-lay & AI cutout: {brand} {canonical_title[:30]}", idx+1, max_posts, valid_count, "AI_PROCESSING", canonical_title)
-                    print(f"Generating AI cutout for {slug} (with fallback '{item['title']}')...", flush=True)
-                    success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}", market_url=market_link)
+                    emit_progress(progress_base + 2, f"Studio Flat-Lay Cutout: {brand} {canonical_title[:28]}", idx+1, max_posts, valid_count, "AI_PROCESSING", canonical_title)
+                    print(f"Generating AI cutout for {slug} (with fallback '{brand} {canonical_title}')...", flush=True)
                     
+                    success = process_and_cutout_image(img_src, out_png, query_fallback=f"{brand} {canonical_title}", market_url=market_link)
                     if not success or not os.path.exists(out_png):
                         print(f"[REJECTED] Cutout failed or image invalid for: '{canonical_title}'", flush=True)
                         continue
 
-                    # Validate cutout image quality (reject solid black, blank, or broken assets)
+                    # Validate cutout quality
                     is_valid_img, img_err = is_valid_grail_image(out_png)
                     if not is_valid_img:
                         print(f"[REJECTED] Image quality failed ({img_err}) for: '{canonical_title}'", flush=True)
@@ -551,10 +584,10 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                             pass
                         continue
 
+                    # 7. Save to Discovered List & Cache
                     discovered_items.append(item)
                     valid_count += 1
 
-                    # 1. Update scratch/discovered_qualityreps_finds.json immediately so it is safe on disk
                     cache_dir = os.path.join(os.path.dirname(__file__), "..", "scratch")
                     os.makedirs(cache_dir, exist_ok=True)
                     cache_file = os.path.join(cache_dir, "discovered_qualityreps_finds.json")
@@ -570,12 +603,11 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
                     with open(cache_file, "w", encoding="utf-8") as f:
                         json.dump(cached_list, f, indent=2)
 
-                    # 2. Emit Real-Time Discovered Item Event to SSE stream
+                    # 8. Real-Time Discovered Item Event to SSE stream
                     print(f"[AF_ITEM_DISCOVERED] {json.dumps(item)}", flush=True)
-
                     emit_progress(progress_base + 3, f"✓ Verified Grail added: {brand} - {canonical_title} (${price})", idx+1, max_posts, valid_count, "ITEM_SAVED", canonical_title)
                     print(f"[VERIFIED #{valid_count}] {item['title']} | ${price} (Retail: ${estimated_retail}) | {market_link}", flush=True)
-                        
+
             except Exception as e:
                 print(f"Error scraping {post_url}: {e}", flush=True)
             finally:
@@ -586,7 +618,7 @@ async def scan_qualityreps(max_posts: int = 15, auto_add: bool = False):
     emit_progress(100, f"Scan finished! Discovered {len(discovered_items)} high-quality Grails.", max_posts, max_posts, len(discovered_items), "COMPLETE")
     print(f"\n=== SCAN FINISHED: Discovered {len(discovered_items)} high-quality pieces ===", flush=True)
     
-    # Save discovered items to scratch/discovered_qualityreps_finds.json
+    # Final cache update
     cache_dir = os.path.join(os.path.dirname(__file__), "..", "scratch")
     os.makedirs(cache_dir, exist_ok=True)
     cache_file = os.path.join(cache_dir, "discovered_qualityreps_finds.json")
@@ -617,4 +649,3 @@ if __name__ == "__main__":
         elif arg.isdigit():
             limit = int(arg)
     asyncio.run(scan_qualityreps(max_posts=limit, auto_add=auto))
-

@@ -6,7 +6,7 @@ import fs from "fs";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { url, title, brand, category, price, rawImageSrc, localImage, imageUrl, rotation } = body;
+    const { url, title, brand, category, season, price, estimatedRetail, rawImageSrc, localImage, imageUrl, rotation } = body;
 
     if (!url) {
       return NextResponse.json({ success: false, error: "Market or Reddit URL is required" }, { status: 400 });
@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
       title,
       brand,
       category,
+      season: season || "",
       price,
+      estimatedRetail: estimatedRetail || 0,
       rawImageSrc,
       localImage: localImage || imageUrl,
       rotation: rotation || 0,
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const cmd = `python "${scriptPath}" "${tempPayloadFile}"`;
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       exec(cmd, { cwd: process.cwd() }, (error, stdout, stderr) => {
         try {
           if (fs.existsSync(tempPayloadFile)) {

@@ -87,20 +87,38 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       start(controller) {
-        // Handle stdout
+        let isClosed = false;
+        const safeEnqueue = (data: Uint8Array) => {
+          if (!isClosed) {
+            try {
+              controller.enqueue(data);
+            } catch (e) {
+              isClosed = true;
+            }
+          }
+        };
+
+        const safeClose = () => {
+          if (!isClosed) {
+            isClosed = true;
+            try {
+              controller.close();
+            } catch (e) {}
+          }
+        };
+
         child.stdout.on("data", (chunk) => {
-          const rawText = chunk.toString("utf-8");
-          const lines = rawText.split(/\r?\n/);
-          
+          const text = chunk.toString("utf-8");
+          const lines = text.split("\n");
+
           for (const line of lines) {
             if (!line.trim()) continue;
-            
-            // Check for real-time discovered item event
+
             if (line.includes("[AF_ITEM_DISCOVERED]")) {
               try {
                 const jsonStr = line.substring(line.indexOf("[AF_ITEM_DISCOVERED]") + 21).trim();
                 const itemData = JSON.parse(jsonStr);
-                controller.enqueue(
+                safeEnqueue(
                   encoder.encode(`data: ${JSON.stringify({ type: "item_discovered", item: itemData })}\n\n`)
                 );
               } catch (err) {
@@ -110,16 +128,16 @@ export async function POST(req: NextRequest) {
               try {
                 const jsonStr = line.substring(line.indexOf("[AF_PROGRESS]") + 13).trim();
                 const progressData = JSON.parse(jsonStr);
-                controller.enqueue(
+                safeEnqueue(
                   encoder.encode(`data: ${JSON.stringify({ type: "progress", data: progressData })}\n\n`)
                 );
               } catch (err) {
-                controller.enqueue(
+                safeEnqueue(
                   encoder.encode(`data: ${JSON.stringify({ type: "log", text: line })}\n\n`)
                 );
               }
             } else {
-              controller.enqueue(
+              safeEnqueue(
                 encoder.encode(`data: ${JSON.stringify({ type: "log", text: line })}\n\n`)
               );
             }
@@ -129,7 +147,7 @@ export async function POST(req: NextRequest) {
         // Handle stderr
         child.stderr.on("data", (chunk) => {
           const text = chunk.toString("utf-8");
-          controller.enqueue(
+          safeEnqueue(
             encoder.encode(`data: ${JSON.stringify({ type: "stderr", text })}\n\n`)
           );
         });
@@ -152,7 +170,7 @@ export async function POST(req: NextRequest) {
             details: code === 0 ? `Found ${items.length} total potential grails in buffer` : `Exited with status code ${code}`,
           });
 
-          controller.enqueue(
+          safeEnqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 type: "done",
@@ -163,12 +181,12 @@ export async function POST(req: NextRequest) {
               })}\n\n`
             )
           );
-          controller.close();
+          safeClose();
         });
 
         // Handle error
         child.on("error", (err) => {
-          controller.enqueue(
+          safeEnqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 type: "error",
@@ -176,7 +194,7 @@ export async function POST(req: NextRequest) {
               })}\n\n`
             )
           );
-          controller.close();
+          safeClose();
         });
       },
       cancel() {

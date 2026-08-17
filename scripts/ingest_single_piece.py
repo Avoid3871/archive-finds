@@ -63,7 +63,9 @@ def ingest(payload_file: str):
     brand = data.get("brand", "Archive Collection").strip()
     title = data.get("title", "Archive Grail").strip()
     category = data.get("category", "Outerwear").strip()
+    season = data.get("season", "").strip()
     price = float(data.get("price", 59.0))
+    estimated_retail = float(data.get("estimatedRetail", 0)) or round(price * 8.5, 0)
     raw_img = data.get("rawImageSrc", "").strip()
 
     affiliate_url = convert_to_sugargoo_affiliate(raw_url)
@@ -112,9 +114,10 @@ def ingest(payload_file: str):
         "brandSlug": slugify(brand),
         "category": category,
         "categorySlug": slugify(category),
+        "season": season,
         "price": price,
         "sourcePrice": price,
-        "estimatedRetail": round(price * 8.5, 0),
+        "estimatedRetail": estimated_retail,
         "directStoreLink": clean_url(raw_url),
         "sugargooUrl": affiliate_url,
         "affiliateLink": affiliate_url,
@@ -125,8 +128,8 @@ def ingest(payload_file: str):
         "status": "APPROVED",
         "verified": True,
         "isFeatured": True,
-        "isRare": price > 80,
-        "notes": "1-Click Admin Ingest"
+        "isRare": price > 80 or bool(season),
+        "notes": f"1-Click Admin Ingest{' | ' + season if season else ''}"
     }
 
     # Check for existing product by directStoreLink or URL

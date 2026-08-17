@@ -172,11 +172,11 @@ def is_badge_or_icon(img: Image.Image) -> bool:
     return False
 
 
-def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", market_url: str = "", target_size=(1000, 1000)) -> bool:
+def process_and_cutout_image(img_input, output_path: str, query_fallback: str = "", market_url: str = "", target_size=(1000, 1000), model_name: str = "isnet-general-use") -> bool:
     """
     Takes a direct marketplace link (Weidian/Taobao/1688) or a real Reddit QC photo.
-    Extracts garment cleanly via rembg, trims padding, centers on a 1000x1000 square transparent canvas.
-    NEVER uses generic web search to prevent fake or unrelated images (tigers, actors, stock photos).
+    Extracts garment cleanly via rembg (IS-Net HD), trims padding, centers on a 1000x1000 square transparent canvas.
+    NEVER uses generic web search to prevent fake or unrelated images.
     """
     try:
         input_image = None
@@ -201,7 +201,6 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
         # Priority 2: Genuine Reddit Post Image (only if from i.redd.it / preview.redd.it and not avatar/icon)
         if input_image is None and img_input:
             if isinstance(img_input, str) and img_input.startswith("http"):
-                # Only accept actual post images from Reddit CDN or trusted store CDNs
                 is_trusted_cdn = any(cdn in img_input for cdn in ["i.redd.it", "preview.redd.it", "external-preview.redd.it", "geilicdn", "alicdn", "cbu01"])
                 if is_trusted_cdn and not any(bad in img_input.lower() for bad in BAD_IMAGE_DOMAINS):
                     try:
@@ -222,7 +221,7 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
                 if not is_badge_or_icon(img_input):
                     input_image = img_input.convert("RGBA")
 
-        # If no valid seller studio photo or real Reddit QC image exists, REJECT! (Never invent fake images)
+        # If no valid seller studio photo or real Reddit QC image exists, REJECT!
         if input_image is None or is_badge_or_icon(input_image):
             print("[IMAGE REJECT] No authentic seller studio or Reddit QC photo found. Skipping piece.")
             return False
@@ -230,10 +229,43 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
         # Strip red scrub bar / mobile screenshot artifacts
         input_image = clean_ui_artifacts(input_image)
 
+        # 1. AI background removal with chosen model (default: isnet-general-use)
+        print(f"Executing AI background removal with rembg ({model_name})...")
+        actual_model = "isnet-general-use" if model_name in ["isnet-general-use", "isnet-matte"] else model_name
+        if actual_model not in ["isnet-general-use", "u2net", "silueta", "u2netp"]:
+            actual_model = "isnet-general-use"
 
-        # 1. AI background removal
-        print("Executing AI background removal with rembg...")
-        output_image = rembg.remove(input_image)
+        session = rembg.new_session(actual_model)
+        if model_name == "isnet-matte":
+            output_image = rembg.remove(
+                input_image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=12
+            )
+        else:
+            output_image = rembg.remove(input_image, session=session)
+
+        # Smart clean detached background watermarks/stickers
+        try:
+            import numpy as np
+            from scipy import ndimage
+            arr = np.array(output_image)
+            alpha = arr[:, :, 3] > 25
+            labeled, num_features = ndimage.label(alpha)
+            if num_features > 1:
+                sizes = ndimage.sum(alpha, labeled, range(1, num_features + 1))
+                max_size = max(sizes) if len(sizes) > 0 else 0
+                clean_alpha = np.zeros_like(alpha, dtype=bool)
+                for idx, size in enumerate(sizes, 1):
+                    if size >= 0.10 * max_size:
+                        clean_alpha[labeled == idx] = True
+                arr[~clean_alpha, 3] = 0
+                output_image = Image.fromarray(arr)
+        except Exception:
+            pass
         
         # 2. Bounding box of garment
         bbox = output_image.getbbox()
@@ -248,7 +280,7 @@ def process_and_cutout_image(img_input, output_path: str, query_fallback: str = 
         max_h = target_size[1] - 2 * margin
         
         orig_w, orig_h = cropped.size
-        ratio = min(max_w / orig_w, max_h / orig_h)
+        ratio = min(max_w / max(1, orig_w), max_h / max(1, orig_h))
         new_w = max(1, int(orig_w * ratio))
         new_h = max(1, int(orig_h * ratio))
         
@@ -273,6 +305,7 @@ if __name__ == "__main__":
         inp = sys.argv[1]
         outp = sys.argv[2]
         fb = sys.argv[3] if len(sys.argv) > 3 else ""
-        process_and_cutout_image(inp, outp, query_fallback=fb)
+        m_name = sys.argv[4] if len(sys.argv) > 4 else "isnet-general-use"
+        process_and_cutout_image(inp, outp, query_fallback=fb, model_name=m_name)
     else:
-        print("Usage: python image_cutout_pipeline.py <input_url_or_path> <output_png_path> [query_fallback]")
+        print("Usage: python image_cutout_pipeline.py <input_url_or_path> <output_png_path> [query_fallback] [model_name]")
