@@ -71,16 +71,24 @@ interface HealthItem {
   id: string;
   title: string;
   brand: string;
-  sugargooUrl: string;
-  directStoreLink: string;
+  slug?: string;
+  sugargooUrl?: string;
+  affiliateUrl?: string;
+  directLink?: string;
+  directStoreLink?: string;
+  imageUrl?: string;
   status: "HEALTHY" | "DEAD" | "FLAGGED";
-  httpStatus: number | null;
-  delistedReason: string | null;
-  note: string;
+  httpStatus?: number | null;
+  statusCode?: number | null;
+  delistedReason?: string | null;
+  message?: string;
+  note?: string;
+  testedAt?: string;
 }
 
 interface HealthReport {
-  timestamp: string;
+  lastAudit?: string;
+  timestamp?: string;
   totalChecked: number;
   healthyCount: number;
   deadCount: number;
@@ -811,7 +819,7 @@ export default function AdminSourcesPage() {
     }
   };
 
-  const handleHealthAction = async (productId: string, action: "approve" | "delist" | "update_url", newUrl?: string) => {
+  const handleHealthAction = async (productId: string, action: "approve" | "delist" | "delete" | "update_url", newUrl?: string) => {
     setActionLoadingId(productId);
     try {
       const res = await fetch("/api/admin/link-health", {
@@ -821,21 +829,33 @@ export default function AdminSourcesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        // Refresh local health state
-        if (healthReport) {
-          const updatedItems = healthReport.items.map((it) => {
-            if (it.id === productId) {
-              return {
-                ...it,
-                status: action === "delist" ? ("DEAD" as const) : ("HEALTHY" as const),
-                note: action === "delist" ? "Delisted by admin" : "Approved & verified by admin",
-                directStoreLink: newUrl || it.directStoreLink,
-              };
-            }
-            return it;
-          });
+        // Refresh local health state with updated report or local calculation
+        if (data.report) {
+          setHealthReport(data.report);
+        } else if (healthReport) {
+          let updatedItems = healthReport.items;
+          if (action === "delist" || action === "delete") {
+            updatedItems = updatedItems.filter((it) => it.id !== productId);
+          } else {
+            updatedItems = updatedItems.map((it) => {
+              if (it.id === productId) {
+                return {
+                  ...it,
+                  status: ("HEALTHY" as const),
+                  note: "Approved & verified by admin",
+                  directStoreLink: newUrl || it.directStoreLink,
+                };
+              }
+              return it;
+            });
+          }
+
           setHealthReport({
             ...healthReport,
+            totalChecked: updatedItems.length,
+            healthyCount: updatedItems.filter((it) => it.status === "HEALTHY").length,
+            deadCount: updatedItems.filter((it) => it.status === "DEAD").length,
+            flaggedCount: updatedItems.filter((it) => it.status === "FLAGGED").length,
             items: updatedItems,
           });
         }
@@ -1913,50 +1933,75 @@ export default function AdminSourcesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                    <a
-                      href={item.sugargooUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span>Test Sugargoo</span>
-                    </a>
+                  {(() => {
+                    const rawMarketplaceLink = item.directStoreLink || item.directLink || "";
+                    const affiliateLink =
+                      item.affiliateUrl ||
+                      item.sugargooUrl ||
+                      (rawMarketplaceLink
+                        ? `https://www.sugargoo.com/products?productLink=${encodeURIComponent(rawMarketplaceLink)}&memberId=1325437696506389977`
+                        : "");
 
-                    <button
-                      onClick={() => {
-                        setEditingUrlId(item.id);
-                        setNewUrlInput(item.directStoreLink || "");
-                      }}
-                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
-                    >
-                      <Edit3 className="w-3 h-3" />
-                      <span>Update URL</span>
-                    </button>
+                    return (
+                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                        <a
+                          href={affiliateLink || "#"}
+                          target={affiliateLink ? "_blank" : undefined}
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            if (!affiliateLink) {
+                              e.preventDefault();
+                              alert("No marketplace link found to generate a Sugargoo affiliate URL.");
+                            }
+                          }}
+                          className={`px-3 py-1.5 font-mono text-xs rounded transition-colors flex items-center gap-1.5 ${
+                            affiliateLink
+                              ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-200 cursor-pointer"
+                              : "bg-neutral-900 text-neutral-600 cursor-not-allowed border border-neutral-800"
+                          }`}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Test Sugargoo</span>
+                        </a>
 
-                    {item.status !== "HEALTHY" && (
-                      <button
-                        onClick={() => handleHealthAction(item.id, "approve")}
-                        disabled={actionLoadingId === item.id}
-                        className="px-3 py-1.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Keep / Approve</span>
-                      </button>
-                    )}
+                        <button
+                          onClick={() => {
+                            setEditingUrlId(item.id);
+                            setNewUrlInput(item.directStoreLink || item.directLink || "");
+                          }}
+                          className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Update URL</span>
+                        </button>
 
-                    {item.status !== "DEAD" && (
-                      <button
-                        onClick={() => handleHealthAction(item.id, "delist")}
-                        disabled={actionLoadingId === item.id}
-                        className="px-3 py-1.5 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        <span>Delist Piece</span>
-                      </button>
-                    )}
-                  </div>
+                        {item.status !== "HEALTHY" && (
+                          <button
+                            onClick={() => handleHealthAction(item.id, "approve")}
+                            disabled={actionLoadingId === item.id}
+                            className="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/80 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Keep / Approve</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to permanently delete/delist "${item.title}" from the store catalog?`)) {
+                              handleHealthAction(item.id, "delist");
+                            }
+                          }}
+                          disabled={actionLoadingId === item.id}
+                          className="px-3 py-1.5 bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800 font-mono text-xs rounded transition-colors flex items-center gap-1.5"
+                          title="Permanently remove piece from live store catalog"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>{actionLoadingId === item.id ? "Delisting..." : "Delete / Delist"}</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))
             )}

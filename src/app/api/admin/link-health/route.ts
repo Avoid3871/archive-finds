@@ -147,22 +147,33 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, action, newUrl } = body; // action: 'approve' | 'delist' | 'update_url'
+    const { productId, action, newUrl } = body; // action: 'approve' | 'delist' | 'delete' | 'update_url'
 
     if (!fs.existsSync(CATALOG_PATH)) {
       return NextResponse.json({ success: false, error: 'Catalog file not found' }, { status: 404 });
     }
 
-    const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8'));
+    let catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf-8'));
     const index = catalog.findIndex((p: any) => String(p.id) === String(productId) || p.slug === productId);
 
-    if (index === -1) {
+    if (index === -1 && action !== 'delete') {
       return NextResponse.json({ success: false, error: 'Product not found in catalog' }, { status: 404 });
     }
 
-    if (action === 'delist') {
-      catalog[index].status = 'DELISTED';
-      catalog[index].isDelisted = true;
+    let targetTitle = catalog[index]?.title || catalog[index]?.name || `Piece #${productId}`;
+
+    if (action === 'delete') {
+      catalog = catalog.filter((p: any) => String(p.id) !== String(productId) && p.slug !== productId);
+      // Re-index remaining products
+      catalog.forEach((p: any, idx: number) => {
+        p.id = String(idx + 1);
+      });
+    } else if (action === 'delist') {
+      // Complete removal from public store catalog
+      catalog = catalog.filter((p: any) => String(p.id) !== String(productId) && p.slug !== productId);
+      catalog.forEach((p: any, idx: number) => {
+        p.id = String(idx + 1);
+      });
     } else if (action === 'approve') {
       catalog[index].status = 'APPROVED';
       catalog[index].isDelisted = false;
@@ -178,19 +189,59 @@ export async function POST(req: Request) {
 
     fs.writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2), 'utf-8');
 
-    // Also update health report if exists
+    // Update and recalculate health report
+    let updatedReport = null;
     if (fs.existsSync(REPORT_PATH)) {
       const healthData = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf-8'));
-      const hIdx = healthData.items?.findIndex((item: any) => String(item.id) === String(productId) || item.slug === productId);
-      if (hIdx !== undefined && hIdx !== -1) {
-        healthData.items[hIdx].status = action === 'delist' ? 'DEAD' : 'HEALTHY';
-        healthData.items[hIdx].message = action === 'delist' ? 'Manually delisted by admin' : 'Approved by admin';
-        fs.writeFileSync(REPORT_PATH, JSON.stringify(healthData, null, 2), 'utf-8');
+      
+      if (action === 'delete' || action === 'delist') {
+        healthData.items = (healthData.items || []).filter(
+          (item: any) => String(item.id) !== String(productId) && item.slug !== productId
+        );
+      } else {
+        const hIdx = healthData.items?.findIndex((item: any) => String(item.id) === String(productId) || item.slug === productId);
+        if (hIdx !== undefined && hIdx !== -1) {
+          healthData.items[hIdx].status = 'HEALTHY';
+          healthData.items[hIdx].message = 'Approved & verified by admin';
+          if (newUrl) {
+            healthData.items[hIdx].directLink = newUrl;
+            healthData.items[hIdx].directStoreLink = newUrl;
+            healthData.items[hIdx].affiliateUrl = `https://www.sugargoo.com/products?productLink=${encodeURIComponent(newUrl)}&memberId=1325437696506389977`;
+          }
+        }
       }
+
+      // Recalculate summary counts
+      healthData.totalChecked = healthData.items.length;
+      healthData.healthyCount = healthData.items.filter((it: any) => it.status === 'HEALTHY').length;
+      healthData.deadCount = healthData.items.filter((it: any) => it.status === 'DEAD').length;
+      healthData.flaggedCount = healthData.items.filter((it: any) => it.status === 'FLAGGED').length;
+
+      fs.writeFileSync(REPORT_PATH, JSON.stringify(healthData, null, 2), 'utf-8');
+      updatedReport = healthData;
     }
 
-    return NextResponse.json({ success: true, product: catalog[index] });
+    // Trigger fast background auto-sync to GitHub so live website updates immediately
+    try {
+      const gitCmd = `git add -A && git commit -m "Auto-Deploy: ${action === 'delete' || action === 'delist' ? 'Deleted dead piece' : 'Updated URL/status for'} ${targetTitle.replace(/"/g, '')}" && git push origin main`;
+      const { exec } = require('child_process');
+      exec(gitCmd, { cwd: process.cwd() }, (gitErr: any) => {
+        if (!gitErr) {
+          console.log(`[AUTO-SYNC] Successfully pushed dead link moderation update to live server.`);
+        }
+      });
+    } catch (e) {}
+
+    return NextResponse.json({
+      success: true,
+      action,
+      productId,
+      report: updatedReport,
+      catalogCount: catalog.length,
+      message: action === 'delete' || action === 'delist' ? `Piece ${targetTitle} deleted from store catalog.` : `Piece ${targetTitle} updated.`
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
