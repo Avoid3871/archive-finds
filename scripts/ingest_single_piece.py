@@ -82,30 +82,74 @@ def ingest(payload_file: str):
     clean_rel = existing_img.lstrip("/\\")
     existing_full_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "public", clean_rel)) if clean_rel else ""
 
+    # 1. Try resolving base-slug preview if direct path was not found
+    if not (existing_full_path and os.path.exists(existing_full_path) and os.path.isfile(existing_full_path)):
+        base_slug = re.sub(r'-\d+$', '', slug)
+        possible_previews = [
+            os.path.join(os.path.dirname(__file__), "..", "public", "products", "sheet_previews", f"{base_slug}.jpg"),
+            os.path.join(os.path.dirname(__file__), "..", "public", "products", "sheet_previews", f"{slug}.jpg"),
+        ]
+        for p in possible_previews:
+            if os.path.exists(p) and os.path.isfile(p):
+                existing_full_path = p
+                print(f"[FOUND PREVIEW] Resolved preview source: {p}", flush=True)
+                break
+
+    saved_image = False
+
+    # 2. Process local existing file with rembg
     if existing_full_path and os.path.exists(existing_full_path) and os.path.isfile(existing_full_path):
         try:
             with Image.open(existing_full_path) as im:
                 im_rgba = im.convert("RGBA")
-                # If image has no alpha or is from sheet preview, remove background with rembg
                 ext = os.path.splitext(existing_full_path)[1].lower()
                 if ext in [".jpg", ".jpeg", ".webp"] or "sheet_previews" in existing_full_path:
-                    print(f"[REMBG STUDIO] Removing background from preview: {existing_img}...", flush=True)
+                    print(f"[REMBG STUDIO] Removing background from local source: {existing_full_path}...", flush=True)
                     cutout = rembg.remove(im_rgba)
                     cutout.save(out_png, "PNG")
                 else:
                     im_rgba.save(out_png, "PNG")
+            saved_image = True
             print(f"[REUSE CUTOUT] Successfully saved studio cutout to: {local_img}", flush=True)
         except Exception as e:
             print(f"[IMAGE PROCESS WARN] {e}, falling back to copy", flush=True)
             try:
                 import shutil
                 shutil.copy2(existing_full_path, out_png)
+                saved_image = True
             except Exception as copy_err:
                 print(f"[COPY WARN] {copy_err}", flush=True)
-    else:
+
+    # 3. If local file was not available, try downloading direct URL
+    target_url = existing_img if existing_img.startswith("http") else (raw_img if raw_img.startswith("http") else "")
+    if not saved_image and target_url:
+        try:
+            print(f"[DOWNLOAD SOURCE] Downloading high-res image from: {target_url[:60]}...", flush=True)
+            req = urllib.request.Request(target_url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Referer": "https://www.google.com/"
+            })
+            with urllib.request.urlopen(req, timeout=12) as response:
+                import io
+                img_data = response.read()
+                with Image.open(io.BytesIO(img_data)) as dl_im:
+                    dl_rgba = dl_im.convert("RGBA")
+                    print(f"[REMBG WEB] Applying background removal to downloaded image...", flush=True)
+                    cutout = rembg.remove(dl_rgba)
+                    cutout.save(out_png, "PNG")
+            saved_image = True
+            print(f"[WEB CUTOUT] Successfully processed web image to: {local_img}", flush=True)
+        except Exception as dl_err:
+            print(f"[DOWNLOAD WARN] {dl_err}", flush=True)
+
+    # 4. Fallback to process_and_cutout_image search pipeline
+    if not saved_image or not os.path.exists(out_png):
         search_query = f"{brand} {title}"
-        print(f"Generating AI cutout from market source...", flush=True)
-        process_and_cutout_image(raw_img, out_png, query_fallback=search_query, market_url=raw_url)
+        print(f"Generating AI cutout from market source/search...", flush=True)
+        try:
+            process_and_cutout_image(raw_img, out_png, query_fallback=search_query, market_url=raw_url)
+        except Exception as pipe_err:
+            print(f"[PIPELINE ERROR] {pipe_err}", flush=True)
 
     rotation = int(data.get("rotation", 0))
     if rotation % 360 != 0 and os.path.exists(out_png):

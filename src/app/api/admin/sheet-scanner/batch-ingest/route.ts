@@ -39,6 +39,21 @@ export async function POST(req: NextRequest) {
       const id = (nextIdStart + idx).toString();
       const slug = it.slug || `${it.brand}-${it.title}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       
+      let finalImg = it.imageUrl || it.localImage || "";
+      const publicProductsDir = path.join(process.cwd(), "public", "products");
+      const targetPng = path.join(publicProductsDir, `${slug}.png`);
+
+      if (finalImg && !fs.existsSync(targetPng)) {
+        const cleanRel = finalImg.replace(/^\/+/, "");
+        const localSource = path.join(process.cwd(), "public", cleanRel);
+        if (fs.existsSync(localSource) && fs.statSync(localSource).isFile()) {
+          try {
+            fs.copyFileSync(localSource, targetPng);
+            finalImg = `/products/${slug}.png`;
+          } catch (e) {}
+        }
+      }
+
       const newProduct = {
         id,
         title: it.title,
@@ -48,7 +63,8 @@ export async function POST(req: NextRequest) {
         priceUSD: it.sourcePrice || it.price || 49.0,
         priceCNY: it.priceCNY || Math.round((it.sourcePrice || 49.0) / 0.14815),
         estimatedRetail: it.estimatedRetail || Math.round((it.sourcePrice || 49.0) * 8.5),
-        imageUrl: it.imageUrl || it.localImage || "",
+        imageUrl: finalImg || `/products/${slug}.png`,
+        localImage: finalImg || `/products/${slug}.png`,
         sugargooUrl: it.sugargooUrl || it.affiliateLink || "",
         directStoreLink: it.rawMarketUrl || it.directStoreLink || "",
         slug,
