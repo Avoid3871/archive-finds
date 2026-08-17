@@ -18,6 +18,16 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { isSaved, toggleSave } = useWishlist();
   const saved = isSaved(product.id);
   const [imgSrc, setImgSrc] = useState(product.imageUrl || "/placeholder-fashion.svg");
+  const [triedCdn, setTriedCdn] = useState(false);
+
+  const handleImageError = () => {
+    if (!triedCdn && product.imageUrl && product.imageUrl.startsWith("/products/")) {
+      setTriedCdn(true);
+      setImgSrc(`https://cdn.jsdelivr.net/gh/Avoid3871/archive-finds@main/public${product.imageUrl}`);
+    } else {
+      setImgSrc("/placeholder-fashion.svg");
+    }
+  };
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,7 +50,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={priority}
-            onError={() => setImgSrc("/placeholder-fashion.svg")}
+            onError={handleImageError}
             className="object-contain p-2 transition-transform duration-700 ease-out group-hover:scale-105"
           />
 

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const scriptPath = path.join(process.cwd(), "scratch", "run_cutout_preview.py");
-    const outFilename = `preview_${Date.now()}.png`;
+    const outFilename = `_cutout_preview.png`;
     const outFullPath = path.join(process.cwd(), "public", "products", outFilename);
 
     // If imageSrc is a Base64 data URL (e.g. from File Upload or Clipboard Paste), write to temp input file
@@ -158,7 +158,7 @@ except Exception as e:
       }
     }
 
-    const localCutoutUrl = `/products/${outFilename}`;
+    const localCutoutUrl = `/products/${outFilename}?t=${Date.now()}`;
     logJobRecord({
       type: "AI_BACKGROUND_REMOVAL",
       pieceName: (typeof imageSrc === "string" && imageSrc.startsWith("data:") ? "Custom Upload" : imageSrc.substring(imageSrc.lastIndexOf("/") + 1, imageSrc.lastIndexOf("/") + 40)) || "Preview Cutout",

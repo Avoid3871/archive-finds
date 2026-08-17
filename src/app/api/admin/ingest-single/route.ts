@@ -64,6 +64,19 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          // Trigger fast background auto-sync to GitHub so live website reflects new piece immediately
+          try {
+            const pieceTitle = parsedResult?.title || title;
+            const gitCmd = `git add -A && git commit -m "Auto-Deploy: Ingested ${pieceTitle.replace(/"/g, '')}" && git push origin main`;
+            exec(gitCmd, { cwd: process.cwd() }, (gitErr) => {
+              if (gitErr) {
+                console.warn("[AUTO-SYNC] Notice:", gitErr.message);
+              } else {
+                console.log(`[AUTO-SYNC] Successfully pushed "${pieceTitle}" to live GitHub/Vercel.`);
+              }
+            });
+          } catch (e) {}
+
           resolve(
             NextResponse.json({
               success: true,
@@ -71,7 +84,7 @@ export async function POST(req: NextRequest) {
               id: parsedResult?.id || "",
               title: parsedResult?.title || title,
               imageUrl: parsedResult?.imageUrl || localImage || imageUrl,
-              message: "Piece successfully ingested with AI cutout and Sugargoo affiliate link!",
+              message: "Piece successfully ingested with AI cutout and Sugargoo affiliate link! (Live sync started in background)",
               stdout,
             })
           );

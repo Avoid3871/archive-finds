@@ -1,9 +1,12 @@
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { getAllProducts } from "@/lib/products/mockData";
 import { Sparkles } from "lucide-react";
 
+export const revalidate = 10;
+
 export default function NewFindsPage() {
-  const latestProducts = [...MOCK_PRODUCTS].reverse();
+  const allProducts = getAllProducts();
+  const latestProducts = [...allProducts].reverse();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

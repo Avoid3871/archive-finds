@@ -1,19 +1,31 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { MOCK_PRODUCTS, Product } from "@/lib/products/mockData";
 import { BRANDS } from "@/lib/constants";
 import Link from "next/link";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
+  const [productsList, setProductsList] = useState<Product[]>(MOCK_PRODUCTS);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          setProductsList(data.products);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const searchResults = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
-    return MOCK_PRODUCTS.filter((prod) => {
+    return productsList.filter((prod) => {
       return (
         prod.name.toLowerCase().includes(q) ||
         prod.brand.toLowerCase().includes(q) ||
@@ -23,7 +35,7 @@ export default function SearchPage() {
         prod.era.toLowerCase().includes(q)
       );
     });
-  }, [query]);
+  }, [query, productsList]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

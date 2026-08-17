@@ -2,12 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Sparkles, Compass, ShieldCheck, Zap } from "lucide-react";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { getAllProducts } from "@/lib/products/mockData";
 import { BRANDS, CATEGORIES } from "@/lib/constants";
 
+export const revalidate = 10;
+
 export default function HomePage() {
-  const newFinds = MOCK_PRODUCTS.slice(0, 6);
-  const featuredFinds = MOCK_PRODUCTS.filter((p) => p.isFeatured);
+  const allProducts = getAllProducts();
+  const newFinds = allProducts.slice(0, 6);
+  const featuredFinds = allProducts.filter((p) => p.isFeatured);
 
   return (
     <div className="space-y-16 sm:space-y-24">
@@ -102,7 +105,7 @@ export default function HomePage() {
             href="/new"
             className="text-xs font-mono tracking-widest uppercase text-neutral-600 hover:text-black flex items-center gap-1 transition-colors"
           >
-            VIEW ALL ({MOCK_PRODUCTS.length}) <ArrowUpRight className="w-3.5 h-3.5" />
+            VIEW ALL ({allProducts.length}) <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 

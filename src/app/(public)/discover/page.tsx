@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { SearchBar } from "@/components/search/SearchBar";
 import { FilterDrawer, FilterState } from "@/components/search/FilterDrawer";
-import { MOCK_PRODUCTS } from "@/lib/products/mockData";
+import { MOCK_PRODUCTS, Product } from "@/lib/products/mockData";
 import { BRANDS, CATEGORIES } from "@/lib/constants";
 import { ArrowUpDown, Sparkles, Flame, Tag, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,19 @@ function DiscoverContent() {
   const initialCategory = searchParams.get("category") || undefined;
   const initialMaxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined;
 
+  const [productsList, setProductsList] = useState<Product[]>(MOCK_PRODUCTS);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          setProductsList(data.products);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     brand: initialBrand,
@@ -41,7 +54,7 @@ function DiscoverContent() {
   const [sortBy, setSortBy] = useState<SortOption>("featured");
 
   const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((prod) => {
+    return productsList.filter((prod) => {
       // Query search
       if (query.trim()) {
         const q = query.toLowerCase();
@@ -143,7 +156,7 @@ function DiscoverContent() {
       {/* Header Info */}
       <div className="border-b border-neutral-200 pb-6 space-y-2">
         <p className="text-[11px] font-mono uppercase tracking-widest text-neutral-600">
-          ARCHIVE DATABASE ({filteredProducts.length} OF {MOCK_PRODUCTS.length} ITEMS)
+          ARCHIVE DATABASE ({filteredProducts.length} OF {productsList.length} ITEMS)
         </p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-black">
           DISCOVER ALL FINDS
