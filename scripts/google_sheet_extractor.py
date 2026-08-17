@@ -121,7 +121,7 @@ def map_category(tab_name: str, item_title: str) -> str:
     return "Outerwear"
 
 async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, str]:
-    """Test marketplace link live availability without paid APIs."""
+    """Test marketplace link live availability and stock without paid APIs."""
     raw_url = clean_url(raw_url)
     if not raw_url or not raw_url.startswith("http"):
         return False, "Invalid or missing URL"
@@ -130,6 +130,45 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
     if "sold out" in raw_url.lower() or "deleted" in raw_url.lower():
         return False, "Marked sold out"
 
+    # 1. Weidian Thor Live Verification
+    if "weidian.com" in raw_url:
+        item_id_match = re.search(r'(?:itemID|itemId|item_id)=(\d+)', raw_url)
+        if item_id_match:
+            wid = item_id_match.group(1)
+            thor_url = f"https://thor.weidian.com/detail/getItemSkuInfo/1.0?param=%7B%22itemId%22%3A%22{wid}%22%7D"
+            headers_wd = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Referer": "https://weidian.com/"
+            }
+            async with sem:
+                loop = asyncio.get_event_loop()
+                def check_wd():
+                    try:
+                        req = urllib.request.Request(thor_url, headers=headers_wd)
+                        with urllib.request.urlopen(req, timeout=4) as resp:
+                            data = json.loads(resp.read().decode('utf-8'))
+                            code = data.get('status', {}).get('code')
+                            if code != 0:
+                                return False, "Weidian: Item delisted (code != 0)"
+                            res = data.get('result')
+                            if not res:
+                                return False, "Weidian: No product data"
+                            sku_infos = res.get('skuInfos', [])
+                            stock = 0
+                            if isinstance(sku_infos, list):
+                                for s in sku_infos:
+                                    stock += s.get('skuInfo', {}).get('stock', 0)
+                            elif isinstance(sku_infos, dict):
+                                for k, s in sku_infos.items():
+                                    stock += s.get('stock', 0)
+                            if len(sku_infos) > 0 and stock == 0:
+                                return False, "Weidian: Out of stock (0 units available)"
+                            return True, "Active (In Stock)"
+                    except Exception as e:
+                        return False, f"Weidian check failed: {str(e)[:30]}"
+                return await loop.run_in_executor(None, check_wd)
+
+    # 2. General / Taobao / 1688 Check
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -142,28 +181,31 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
             try:
                 req = urllib.request.Request(raw_url, headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as resp:
+                    final_url = resp.geturl()
                     code = resp.getcode()
                     body = resp.read().decode('utf-8', errors='ignore')
-                    return code, body
+                    return code, body, final_url
             except urllib.error.HTTPError as e:
-                return e.code, ""
+                return e.code, "", ""
             except Exception as e:
-                # Some sites block generic requests, treat as potentially ok if domain resolves
-                return 200, ""
+                return 0, "", ""
 
-        status_code, text = await loop.run_in_executor(None, fetch)
+        status_code, text, final_url = await loop.run_in_executor(None, fetch)
         
-        if status_code in [404, 410]:
-            return False, f"HTTP {status_code} Page Not Found"
+        if status_code in [404, 410] or "error.taobao.com" in final_url:
+            return False, f"HTTP {status_code} - Page Not Found / Error"
             
         delisted_keywords = [
             "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
             "item deleted", "404 Not Found", "此商品不存在", "已下架", "该宝贝不存在",
-            "卖家已下架", "商品不存在或已被删除"
+            "卖家已下架", "商品不存在或已被删除", "很抱歉，您查看的宝贝不存在"
         ]
         if any(kw in text for kw in delisted_keywords):
             return False, "Seller delisted or item out of stock"
             
+        if status_code == 0:
+            return False, "Host unreachable / link dead"
+
         return True, "Active"
 
 def discover_tabs_from_sheet(sheet_id: str) -> list[dict]:

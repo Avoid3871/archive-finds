@@ -97,6 +97,21 @@ interface HealthReport {
   items: HealthItem[];
 }
 
+const SUGARGOO_AFFILIATE_ID = "1325437696506389977";
+
+function normalizeSugargooLink(rawUrl: string): string {
+  if (!rawUrl) return "#";
+  if (rawUrl.includes("sugargoo.com")) {
+    if (!rawUrl.includes("memberId=")) {
+      return `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}memberId=${SUGARGOO_AFFILIATE_ID}`;
+    }
+    return rawUrl;
+  }
+  const cleanUrl = rawUrl.replace(/^https?:\/\/www\.google\.com\/url\?q=/, "").split("&")[0];
+  const encoded = encodeURIComponent(cleanUrl);
+  return `https://www.sugargoo.com/products?productLink=${encoded}&memberId=${SUGARGOO_AFFILIATE_ID}`;
+}
+
 const POPULAR_BRANDS = [
   "Rick Owens",
   "Maison Margiela",
@@ -2863,16 +2878,17 @@ export default function AdminSourcesPage() {
                     }`}
                   >
                     <img
-                      src={editingItem.imageUrl || editingItem.localImage || editingItem.rawImageSrc}
+                      src={getProxiedImageUrl(editingItem.imageUrl || editingItem.localImage || editingItem.rawImageSrc)}
                       alt={editingItem.title}
+                      referrerPolicy="no-referrer"
                       style={{
                         transform: `rotate(${editRotation}deg)`,
                         transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                       className="max-h-full max-w-full object-contain filter drop-shadow-xl select-none"
                       onError={(e) => {
-                        if (editingItem.rawImageSrc && e.currentTarget.src !== editingItem.rawImageSrc) {
-                          e.currentTarget.src = editingItem.rawImageSrc;
+                        if (editingItem.rawImageSrc && !e.currentTarget.src.includes("sheet-image-proxy")) {
+                          e.currentTarget.src = `/api/admin/sheet-image-proxy?url=${encodeURIComponent(editingItem.rawImageSrc)}`;
                         }
                       }}
                     />
@@ -3383,7 +3399,7 @@ export default function AdminSourcesPage() {
                     const rawUrl = editFormData.rawMarketUrl || editingItem?.rawMarketUrl || "";
                     const sgUrl =
                       editingItem?.sugargooUrl ||
-                      (rawUrl ? `https://www.sugargoo.com/products?productLink=${encodeURIComponent(rawUrl)}&memberId=1325437696506389977` : "#");
+                      normalizeSugargooLink(rawUrl);
                     return (
                       <a
                         href={sgUrl}

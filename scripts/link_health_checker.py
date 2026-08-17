@@ -49,6 +49,54 @@ async def check_single_product_async(item: dict, sem: asyncio.Semaphore) -> dict
         result["message"] = "No direct market link found"
         return result
         
+    # 1. Weidian Thor Live Verification
+    if "weidian.com" in direct_link:
+        import re
+        item_id_match = re.search(r'(?:itemID|itemId|item_id)=(\d+)', direct_link)
+        if item_id_match:
+            wid = item_id_match.group(1)
+            thor_url = f"https://thor.weidian.com/detail/getItemSkuInfo/1.0?param=%7B%22itemId%22%3A%22{wid}%22%7D"
+            headers_wd = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Referer": "https://weidian.com/"
+            }
+            async with sem:
+                loop = asyncio.get_event_loop()
+                def check_wd():
+                    try:
+                        import urllib.request
+                        req = urllib.request.Request(thor_url, headers=headers_wd)
+                        with urllib.request.urlopen(req, timeout=4) as resp:
+                            data = json.loads(resp.read().decode('utf-8'))
+                            code = data.get('status', {}).get('code')
+                            if code != 0:
+                                return False, "Weidian: Item delisted (code != 0)"
+                            res = data.get('result')
+                            if not res:
+                                return False, "Weidian: No product data"
+                            sku_infos = res.get('skuInfos', [])
+                            stock = 0
+                            if isinstance(sku_infos, list):
+                                for s in sku_infos:
+                                    stock += s.get('skuInfo', {}).get('stock', 0)
+                            elif isinstance(sku_infos, dict):
+                                for k, s in sku_infos.items():
+                                    stock += s.get('stock', 0)
+                            if len(sku_infos) > 0 and stock == 0:
+                                return False, "Weidian: Out of stock (0 units available)"
+                            return True, "Active (In Stock)"
+                    except Exception as e:
+                        return False, f"Weidian check failed: {str(e)[:30]}"
+                
+                is_alive, msg = await loop.run_in_executor(None, check_wd)
+                if is_alive:
+                    result["status"] = "HEALTHY"
+                    result["message"] = "Weidian verified in stock"
+                else:
+                    result["status"] = "DEAD"
+                    result["message"] = msg
+                return result
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -59,28 +107,27 @@ async def check_single_product_async(item: dict, sem: asyncio.Semaphore) -> dict
         try:
             import urllib.request
             req = urllib.request.Request(direct_link, headers=headers)
-            # Run blocking urllib request in threadpool for zero async overhead
             loop = asyncio.get_event_loop()
             
             def fetch():
                 try:
                     with urllib.request.urlopen(req, timeout=6) as response:
-                        return response.getcode(), response.read().decode('utf-8', errors='ignore')
+                        return response.getcode(), response.read().decode('utf-8', errors='ignore'), response.geturl()
                 except urllib.error.HTTPError as e:
-                    return e.code, ""
+                    return e.code, "", ""
                 except Exception as e:
-                    return 0, str(e)
+                    return 0, str(e), ""
 
-            status_code, text = await loop.run_in_executor(None, fetch)
+            status_code, text, final_url = await loop.run_in_executor(None, fetch)
             result["statusCode"] = status_code
             
             delisted_keywords = [
                 "商品已经下架", "商品已下架", "宝贝不存在", "item not found", 
                 "item deleted", "404 Not Found", "此商品不存在", "已下架", "该宝贝不存在",
-                "卖家已下架", "商品不存在或已被删除"
+                "卖家已下架", "商品不存在或已被删除", "很抱歉，您查看的宝贝不存在"
             ]
             
-            if status_code in [404, 410]:
+            if status_code in [404, 410] or "error.taobao.com" in final_url:
                 result["status"] = "DEAD"
                 result["message"] = f"HTTP {status_code} - Item page deleted or not found"
             elif any(kw in text for kw in delisted_keywords):
