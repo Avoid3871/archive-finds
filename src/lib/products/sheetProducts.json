@@ -3155,5 +3155,29 @@
       "BOTTOMS"
     ],
     "createdAt": "2026-08-18T12:54:50.715Z"
+  },
+  {
+    "id": "127",
+    "title": "DESTROYED DENIM",
+    "brand": "BALENCIAGA",
+    "category": "Denim",
+    "price": 53.41,
+    "priceUSD": 53.41,
+    "priceCNY": 360,
+    "estimatedRetail": 453.98,
+    "imageUrl": "/products/balenciaga-destroyed-denim.png",
+    "localImage": "/products/balenciaga-destroyed-denim.png",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5435477258&memberId=1325437696506389977",
+    "directStoreLink": "https://weidian.com/item.html?itemID=5435477258",
+    "slug": "balenciaga-destroyed-denim",
+    "status": "APPROVED",
+    "tags": [
+      "BALENCIAGA",
+      "Denim",
+      "archive",
+      "grail",
+      "BOTTOMS"
+    ],
+    "createdAt": "2026-08-18T12:54:52.291Z"
   }
 ]
