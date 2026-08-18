@@ -3203,5 +3203,30 @@
       "TOPS"
     ],
     "createdAt": "2026-08-18T12:55:25.460Z"
+  },
+  {
+    "id": "129",
+    "title": "Vetements Cut Up Zip Up Deconstructed Hoodie",
+    "name": "Vetements Cut Up Zip Up Deconstructed Hoodie",
+    "brand": "Vetements",
+    "brandSlug": "vetements",
+    "category": "Hoodies",
+    "categorySlug": "hoodies",
+    "season": "",
+    "price": 59.0,
+    "sourcePrice": 59.0,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://detail.1688.com/offer/739087691883.html",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F739087691883.html&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F739087691883.html&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F739087691883.html&memberId=1325437696506389977",
+    "imageUrl": "/products/vetements-vetements-cut-up-zip-up-deconstructed-hoodie-7765.png",
+    "localImage": "/products/vetements-vetements-cut-up-zip-up-deconstructed-hoodie-7765.png",
+    "slug": "vetements-vetements-cut-up-zip-up-deconstructed-hoodie-7765",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
