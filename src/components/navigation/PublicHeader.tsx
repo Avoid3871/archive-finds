@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Search, Menu, X, ArrowUpRight, Bookmark } from "lucide-react";
+import { Search, Menu, X, ArrowUpRight, Bookmark, BookOpen } from "lucide-react";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
 
 import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
@@ -38,7 +38,7 @@ export function PublicHeader() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-widest uppercase">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-7 text-xs font-semibold tracking-widest uppercase">
           <Link
             href="/discover"
             className="text-neutral-600 hover:text-black transition-colors"
@@ -63,6 +63,12 @@ export function PublicHeader() {
             className="text-neutral-600 hover:text-black transition-colors"
           >
             CATEGORIES
+          </Link>
+          <Link
+            href="/mission"
+            className="text-neutral-600 hover:text-black transition-colors"
+          >
+            OUR MISSION
           </Link>
           <Link
             href="/saved"
@@ -110,7 +116,7 @@ export function PublicHeader() {
             )}
           </Link>
 
-          {/* Admin Direct Entry */}
+          {/* Admin Direct Entry (Protected by Master Passphrase) */}
           <Link
             href="/admin"
             className="hidden lg:flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-neutral-400 hover:text-black transition-colors pl-2"
@@ -181,6 +187,17 @@ export function PublicHeader() {
               className="py-2 border-b border-neutral-100 flex items-center justify-between text-neutral-800"
             >
               Categories & Taxonomy
+              <ArrowUpRight className="w-4 h-4 text-neutral-400" />
+            </Link>
+            <Link
+              href="/mission"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2 border-b border-neutral-100 flex items-center justify-between text-neutral-800"
+            >
+              <span className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Our Mission & Manifesto
+              </span>
               <ArrowUpRight className="w-4 h-4 text-neutral-400" />
             </Link>
             <Link

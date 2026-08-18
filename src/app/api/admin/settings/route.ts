@@ -19,6 +19,9 @@ interface AdminSettingsPayload {
     pythonPath: string;
     autoScanInterval: string;
   };
+  security: {
+    adminPassword?: string;
+  };
 }
 
 function getDefaultSettings(): AdminSettingsPayload {
@@ -35,6 +38,9 @@ function getDefaultSettings(): AdminSettingsPayload {
     worker: {
       pythonPath: "python",
       autoScanInterval: "60",
+    },
+    security: {
+      adminPassword: "archivefinds2026",
     },
   };
 }
@@ -64,6 +70,10 @@ export async function POST(request: Request) {
         ...currentSettings.worker,
         ...(body.worker || {}),
       },
+      security: {
+        ...currentSettings.security,
+        ...(body.security || {}),
+      },
       updatedAt: new Date().toISOString(),
     };
 
@@ -74,7 +84,6 @@ export async function POST(request: Request) {
 
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updatedSettings, null, 2), "utf-8");
 
-    // Also update agentConfig.ts if needed for server build sync
     return NextResponse.json({ success: true, settings: updatedSettings });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

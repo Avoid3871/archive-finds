@@ -11,7 +11,11 @@ import {
   Sparkles,
   Link2,
   RefreshCw,
-  Info
+  Info,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck
 } from "lucide-react";
 
 interface AgentSettingItem {
@@ -38,10 +42,10 @@ const AGENTS_META: AgentSettingItem[] = [
     badge: "RECOMMENDED",
     badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
     icon: "🟢",
-    fieldName: "Partner Member ID",
+    fieldName: "Affiliate Member ID",
     fieldKey: "sugargoo_id",
     placeholder: "1325437696506389977",
-    description: "Default platform. Injected as memberId into all Sugargoo buy links.",
+    description: "Your primary Sugargoo affiliate identifier for VIP conversion tracking.",
     urlFormat: "sugargoo.com/products?productLink={url}&memberId={id}",
     portalUrl: "https://www.sugargoo.com",
   },
@@ -50,52 +54,52 @@ const AGENTS_META: AgentSettingItem[] = [
     name: "Superbuy",
     badge: "POPULAR",
     badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-    icon: "📦",
-    fieldName: "Partner / Invitation Code",
+    icon: "🟡",
+    fieldName: "Partner Code",
     fieldKey: "superbuy_id",
     placeholder: "wVam6e",
-    description: "Veteran agent. Injected as partnercode parameter.",
-    urlFormat: "superbuy.com/en/page/buy/?url={url}&partnercode={code}",
-    portalUrl: "https://www.superbuy.com/en/page/partner/",
+    description: "Superbuy affiliate referral partner code.",
+    urlFormat: "superbuy.com/en/page/buy/?partnercode={id}&url={url}",
+    portalUrl: "https://www.superbuy.com",
   },
   {
     id: "mulebuy",
     name: "Mulebuy",
-    badge: "FAST QC",
+    badge: "ACTIVE",
     badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-    icon: "⚡",
-    fieldName: "Referral Ref Code",
+    icon: "🔵",
+    fieldName: "Referral Code (ref)",
     fieldKey: "mulebuy_id",
     placeholder: "201493429",
-    description: "Modern shopping platform. Injected as ref parameter.",
-    urlFormat: "mulebuy.com/product/?url={url}&ref={code}",
+    description: "Mulebuy affiliate account reference code.",
+    urlFormat: "mulebuy.com/product/?shop_type=weidian&id={id}&ref={ref}",
     portalUrl: "https://mulebuy.com",
   },
   {
     id: "cnfans",
     name: "CNfans",
-    badge: "TRENDING",
+    badge: "ACTIVE",
     badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/30",
-    icon: "🔥",
-    fieldName: "Referral Ref Code",
+    icon: "🟣",
+    fieldName: "Referral Code (ref)",
     fieldKey: "cnfans_id",
     placeholder: "16313214",
-    description: "Community-favorite agent with automated order routing.",
-    urlFormat: "cnfans.com/product/?url={url}&ref={code}",
+    description: "CNfans shopping agent affiliate referral ID.",
+    urlFormat: "cnfans.com/product/?shop_type=weidian&id={id}&ref={ref}",
     portalUrl: "https://cnfans.com",
   },
   {
     id: "cssbuy",
     name: "CSSbuy",
-    badge: "ESTABLISHED",
-    badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
-    icon: "🌐",
-    fieldName: "Promotion Code",
+    badge: "ACTIVE",
+    badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+    icon: "🔴",
+    fieldName: "Promo Code",
     fieldKey: "cssbuy_id",
     placeholder: "8e51fa03f5b9b13a",
-    description: "Established agent. Injected as promotionCode and inviter query params.",
-    urlFormat: "cssbuy.com/item.html?url={url}&promotionCode={promo}&inviter={user}",
-    portalUrl: "https://www.cssbuy.com",
+    description: "CSSbuy promotion link code & inviter name.",
+    urlFormat: "cssbuy.com/item.html?itemcode={id}&promotionCode={promo}",
+    portalUrl: "https://cssbuy.com",
     secondaryFieldKey: "cssbuy_inviter",
     secondaryFieldName: "Inviter Username",
     secondaryPlaceholder: "z3r0x",
@@ -103,28 +107,28 @@ const AGENTS_META: AgentSettingItem[] = [
   {
     id: "kakobuy",
     name: "Kakobuy",
-    badge: "FAST SHIPPING",
-    badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/30",
-    icon: "🚀",
-    fieldName: "Affiliate Affcode",
+    badge: "ACTIVE",
+    badgeColor: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+    icon: "🟠",
+    fieldName: "Affiliate Code (affcode)",
     fieldKey: "kakobuy_id",
     placeholder: "ut9mq",
-    description: "Dedicated warehouse inspection agent. Injected as affcode.",
-    urlFormat: "kakobuy.com/item/details?url={url}&affcode={code}",
-    portalUrl: "https://item.kakobuy.com/center/affiliates",
+    description: "Kakobuy affiliate identification token.",
+    urlFormat: "kakobuy.com/item/details?url={url}&affcode={id}",
+    portalUrl: "https://kakobuy.com",
   },
   {
     id: "hoobuy",
     name: "Hoobuy",
-    badge: "PROMO",
-    badgeColor: "bg-orange-500/10 text-orange-400 border-orange-500/30",
-    icon: "🎟️",
-    fieldName: "Invite / Ambassador Code",
+    badge: "ACTIVE",
+    badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+    icon: "🌐",
+    fieldName: "Invite Code (inviteCode)",
     fieldKey: "hoobuy_id",
     placeholder: "PR3YGPpE",
-    description: "Multi-currency platform with $135 freight voucher campaigns.",
-    urlFormat: "hoobuy.com/product?url={url}&inviteCode={code}",
-    portalUrl: "https://hoobuy.com",
+    description: "Hoobuy agent registration & product routing invite code.",
+    urlFormat: "hoobuy.cc/product/{type}/{id}?inviteCode={code}",
+    portalUrl: "https://hoobuy.cc",
   },
 ];
 
@@ -140,8 +144,10 @@ export default function AdminSettingsPage() {
     hoobuy_id: "PR3YGPpE",
     pythonPath: "python",
     autoScanInterval: "60",
+    adminPassword: "archivefinds2026",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -165,6 +171,7 @@ export default function AdminSettingsPage() {
             hoobuy_id: s.agents?.hoobuy?.affiliateId || prev.hoobuy_id,
             pythonPath: s.worker?.pythonPath || prev.pythonPath,
             autoScanInterval: s.worker?.autoScanInterval || prev.autoScanInterval,
+            adminPassword: s.security?.adminPassword || prev.adminPassword,
           }));
         }
       } catch (e) {
@@ -198,6 +205,9 @@ export default function AdminSettingsPage() {
           pythonPath: formData.pythonPath,
           autoScanInterval: formData.autoScanInterval,
         },
+        security: {
+          adminPassword: formData.adminPassword,
+        },
       };
 
       await fetch("/api/admin/settings", {
@@ -227,126 +237,105 @@ export default function AdminSettingsPage() {
             </h1>
           </div>
           <p className="text-xs font-mono text-neutral-400">
-            Configure multi-agent affiliate routing tokens, referral parameters, and local crawler automation.
+            Configure multi-agent affiliate routing tokens, referral parameters, security passphrase, and crawler automation.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            7 AGENTS INTEGRATED
+        {saved && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs font-mono text-emerald-400 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>ALL SETTINGS SAVED & PERSISTED</span>
           </div>
-        </div>
+        )}
       </div>
 
-      {saved && (
-        <div className="p-4 bg-emerald-950/40 border border-emerald-500/40 text-xs font-mono text-emerald-300 flex items-center justify-between gap-2 animate-in fade-in rounded">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Settings saved successfully! All storefront buy buttons now route through your updated codes.</span>
-          </div>
-          <span className="text-[10px] text-neutral-400 uppercase">Live Synced</span>
-        </div>
-      )}
-
-      {/* Main Form */}
-      <form onSubmit={handleSave} className="space-y-8">
-        {/* SECTION 1: MULTI-AGENT AFFILIATE CODES */}
+      <form onSubmit={handleSave} className="space-y-10">
+        {/* SECTION 1: AFFILIATE NETWORK AGENTS */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Link2 className="w-4 h-4 text-neutral-300" />
               <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
-                1. Multi-Agent Affiliate Network (7 Agents)
+                1. Multi-Agent Affiliate Network (7 Supported Agents)
               </h2>
             </div>
             <span className="text-[11px] font-mono text-neutral-500">
-              Auto-resolved via <code className="text-neutral-400">resolveAgentUrl()</code>
+              Auto-attached to all outbound links
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {AGENTS_META.map((agent) => {
-              const currentVal = (formData as any)[agent.fieldKey] || "";
-              const isConfigured = Boolean(currentVal && currentVal.trim().length > 0);
+              const mainValue = (formData as any)[agent.fieldKey] || "";
+              const secValue = agent.secondaryFieldKey ? (formData as any)[agent.secondaryFieldKey] || "" : "";
 
               return (
                 <div
                   key={agent.id}
-                  className="bg-neutral-900/90 border border-neutral-800 rounded-lg p-5 flex flex-col justify-between hover:border-neutral-700 transition-all space-y-4 shadow-sm"
+                  className="bg-neutral-900 border border-neutral-800 rounded-lg p-5 flex flex-col justify-between space-y-4 hover:border-neutral-700 transition-colors"
                 >
-                  {/* Top Bar */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="space-y-3">
+                    {/* Card Header */}
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-base">{agent.icon}</span>
-                        <h3 className="text-sm font-mono font-bold text-white tracking-wide">
+                        <h3 className="font-mono font-bold text-sm text-white">
                           {agent.name}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 border rounded ${agent.badgeColor}`}>
-                          {agent.badge}
-                        </span>
-                        {isConfigured ? (
-                          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                            ACTIVE
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-mono text-neutral-500 bg-neutral-800 px-1.5 py-0.5 rounded">
-                            DEFAULT
-                          </span>
-                        )}
-                      </div>
+                      <span
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 border rounded uppercase ${agent.badgeColor}`}
+                      >
+                        {agent.badge}
+                      </span>
                     </div>
-                    <p className="text-[11px] font-mono text-neutral-400 leading-relaxed">
+
+                    <p className="text-[11px] font-mono text-neutral-400">
                       {agent.description}
                     </p>
-                  </div>
 
-                  {/* Input Fields */}
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <label className="text-[10px] font-mono uppercase text-neutral-300 block mb-1 font-bold">
+                    {/* Primary Field */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-mono uppercase text-neutral-300 block font-semibold">
                         {agent.fieldName}
                       </label>
                       <input
                         type="text"
-                        value={currentVal}
-                        placeholder={agent.placeholder}
+                        value={mainValue}
                         onChange={(e) => handleChange(agent.fieldKey, e.target.value)}
-                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-white transition-colors"
+                        placeholder={agent.placeholder}
+                        className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white transition-colors"
                       />
                     </div>
 
-                    {/* Secondary field if applicable (e.g. CSSbuy inviter) */}
+                    {/* Optional Secondary Field (e.g. CSSbuy inviter) */}
                     {agent.secondaryFieldKey && (
-                      <div>
-                        <label className="text-[10px] font-mono uppercase text-neutral-300 block mb-1 font-bold">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-mono uppercase text-neutral-300 block font-semibold">
                           {agent.secondaryFieldName}
                         </label>
                         <input
                           type="text"
-                          value={(formData as any)[agent.secondaryFieldKey] || ""}
-                          placeholder={agent.secondaryPlaceholder}
+                          value={secValue}
                           onChange={(e) => handleChange(agent.secondaryFieldKey!, e.target.value)}
-                          className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-white transition-colors"
+                          placeholder={agent.secondaryPlaceholder}
+                          className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white transition-colors"
                         />
                       </div>
                     )}
+                  </div>
 
-                    {/* Live Query Pattern Preview */}
-                    <div className="bg-black/50 border border-neutral-800/80 rounded p-2.5 flex items-center justify-between gap-2">
-                      <div className="truncate text-[10px] font-mono text-neutral-400">
-                        <span className="text-neutral-600 font-bold">URL: </span>
-                        {agent.urlFormat.replace("{id}", currentVal || agent.placeholder).replace("{code}", currentVal || agent.placeholder).replace("{promo}", currentVal || agent.placeholder).replace("{user}", (formData as any).cssbuy_inviter || "z3r0x")}
-                      </div>
+                  {/* Card Footer: Routing Scheme & External Portal */}
+                  <div className="pt-3 border-t border-neutral-800/80 flex items-center justify-between text-[10px] font-mono text-neutral-500">
+                    <span className="truncate max-w-[200px]" title={agent.urlFormat}>
+                      {agent.urlFormat}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
                       <a
                         href={agent.portalUrl}
                         target="_blank"
-                        rel="noreferrer"
-                        className="text-[10px] font-mono text-neutral-400 hover:text-white flex items-center gap-1 shrink-0 transition-colors"
-                        title="Open Affiliate Portal"
+                        rel="noopener noreferrer"
+                        className="text-neutral-400 hover:text-white flex items-center gap-1 transition-colors"
                       >
                         <span>Portal</span>
                         <ExternalLink className="w-3 h-3" />
@@ -405,12 +394,55 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
+        {/* SECTION 3: HUD SECURITY & MASTER PASSPHRASE */}
+        <div className="space-y-4 pt-4 border-t border-neutral-800">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
+              3. HUD Security & Operator Passphrase
+            </h2>
+          </div>
+
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 space-y-4">
+            <p className="text-xs font-mono text-neutral-400">
+              The HUD and all administrative actions are protected by this master passphrase. Visitors cannot access the HUD without entering it.
+            </p>
+
+            <div className="max-w-md space-y-1.5">
+              <label className="text-xs font-mono uppercase text-neutral-300 block font-bold flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-neutral-400" />
+                Master Passphrase
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={formData.adminPassword}
+                  onChange={(e) => handleChange("adminPassword", e.target.value)}
+                  placeholder="archivefinds2026"
+                  className="w-full px-3.5 py-2.5 pr-10 bg-neutral-950 border border-neutral-800 rounded text-xs font-mono text-white focus:outline-none focus:border-white transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors p-1 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-neutral-500">
+                Default: <code className="text-neutral-400">archivefinds2026</code>. You can change it anytime here.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Action Button */}
         <div className="pt-4 flex items-center justify-between">
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all flex items-center gap-2.5 shadow-lg active:scale-95 disabled:opacity-50"
+            className="px-8 py-3.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-all flex items-center gap-2.5 shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {saving ? (
               <>
@@ -426,7 +458,7 @@ export default function AdminSettingsPage() {
           </button>
 
           <p className="text-[11px] font-mono text-neutral-500">
-            Changes apply instantly to live product pages and links.
+            Changes apply instantly to live product pages, affiliate links, and security gates.
           </p>
         </div>
       </form>

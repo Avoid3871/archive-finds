@@ -106,9 +106,14 @@ export function Footer() {
           {/* Platform Info */}
           <div className="md:col-span-2 space-y-3">
             <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-400">
-              Platform
+              Platform & Legal
             </h3>
             <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/mission" className="text-neutral-300 hover:text-white transition-colors font-medium">
+                  Our Mission & Disclaimer
+                </Link>
+              </li>
               <li>
                 <Link href="/discover" className="text-neutral-300 hover:text-white transition-colors">
                   All Finds
@@ -125,7 +130,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="text-neutral-400 hover:text-neutral-200 transition-colors font-mono text-xs">
+                <Link href="/admin" className="text-neutral-500 hover:text-neutral-300 transition-colors font-mono text-xs">
                   Worker HUD
                 </Link>
               </li>
