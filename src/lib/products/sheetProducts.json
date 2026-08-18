@@ -3081,5 +3081,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "124",
+    "title": "Rick Owens Tommy Oversized T-Shirt",
+    "name": "Rick Owens Tommy Oversized T-Shirt",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "T-Shirts",
+    "categorySlug": "t-shirts",
+    "season": "Mainline Archive",
+    "price": 34.0,
+    "sourcePrice": 34.0,
+    "estimatedRetail": 380.0,
+    "directStoreLink": "https://detail.1688.com/offer/633365683369.html",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F633365683369.html&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F633365683369.html&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fdetail.1688.com%2Foffer%2F633365683369.html&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-rick-owens-tommy-oversized-t-shirt-4458.png",
+    "localImage": "/products/rick-owens-rick-owens-tommy-oversized-t-shirt-4458.png",
+    "slug": "rick-owens-rick-owens-tommy-oversized-t-shirt-4458",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | Mainline Archive"
   }
 ]
