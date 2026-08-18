@@ -3031,5 +3031,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "122",
+    "title": "Celine Classic Wool & Calfskin Leather Trimmed Teddy Bomber Jacket",
+    "name": "Celine Classic Wool & Calfskin Leather Trimmed Teddy Bomber Jacket",
+    "brand": "Celine",
+    "brandSlug": "celine",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "Permanent Collection",
+    "price": 125.93,
+    "sourcePrice": 125.93,
+    "estimatedRetail": 2850.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5587510205",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5587510205&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5587510205&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5587510205&memberId=1325437696506389977",
+    "imageUrl": "/products/celine-celine-classic-wool-calfskin-leather-trimmed-teddy-bo.png",
+    "localImage": "/products/celine-celine-classic-wool-calfskin-leather-trimmed-teddy-bo.png",
+    "slug": "celine-celine-classic-wool-calfskin-leather-trimmed-teddy-bo",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | Permanent Collection"
   }
 ]
