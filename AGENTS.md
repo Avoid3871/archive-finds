@@ -4,6 +4,12 @@
 - **Second Brain MOC:** `D:\grepify (second brain)\01 - Projects\Archive Finds.md`
 - **Second Brain Sub-Notes:** `D:\grepify (second brain)\01 - Projects\Archive Finds\`
 - **Sugargoo Affiliate ID:** `1325437696506389977`
+- **Superbuy Partner Code:** `wVam6e`
+- **Mulebuy Ref Code:** `201493429`
+- **CNfans Ref Code:** `16313214`
+- **CSSbuy Promo Code:** `8e51fa03f5b9b13a` (Inviter: `z3r0x`)
+- **Kakobuy Affcode:** `ut9mq`
+- **Hoobuy Invite Code:** `PR3YGPpE`
 - **Exchange Rate:** `1 CNY = 0.14815 USD` (1 USD = 6.75 CNY)
 - **Live Catalog:** `src/lib/products/sheetProducts.json`
 - **Moderation Queue:** `scratch/discovered_qualityreps_finds.json`
