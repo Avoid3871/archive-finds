@@ -11,10 +11,12 @@
 - **Kakobuy Affcode:** `ut9mq`
 - **Hoobuy Invite Code:** `PR3YGPpE`
 - **Exchange Rate:** `1 CNY = 0.14815 USD` (1 USD = 6.75 CNY)
+- **Master Passphrase:** `archivefinds2026` (HUD Operator Gate)
 - **Live Catalog:** `src/lib/products/sheetProducts.json`
-- **Moderation Queue:** `scratch/discovered_qualityreps_finds.json`
+- **Moderation Queue:** `scratch/discovered_qualityreps_finds.json` & `scratch/discovered_sheet_finds.json`
 - **Studio Cutout:** `scripts/image_cutout_pipeline.py` (Local Python `rembg` ONNX)
 - **Live Price Resolver:** `scripts/product_identifier.py` & `/api/admin/identify-product` (Weidian Thor API)
+- **Mission Page:** `src/app/(public)/mission/page.tsx` (`/mission`)
 
 ## 2. Second Brain Auto-Sync Rules
 - When modifying architecture, APIs, or adding new features:
