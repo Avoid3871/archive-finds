@@ -3179,5 +3179,29 @@
       "BOTTOMS"
     ],
     "createdAt": "2026-08-18T12:54:52.291Z"
+  },
+  {
+    "id": "128",
+    "title": "MONOGRAM BOYHOOD PUFFER",
+    "brand": "LOUIS VUITTON",
+    "category": "Outerwear",
+    "price": 123.58,
+    "priceUSD": 123.58,
+    "priceCNY": 833,
+    "estimatedRetail": 1050.43,
+    "imageUrl": "/products/louis-vuitton-monogram-boyhood-puffer.png",
+    "localImage": "/products/louis-vuitton-monogram-boyhood-puffer.png",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6739665330&memberId=1325437696506389977",
+    "directStoreLink": "https://weidian.com/item.html?itemID=6739665330",
+    "slug": "louis-vuitton-monogram-boyhood-puffer",
+    "status": "APPROVED",
+    "tags": [
+      "LOUIS VUITTON",
+      "Outerwear",
+      "archive",
+      "grail",
+      "TOPS"
+    ],
+    "createdAt": "2026-08-18T12:55:25.460Z"
   }
 ]
