@@ -24,12 +24,45 @@ def clean_url(url: str) -> str:
     if not url:
         return ""
     url = url.strip()
-    # If wrapped in google redirect url: https://www.google.com/url?q=...
-    if "google.com/url?q=" in url:
+    # 1. Unwrap Google redirect: https://www.google.com/url?q=...
+    if "google.com/url?" in url:
         parsed = urllib.parse.urlparse(url)
         params = urllib.parse.parse_qs(parsed.query)
         if "q" in params:
             url = params["q"][0]
+            
+    # 2. Unwrap Sugargoo / Agent redirect links
+    if any(agent in url for agent in ["sugargoo.com", "superbuy.com", "mulebuy.com", "cnfans.com", "cssbuy.com", "kakobuy.com", "hoobuy.com"]):
+        try:
+            parsed = urllib.parse.urlparse(url)
+            params = urllib.parse.parse_qs(parsed.query)
+            for k in ["productLink", "productUrl", "url"]:
+                if k in params:
+                    url = params[k][0]
+                    break
+        except Exception:
+            pass
+
+    # 3. Canonicalize Weidian
+    if "weidian.com" in url:
+        m = re.search(r'(?:itemID|itemId|item_id)=(\d+)', url, re.IGNORECASE)
+        if m:
+            return f"https://weidian.com/item.html?itemID={m.group(1)}"
+            
+    # 4. Canonicalize Taobao / Tmall
+    if "taobao.com" in url or "tmall.com" in url:
+        m = re.search(r'(?:[?&]|\b)id=(\d+)', url)
+        if not m:
+            m = re.search(r'spm=id=(\d+)', url)
+        if m:
+            return f"https://item.taobao.com/item.htm?id={m.group(1)}"
+
+    # 5. Canonicalize 1688
+    if "1688.com" in url:
+        m = re.search(r'offer/(\d+)\.html', url)
+        if m:
+            return f"https://detail.1688.com/offer/{m.group(1)}.html"
+
     return url.strip()
 
 def normalize_sugargoo_link(raw_url: str) -> str:
@@ -121,52 +154,52 @@ def map_category(tab_name: str, item_title: str) -> str:
     return "Outerwear"
 
 async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, str]:
-    """Test marketplace link live availability and stock without paid APIs."""
+    """Test marketplace link live availability and stock accurately without paid APIs."""
     raw_url = clean_url(raw_url)
     if not raw_url or not raw_url.startswith("http"):
         return False, "Invalid or missing URL"
     
     # Fast heuristic check for obvious sold out notes
     if "sold out" in raw_url.lower() or "deleted" in raw_url.lower():
-        return False, "Marked sold out"
+        return False, "Marked sold out in URL"
 
-    # 1. Weidian Thor Live Verification
+    # Reject non-orderable direct sites / albums
+    if "yupoo.com" in raw_url:
+        return False, "Yupoo album (Agent direct checkout not supported)"
+        
+    if "reondistrict.com" in raw_url:
+        return False, "Reon District (Direct Korean store, not an agent marketplace)"
+
+    # 1. Weidian True Live Status Verification (via Direct HTML Render Check)
     if "weidian.com" in raw_url:
-        item_id_match = re.search(r'(?:itemID|itemId|item_id)=(\d+)', raw_url)
-        if item_id_match:
-            wid = item_id_match.group(1)
-            thor_url = f"https://thor.weidian.com/detail/getItemSkuInfo/1.0?param=%7B%22itemId%22%3A%22{wid}%22%7D"
-            headers_wd = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Referer": "https://weidian.com/"
-            }
-            async with sem:
-                loop = asyncio.get_event_loop()
-                def check_wd():
-                    try:
-                        req = urllib.request.Request(thor_url, headers=headers_wd)
-                        with urllib.request.urlopen(req, timeout=4) as resp:
-                            data = json.loads(resp.read().decode('utf-8'))
-                            code = data.get('status', {}).get('code')
-                            if code != 0:
-                                return False, "Weidian: Item delisted (code != 0)"
-                            res = data.get('result')
-                            if not res:
-                                return False, "Weidian: No product data"
-                            sku_infos = res.get('skuInfos', [])
-                            stock = 0
-                            if isinstance(sku_infos, list):
-                                for s in sku_infos:
-                                    stock += s.get('skuInfo', {}).get('stock', 0)
-                            elif isinstance(sku_infos, dict):
-                                for k, s in sku_infos.items():
-                                    stock += s.get('stock', 0)
-                            if len(sku_infos) > 0 and stock == 0:
-                                return False, "Weidian: Out of stock (0 units available)"
-                            return True, "Active (In Stock)"
-                    except Exception as e:
-                        return False, f"Weidian check failed: {str(e)[:30]}"
-                return await loop.run_in_executor(None, check_wd)
+        wid_match = re.search(r'itemID=(\d+)', raw_url)
+        if not wid_match:
+            return False, "Invalid Weidian Item ID"
+        wid = wid_match.group(1)
+        target_url = f"https://weidian.com/item.html?itemID={wid}"
+        headers_wd = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://weidian.com/"
+        }
+        async with sem:
+            loop = asyncio.get_event_loop()
+            def verify_wd():
+                try:
+                    req = urllib.request.Request(target_url, headers=headers_wd)
+                    with urllib.request.urlopen(req, timeout=6) as resp:
+                        html = resp.read().decode('utf-8', errors='ignore')
+                        # Active Weidian items always have item-name, cur-price or content rendered
+                        if 'class="item-name"' in html or 'class="cur-price"' in html or 'class="content"' in html:
+                            return True, "Weidian Active (In Stock)"
+                        if '该商品已经被删除' in html or '去看看其它商品吧' in html:
+                            return False, "Weidian: Item Deleted / Removed by Seller"
+                        # Empty shell = delisted
+                        return False, "Weidian: Delisted / Off-shelf"
+                except urllib.error.HTTPError as e:
+                    return False, f"Weidian HTTP {e.code}"
+                except Exception as e:
+                    return False, f"Weidian check failed: {str(e)[:30]}"
+            return await loop.run_in_executor(None, verify_wd)
 
     # 2. General / Taobao / 1688 Check
     headers = {
@@ -180,7 +213,7 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
         def fetch():
             try:
                 req = urllib.request.Request(raw_url, headers=headers)
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with urllib.request.urlopen(req, timeout=6) as resp:
                     final_url = resp.geturl()
                     code = resp.getcode()
                     body = resp.read().decode('utf-8', errors='ignore')
@@ -207,9 +240,6 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
             return False, "Host unreachable / link dead"
 
         # Taobao anti-bot: detect login redirect wall pages.
-        # These are ~5KB pages with "localStorage.x5referer" and no actual product data.
-        # To guarantee that ONLY products that actively load on Sugargoo appear in the queue,
-        # unverified / login-blocked Taobao links are strictly rejected as dead.
         is_taobao = "taobao.com" in raw_url or "tmall.com" in raw_url
         if is_taobao:
             is_login_wall = "x5referer" in text or "login.taobao.com" in text or "login.m.taobao.com" in text

@@ -120,3 +120,17 @@ export const AGENTS_CONFIG: Record<AgentId, AgentInfo> = {
     },
   },
 };
+
+export function generateAgentUrl(agentId: AgentId, marketUrl: string, customAffiliateId?: string): string {
+  const agent = AGENTS_CONFIG[agentId] || AGENTS_CONFIG.sugargoo;
+  const affiliateId = customAffiliateId || agent.affiliateId;
+  return agent.affiliateUrlTemplate(marketUrl, affiliateId);
+}
+
+export function getAllAgents(): AgentInfo[] {
+  return Object.values(AGENTS_CONFIG);
+}
+
+export function getDefaultAgent(): AgentInfo {
+  return AGENTS_CONFIG.sugargoo;
+}

@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { ARCHIVE_BRANDS, BRAND_NAMES, normalizeBrand, getAllKnownBrands } from "@/lib/constants/brands";
+import { generateAgentUrl } from "@/lib/agents/agentConfig";
 
 
 interface DiscoveredItem {
@@ -58,6 +59,10 @@ interface DiscoveredItem {
   status: string;
   rawImageSrc: string;
   season?: string;
+  directStoreLink?: string;
+  validationNote?: string;
+  priceCNY?: number;
+  sheetTab?: string;
 }
 
 interface SheetSource {
@@ -2724,9 +2729,13 @@ export default function AdminSourcesPage() {
                               {(item as any).priceCNY && (
                                 <span>¥{(item as any).priceCNY}</span>
                               )}
-                              {item.status === "UNVERIFIED_TAOBAO" && (
-                                <span className="px-1.5 py-0.5 bg-amber-950/60 border border-amber-700/50 rounded text-amber-400" title={(item as any).validationNote || "Taobao login wall — stock unverified"}>
-                                  ⚠ Unverified
+                              {(item as any).validationNote && (
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                  (item as any).validationNote?.includes("Active") || (item as any).validationNote?.includes("Verified")
+                                    ? "bg-emerald-950/70 border border-emerald-700/60 text-emerald-300"
+                                    : "bg-amber-950/60 border border-amber-700/50 text-amber-400"
+                                }`}>
+                                  ● {(item as any).validationNote}
                                 </span>
                               )}
                             </div>
@@ -2737,13 +2746,14 @@ export default function AdminSourcesPage() {
                         <div className="pt-3 border-t border-neutral-800/80 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
                             <a
-                              href={item.affiliateLink || item.sugargooUrl || normalizeSugargooLink(item.rawMarketUrl || "")}
+                              href={item.rawMarketUrl || item.directStoreLink || item.affiliateLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
+                              title="Open original marketplace listing (Weidian / Taobao / 1688)"
                             >
-                              <ExternalLink className="w-3 h-3" />
-                              <span>Test Link</span>
+                              <ExternalLink className="w-3 h-3 text-neutral-400" />
+                              <span>Direct Store</span>
                             </a>
 
                             <button
