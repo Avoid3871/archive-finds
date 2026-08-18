@@ -3056,5 +3056,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | Permanent Collection"
+  },
+  {
+    "id": "123",
+    "title": "Rick Owens Gimp Puffer Jacket",
+    "name": "Rick Owens Gimp Puffer Jacket",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 122.82,
+    "sourcePrice": 122.82,
+    "estimatedRetail": 1850.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5787458893",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5787458893&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5787458893&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5787458893&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-rick-owens-gimp-puffer-jacket-4349.png",
+    "localImage": "/products/rick-owens-rick-owens-gimp-puffer-jacket-4349.png",
+    "slug": "rick-owens-rick-owens-gimp-puffer-jacket-4349",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
