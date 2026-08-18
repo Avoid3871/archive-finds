@@ -3006,5 +3006,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "121",
+    "title": "Balenciaga S S 2021 Turn Wide Black Zip-Up",
+    "name": "Balenciaga S S 2021 Turn Wide Black Zip-Up",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Hoodies",
+    "categorySlug": "hoodies",
+    "season": "",
+    "price": 41.48,
+    "sourcePrice": 41.48,
+    "estimatedRetail": 950.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5360679158",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5360679158&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5360679158&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5360679158&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-s-s-2021-turn-wide-black-zip-up-4283.png",
+    "localImage": "/products/balenciaga-balenciaga-s-s-2021-turn-wide-black-zip-up-4283.png",
+    "slug": "balenciaga-balenciaga-s-s-2021-turn-wide-black-zip-up-4283",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
