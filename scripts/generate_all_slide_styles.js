@@ -92,14 +92,8 @@ async function createViralMinimalSlide({ packId, slideIndex, totalSlides, produc
       <tspan x="540" dy="84">${escapedLine2}</tspan>
     </text>
 
-    <!-- Subtle Minimalist Indicator Badge -->
-    <rect x="420" y="1660" width="240" height="42" fill="#000000" rx="21" />
-    <text x="540" y="1687" text-anchor="middle" fill="#ffffff" font-size="16" class="sans bold" letter-spacing="1">
-      $${product.price.toFixed(2)} USD
-    </text>
-
     <!-- Bottom Discrete Pagination Dot & Sugargoo indicator -->
-    <text x="540" y="1760" text-anchor="middle" fill="#999999" font-size="16" class="mono" letter-spacing="3">
+    <text x="540" y="1740" text-anchor="middle" fill="#999999" font-size="16" class="mono" letter-spacing="3">
       ARCHIVE FINDS • ${String(slideIndex).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}
     </text>
   </svg>
@@ -442,13 +436,7 @@ async function createMinimalDarkSlide({ packId, slideIndex, totalSlides, product
       <tspan x="540" dy="84">${escapedLine2}</tspan>
     </text>
 
-    <!-- Subtle Minimalist Indicator Badge -->
-    <rect x="420" y="1660" width="240" height="42" fill="#ffffff" rx="21" />
-    <text x="540" y="1687" text-anchor="middle" fill="#000000" font-size="16" class="sans bold" letter-spacing="1">
-      $${product.price.toFixed(2)} USD
-    </text>
-
-    <text x="540" y="1760" text-anchor="middle" fill="#666666" font-size="16" class="mono" letter-spacing="3">
+    <text x="540" y="1740" text-anchor="middle" fill="#666666" font-size="16" class="mono" letter-spacing="3">
       ARCHIVE FINDS • ${String(slideIndex).padStart(2, '0')}/${String(totalSlides).padStart(2, '0')}
     </text>
   </svg>

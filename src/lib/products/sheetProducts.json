@@ -2906,5 +2906,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | AW16 'Nightmares and Dreams'"
+  },
+  {
+    "id": "117",
+    "title": "Enfants Riches Déprimés - CRY FOR HELP JACKET",
+    "name": "Enfants Riches Déprimés - CRY FOR HELP JACKET",
+    "brand": "Enfants Riches Déprimés",
+    "brandSlug": "enfants-riches-d-prim-s",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 351.6,
+    "sourcePrice": 351.6,
+    "estimatedRetail": 2988.6,
+    "directStoreLink": "https://weidian.com/item.html?itemID=3977141212",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D3977141212&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D3977141212&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D3977141212&memberId=1325437696506389977",
+    "imageUrl": "/products/enfants-riches-d-prim-s-cry-for-help-jacket-1438.png",
+    "localImage": "/products/enfants-riches-d-prim-s-cry-for-help-jacket-1438.png",
+    "slug": "enfants-riches-d-prim-s-cry-for-help-jacket-1438",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
