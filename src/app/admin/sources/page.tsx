@@ -2746,14 +2746,14 @@ export default function AdminSourcesPage() {
                         <div className="pt-3 border-t border-neutral-800/80 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
                             <a
-                              href={item.rawMarketUrl || item.directStoreLink || item.affiliateLink}
+                              href={item.sugargooUrl || item.affiliateLink || (item.rawMarketUrl ? `https://www.sugargoo.com/products?productLink=${encodeURIComponent(item.rawMarketUrl)}&memberId=1325437696506389977` : '#')}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
-                              title="Open original marketplace listing (Weidian / Taobao / 1688)"
+                              className="px-3 py-1.5 bg-neutral-950 hover:bg-orange-950/30 text-orange-400 border border-orange-900/40 hover:border-orange-600/60 font-mono text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 text-center"
+                              title="Test live product resolution on Sugargoo with your VIP Affiliate ID"
                             >
-                              <ExternalLink className="w-3 h-3 text-neutral-400" />
-                              <span>Direct Store</span>
+                              <ExternalLink className="w-3 h-3 text-orange-400" />
+                              <span>Test on Sugargoo</span>
                             </a>
 
                             <button

@@ -3106,5 +3106,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | Mainline Archive"
+  },
+  {
+    "id": "125",
+    "title": "Balenciaga 3B Trackpants",
+    "name": "Balenciaga 3B Trackpants",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Denim",
+    "categorySlug": "denim",
+    "season": "",
+    "price": 31.11,
+    "sourcePrice": 31.11,
+    "estimatedRetail": 890.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5229120570",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5229120570&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5229120570&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5229120570&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-3b-trackpants-7663.png",
+    "localImage": "/products/balenciaga-balenciaga-3b-trackpants-7663.png",
+    "slug": "balenciaga-balenciaga-3b-trackpants-7663",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]

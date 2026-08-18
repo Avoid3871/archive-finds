@@ -163,12 +163,15 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
     if "sold out" in raw_url.lower() or "deleted" in raw_url.lower():
         return False, "Marked sold out in URL"
 
-    # Reject non-orderable direct sites / albums
+    # Reject non-orderable direct sites / albums / 1-off second-hand
     if "yupoo.com" in raw_url:
         return False, "Yupoo album (Agent direct checkout not supported)"
         
     if "reondistrict.com" in raw_url:
         return False, "Reon District (Direct Korean store, not an agent marketplace)"
+
+    if "goofish.com" in raw_url or "2.taobao.com" in raw_url:
+        return False, "Goofish / Xianyu (Second-hand single-quantity listing)"
 
     # 1. Weidian True Live Status Verification (via Direct HTML Render Check)
     if "weidian.com" in raw_url:
@@ -188,11 +191,25 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
                     req = urllib.request.Request(target_url, headers=headers_wd)
                     with urllib.request.urlopen(req, timeout=6) as resp:
                         html = resp.read().decode('utf-8', errors='ignore')
-                        # Active Weidian items always have item-name, cur-price or content rendered
-                        if 'class="item-name"' in html or 'class="cur-price"' in html or 'class="content"' in html:
-                            return True, "Weidian Active (In Stock)"
+                        # 1. Check for explicit delisted indicators
                         if '该商品已经被删除' in html or '去看看其它商品吧' in html:
                             return False, "Weidian: Item Deleted / Removed by Seller"
+
+                        # 2. Check for dummy / service / recycled non-clothing listings
+                        m_title = re.search(r'<span class="item-name">(.*?)</span>', html)
+                        title_text = m_title.group(1) if m_title else ""
+                        
+                        dummy_keywords = [
+                            "服务", "棚拍", "定金", "补运费", "邮费", "专拍", "链接", "差价", "摄影", 
+                            "deposit", "postage", "service", "freight", "custom order", "reship", "sample"
+                        ]
+                        if any(dk in title_text.lower() for dk in dummy_keywords):
+                            return False, f"Weidian: Recycled dummy/service listing ({title_text[:25]})"
+
+                        # 3. Active Weidian items always have item-name or cur-price rendered
+                        if 'class="item-name"' in html or 'class="cur-price"' in html or 'class="content"' in html:
+                            return True, "Weidian Active (In Stock)"
+                        
                         # Empty shell = delisted
                         return False, "Weidian: Delisted / Off-shelf"
                 except urllib.error.HTTPError as e:
