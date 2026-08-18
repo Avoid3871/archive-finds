@@ -2956,5 +2956,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "119",
+    "title": "Rick Owens - F/W 2018 SISYPHUS PUFFER",
+    "name": "Rick Owens - F/W 2018 SISYPHUS PUFFER",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 117.5,
+    "sourcePrice": 117.5,
+    "estimatedRetail": 998.75,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4351425263",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4351425263&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4351425263&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4351425263&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-f-w-2018-sisyphus-puffer-1499.png",
+    "localImage": "/products/rick-owens-f-w-2018-sisyphus-puffer-1499.png",
+    "slug": "rick-owens-f-w-2018-sisyphus-puffer-1499",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
