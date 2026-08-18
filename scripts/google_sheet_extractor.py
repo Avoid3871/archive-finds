@@ -208,14 +208,13 @@ async def check_link_alive(raw_url: str, sem: asyncio.Semaphore) -> tuple[bool, 
 
         # Taobao anti-bot: detect login redirect wall pages.
         # These are ~5KB pages with "localStorage.x5referer" and no actual product data.
-        # Real product pages are much larger (50KB+) and contain item content.
+        # To guarantee that ONLY products that actively load on Sugargoo appear in the queue,
+        # unverified / login-blocked Taobao links are strictly rejected as dead.
         is_taobao = "taobao.com" in raw_url or "tmall.com" in raw_url
         if is_taobao:
             is_login_wall = "x5referer" in text or "login.taobao.com" in text or "login.m.taobao.com" in text
-            if is_login_wall and len(text) < 8000:
-                # Taobao blocked server-side verification — cannot confirm alive or dead.
-                # Return True but with a warning so the item enters queue as UNVERIFIED.
-                return True, "Taobao: Unverified (login wall, cannot confirm stock server-side)"
+            if is_login_wall:
+                return False, "Taobao: Delisted or unverified on Sugargoo"
 
         return True, "Active"
 

@@ -2881,5 +2881,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "116",
+    "title": "Raf Simons sweater Ck205",
+    "name": "Raf Simons sweater Ck205",
+    "brand": "Raf Simons",
+    "brandSlug": "raf-simons",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "AW16 'Nightmares and Dreams'",
+    "price": 54.07,
+    "sourcePrice": 54.07,
+    "estimatedRetail": 1450.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5673190678",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673190678&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673190678&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673190678&memberId=1325437696506389977",
+    "imageUrl": "/products/raf-simons-raf-simons-sweater-ck205-1294.png",
+    "localImage": "/products/raf-simons-raf-simons-sweater-ck205-1294.png",
+    "slug": "raf-simons-raf-simons-sweater-ck205-1294",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | AW16 'Nightmares and Dreams'"
   }
 ]

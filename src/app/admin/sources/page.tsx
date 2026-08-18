@@ -157,7 +157,14 @@ function getProxiedImageUrl(src?: string): string {
 }
 
 export default function AdminSourcesPage() {
-  const [activeTab, setActiveTab] = useState<"reddit" | "quick-ingest" | "health" | "sheets">("reddit");
+  const [activeTab, setActiveTabState] = useState<"reddit" | "quick-ingest" | "health" | "sheets">("reddit");
+
+  const setActiveTab = (tab: "reddit" | "quick-ingest" | "health" | "sheets") => {
+    setActiveTabState(tab);
+    try {
+      sessionStorage.setItem("admin_sources_active_tab", tab);
+    } catch (e) {}
+  };
   
   // Reddit Scanner Live Progress States
   const [isScanningReddit, setIsScanningReddit] = useState(false);
@@ -273,14 +280,28 @@ export default function AdminSourcesPage() {
     }
   };
 
-  // Restore success toast across Fast Refresh / page reloads
+  // Restore active tab, success toast, and active review modal across Fast Refresh / page reloads
   useEffect(() => {
     try {
+      const savedTab = sessionStorage.getItem("admin_sources_active_tab") as "reddit" | "quick-ingest" | "health" | "sheets" | null;
+      if (savedTab && ["reddit", "quick-ingest", "health", "sheets"].includes(savedTab)) {
+        setActiveTabState(savedTab);
+      }
+
       const savedToast = sessionStorage.getItem("last_ingested_grail");
       if (savedToast) {
         setSuccessToast(JSON.parse(savedToast));
       }
-      sessionStorage.removeItem("active_ingested_modal");
+
+      const savedModal = sessionStorage.getItem("active_ingested_modal");
+      if (savedModal) {
+        const parsed = JSON.parse(savedModal);
+        if (parsed.editingItem) setEditingItem(parsed.editingItem);
+        if (parsed.editFormData) setEditFormData(parsed.editFormData);
+        if (typeof parsed.editRotation === "number") setEditRotation(parsed.editRotation);
+        if (parsed.selectedImageSrc) setSelectedImageSrc(parsed.selectedImageSrc);
+        if (parsed.ingestModalProgress) setIngestModalProgress(parsed.ingestModalProgress);
+      }
     } catch (e) {
       // Ignore storage errors
     }
@@ -473,6 +494,7 @@ export default function AdminSourcesPage() {
   const openReviewModal = (item: DiscoveredItem) => {
     try {
       sessionStorage.removeItem("active_ingested_modal");
+      sessionStorage.setItem("admin_sources_active_tab", activeTab);
     } catch (e) {}
 
     const rawUrl = item.rawMarketUrl || (item as any).directStoreLink || "";
@@ -674,24 +696,33 @@ export default function AdminSourcesPage() {
           imageUrl: data.imageUrl || selectedImageSrc || editingItem.localImage || editingItem.imageUrl,
         };
         setSuccessToast(toastItem);
-        try {
-          sessionStorage.setItem("last_ingested_grail", JSON.stringify(toastItem));
-          sessionStorage.removeItem("active_ingested_modal");
-        } catch (e) {}
 
-
-        setIngestModalProgress((prev) => ({
-          ...prev,
+        const successProgress = {
           isIngesting: false,
           percent: 100,
-          phase: "SUCCESS",
+          phase: "SUCCESS" as const,
           message: "✓ Successfully Ingested! Piece is now live in your public store.",
           logs: [
-            ...prev.logs,
+            ...ingestModalProgress.logs,
             `[4/4] Ingest complete! Product is active in catalog.`,
           ],
           ingestedSlug: actualSlug,
-        }));
+        };
+        setIngestModalProgress(successProgress);
+
+        try {
+          sessionStorage.setItem("last_ingested_grail", JSON.stringify(toastItem));
+          sessionStorage.setItem(
+            "active_ingested_modal",
+            JSON.stringify({
+              editingItem: { ...editingItem, slug: actualSlug },
+              editFormData,
+              editRotation,
+              selectedImageSrc: data.imageUrl || selectedImageSrc || editingItem.localImage || editingItem.imageUrl,
+              ingestModalProgress: successProgress,
+            })
+          );
+        } catch (e) {}
 
       } else {
         setIngestModalProgress((prev) => ({
