@@ -1,14 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import sharp from "sharp";
+import { generateAllCaptionVariants, generateRandomViralCaption } from "@/app/api/admin/slides/caption/route";
 
 const PRODUCTS_PATH = path.join(process.cwd(), "src", "lib", "products", "sheetProducts.json");
-const HISTORY_PATH = path.join(process.cwd(), "scratch", "slides_generation_history.json");
-const OUTPUT_BASE_DIR = path.join(process.cwd(), "public", "slides", "generated");
 
 const WIDTH = 1080;
 const HEIGHT = 1920;
+
+function getStorageBaseDir(): { dir: string; isTemp: boolean } {
+  // If running in Vercel / AWS Lambda / Serverless environment (/var/task is read-only)
+  if (process.env.VERCEL || process.cwd().startsWith("/var/task") || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const tempDir = path.join(os.tmpdir(), "slides", "generated");
+    fs.mkdirSync(tempDir, { recursive: true });
+    return { dir: tempDir, isTemp: true };
+  }
+
+  // Local development fallback
+  const localPublicDir = path.join(process.cwd(), "public", "slides", "generated");
+  try {
+    fs.mkdirSync(localPublicDir, { recursive: true });
+    const testFile = path.join(localPublicDir, `.write_test_${Date.now()}`);
+    fs.writeFileSync(testFile, "ok");
+    fs.unlinkSync(testFile);
+    return { dir: localPublicDir, isTemp: false };
+  } catch {
+    const tempDir = path.join(os.tmpdir(), "slides", "generated");
+    fs.mkdirSync(tempDir, { recursive: true });
+    return { dir: tempDir, isTemp: true };
+  }
+}
+
+function getHistoryPath(): string {
+  if (process.env.VERCEL || process.cwd().startsWith("/var/task") || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join(os.tmpdir(), "slides_generation_history.json");
+  }
+
+  const localPath = path.join(process.cwd(), "scratch", "slides_generation_history.json");
+  try {
+    fs.mkdirSync(path.dirname(localPath), { recursive: true });
+    return localPath;
+  } catch {
+    return path.join(os.tmpdir(), "slides_generation_history.json");
+  }
+}
 
 function escapeXml(unsafe: string): string {
   return String(unsafe || "")
@@ -56,6 +93,24 @@ async function loadProductImageBuffer(product: any, targetWidth = 860, targetHei
     }
   }
 
+  // Remote HTTP fetch fallback if product has an external URL
+  if (product.imageUrl && (product.imageUrl.startsWith("http://") || product.imageUrl.startsWith("https://"))) {
+    try {
+      const res = await fetch(product.imageUrl);
+      if (res.ok) {
+        const arrayBuffer = await res.arrayBuffer();
+        return await sharp(Buffer.from(arrayBuffer))
+          .resize(targetWidth, targetHeight, {
+            fit: "contain",
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+          })
+          .toBuffer();
+      }
+    } catch (e) {
+      console.warn("Error fetching remote product image:", product.imageUrl, e);
+    }
+  }
+
   // Fallback transparent buffer
   return await sharp({
     create: { width: targetWidth, height: targetHeight, channels: 4, background: { r: 24, g: 24, b: 24, alpha: 1 } },
@@ -64,7 +119,7 @@ async function loadProductImageBuffer(product: any, targetWidth = 860, targetHei
     .toBuffer();
 }
 
-function wrapWords(text: string, maxLen = 16): string[] {
+function wrapWords(text: string, maxLen = 18): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let current = "";
@@ -93,38 +148,31 @@ function formatCoverHeadline(rawTitle: string) {
     };
   }
 
-  // 1. Unescape and normalize literal \n or \\n or real newlines
-  const unescaped = rawTitle
+  // 1. Unescape and normalize newlines
+  let unescaped = rawTitle
     .replace(/\\n/g, "\n")
     .replace(/\r\n/g, "\n")
     .replace(/[\n\r]+/g, "\n")
     .trim();
 
+  // If title has a trailing parenthetical like "(7 GRAILS)" or "(5 PIECES)", ensure it's on its own line
+  if (!unescaped.includes("\n") && /\s*\((.+?)\)$/.test(unescaped)) {
+    unescaped = unescaped.replace(/\s*\((.+?)\)$/, "\n($1)");
+  }
+
   const rawLines = unescaped.split("\n").map((l) => l.trim()).filter(Boolean);
   let finalLines: string[] = [];
 
-  if (rawLines.length > 1) {
-    // User explicitly split lines
-    for (const line of rawLines) {
-      if (line.length > 18) {
-        finalLines.push(...wrapWords(line, 16));
-      } else {
-        finalLines.push(line);
-      }
-    }
-  } else if (rawLines.length === 1) {
-    // Single line - wrap if long
-    const single = rawLines[0];
-    if (single.length > 16) {
-      finalLines = wrapWords(single, 15);
+  for (const line of rawLines) {
+    if (line.startsWith("(") && line.endsWith(")")) {
+      finalLines.push(line);
+    } else if (line.length > 20) {
+      finalLines.push(...wrapWords(line, 18));
     } else {
-      finalLines = [single];
+      finalLines.push(line);
     }
-  } else {
-    finalLines = ["ARCHIVE FINDS", "CURATED GRAILS"];
   }
 
-  // Limit max lines to 4 to prevent vertical overflow
   if (finalLines.length > 4) {
     finalLines = finalLines.slice(0, 4);
   }
@@ -144,12 +192,12 @@ function formatCoverHeadline(rawTitle: string) {
     startY = 510;
   } else if (finalLines.length === 2) {
     if (maxLineLen > 14) {
-      fontSize = 60;
-      lineHeight = 74;
+      fontSize = 62;
+      lineHeight = 76;
       startY = 535;
     } else {
-      fontSize = 70;
-      lineHeight = 84;
+      fontSize = 72;
+      lineHeight = 86;
       startY = 545;
     }
   } else {
@@ -208,7 +256,7 @@ function formatViralHeadline(product: any) {
 }
 
 // -------------------------------------------------------------
-// RENDERERS FOR ALL 3 STYLES
+// RENDERERS FOR ALL 4 STYLES
 // -------------------------------------------------------------
 
 // 1. VIRAL MINIMAL (Clean White)
@@ -231,9 +279,9 @@ async function renderViralMinimalCover(packDir: string, packId: string, title: s
     </text>
 
     <rect x="140" y="1120" width="800" height="340" fill="#f8f8f8" stroke="#ebebeb" stroke-width="2" rx="20" />
-    <text x="540" y="1200" text-anchor="middle" fill="#000000" font-size="28" class="sans bold">CURATED SUGARGOO GRAILS (${count} PIECES)</text>
+    <text x="540" y="1200" text-anchor="middle" fill="#000000" font-size="28" class="sans bold">VERIFIED ARCHIVE GRAILS (${count} PIECES)</text>
     <text x="540" y="1260" text-anchor="middle" fill="#666666" font-size="22" class="sans">Direct archive links &amp; transparent pricing</text>
-    <text x="540" y="1320" text-anchor="middle" fill="#666666" font-size="22" class="sans">Zero gatekeeping • Updated daily</text>
+    <text x="540" y="1320" text-anchor="middle" fill="#666666" font-size="22" class="sans">Zero gatekeeping • Multi-agent checkout</text>
     <text x="540" y="1400" text-anchor="middle" fill="#000000" font-size="24" class="mono bold">archive-finds.vercel.app</text>
 
     <rect x="240" y="1600" width="600" height="96" fill="#000000" rx="48" />
@@ -251,13 +299,12 @@ async function renderViralMinimalCover(packDir: string, packId: string, title: s
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderViralMinimalSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
   const headline = formatViralHeadline(product);
   const heroBuffer = await loadProductImageBuffer(product, 880, 1050);
-  const priceVal = typeof product.price === "number" ? product.price : parseFloat(product.price) || 49;
 
   const svg = `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -291,7 +338,7 @@ async function renderViralMinimalSlide(packDir: string, packId: string, slideInd
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderViralMinimalOutro(packDir: string, packId: string, slideIndex: number): Promise<string> {
@@ -318,12 +365,15 @@ async function renderViralMinimalOutro(packDir: string, packId: string, slideInd
 
     <rect x="140" y="1040" width="800" height="200" fill="#f8f8f8" stroke="#ebebeb" stroke-width="2" rx="16" />
     <text x="190" y="1110" fill="#000000" font-size="32" class="sans bold">3. TAP 'VIEW ITEM'</text>
-    <text x="190" y="1170" fill="#666666" font-size="24" class="sans">Direct Sugargoo 1-click procurement order</text>
+    <text x="190" y="1170" fill="#666666" font-size="24" class="sans">1-click route to Sugargoo, Superbuy &amp; CNfans</text>
 
-    <rect x="140" y="1320" width="800" height="340" fill="#000000" rx="16" />
-    <text x="540" y="1420" text-anchor="middle" fill="#ffffff" font-size="40" class="sans bold">SAVE THIS POST 📌</text>
-    <text x="540" y="1480" text-anchor="middle" fill="#cccccc" font-size="24" class="sans">Never lose access to archive spreadsheet links</text>
-    <text x="540" y="1570" text-anchor="middle" fill="#ffffff" font-size="28" class="mono bold" letter-spacing="2">@ARCHIVEFINDS // DAILY DROPS</text>
+    <rect x="140" y="1320" width="800" height="220" fill="#000000" rx="16" />
+    <text x="540" y="1410" text-anchor="middle" fill="#ffffff" font-size="36" class="sans bold" letter-spacing="-1">SAVE THIS POST 📌</text>
+    <text x="540" y="1470" text-anchor="middle" fill="#aaaaaa" font-size="22" class="sans">Don't lose the spreadsheet links</text>
+
+    <text x="540" y="1740" text-anchor="middle" fill="#999999" font-size="16" class="mono" letter-spacing="3">
+      ARCHIVE FINDS • ${String(slideIndex).padStart(2, "0")}/${String(slideIndex).padStart(2, "0")}
+    </text>
   </svg>
   `;
 
@@ -337,15 +387,15 @@ async function renderViralMinimalOutro(packDir: string, packId: string, slideInd
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
-// 2. EDITORIAL DARK HUD
+// 2. EDITORIAL DARK (High Fashion / Luxury Catalog)
 async function renderEditorialDarkCover(packDir: string, packId: string, title: string, subtitle: string, count: number): Promise<string> {
   const headline = formatCoverHeadline(title);
-  const edFontSize = Math.min(headline.fontSize, 56);
-  const edLineHeight = Math.min(headline.lineHeight, 68);
-  const edStartY = Math.min(headline.startY - 70, 480);
+  const edFontSize = Math.min(headline.fontSize, 62);
+  const edLineHeight = Math.min(headline.lineHeight, 74);
+  const edStartY = Math.max(headline.startY - 70, 480);
 
   const svg = `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -359,7 +409,7 @@ async function renderEditorialDarkCover(packDir: string, packId: string, title: 
     <line x1="80" y1="1800" x2="1000" y2="1800" stroke="#262626" stroke-width="2" />
 
     <text x="120" y="170" fill="#888888" font-size="18" class="mono" letter-spacing="4">ARCHIVE FINDS // EDITORIAL</text>
-    <text x="960" y="170" text-anchor="end" fill="#888888" font-size="18" class="mono" letter-spacing="3">SUGARGOO VERIFIED</text>
+    <text x="960" y="170" text-anchor="end" fill="#888888" font-size="18" class="mono" letter-spacing="3">MULTI-AGENT VERIFIED</text>
 
     <rect x="120" y="300" width="340" height="48" fill="#ffffff" rx="2" />
     <text x="290" y="332" text-anchor="middle" fill="#000000" font-size="18" class="mono bold" letter-spacing="3">CURATED GRAILS</text>
@@ -378,7 +428,7 @@ async function renderEditorialDarkCover(packDir: string, packId: string, title: 
 
     <text x="160" y="1130" fill="#888888" font-size="20" class="mono" letter-spacing="1">✓ VERIFIED DIRECT SOURCE LINKS</text>
     <text x="160" y="1180" fill="#888888" font-size="20" class="mono" letter-spacing="1">✓ ACCURATE SOURCING ESTIMATES</text>
-    <text x="160" y="1230" fill="#888888" font-size="20" class="mono" letter-spacing="1">✓ ONE-CLICK SUGARGOO PROCUREMENT</text>
+    <text x="160" y="1230" fill="#888888" font-size="20" class="mono" letter-spacing="1">✓ 7-AGENT PROCUREMENT CHECKOUT</text>
     <text x="160" y="1280" fill="#888888" font-size="20" class="mono" letter-spacing="1">✓ NO GATEKEEPING // SOURCED DAILY</text>
 
     <line x1="160" y1="1340" x2="920" y2="1340" stroke="#262626" stroke-width="1" />
@@ -400,7 +450,7 @@ async function renderEditorialDarkCover(packDir: string, packId: string, title: 
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderEditorialDarkSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
@@ -423,7 +473,7 @@ async function renderEditorialDarkSlide(packDir: string, packId: string, slideIn
 
     <line x1="80" y1="120" x2="1000" y2="120" stroke="#262626" stroke-width="2" />
     <text x="80" y="160" fill="#888888" font-size="16" class="mono" letter-spacing="4">ARCHIVE FINDS // ${slideNum} OF ${totalNum}</text>
-    <text x="1000" y="160" text-anchor="end" fill="#888888" font-size="16" class="mono" letter-spacing="3">SUGARGOO VERIFIED</text>
+    <text x="1000" y="160" text-anchor="end" fill="#888888" font-size="16" class="mono" letter-spacing="3">VERIFIED GRAIL</text>
 
     <text x="80" y="235" fill="#ffffff" font-size="50" class="sans bold" letter-spacing="-1">${brandName}</text>
     <text x="80" y="275" fill="#888888" font-size="20" class="mono" letter-spacing="2">[ ${category} ]</text>
@@ -439,7 +489,7 @@ async function renderEditorialDarkSlide(packDir: string, packId: string, slideIn
     <text x="120" y="1605" fill="#ffffff" font-size="48" class="mono bold">${price}</text>
 
     <rect x="660" y="1530" width="300" height="64" fill="#ffffff" rx="2" />
-    <text x="810" y="1570" text-anchor="middle" fill="#000000" font-size="18" class="mono bold" letter-spacing="2">SUGARGOO LINK</text>
+    <text x="810" y="1570" text-anchor="middle" fill="#000000" font-size="18" class="mono bold" letter-spacing="2">AGENT LINK</text>
 
     <line x1="120" y1="1660" x2="960" y2="1660" stroke="#262626" stroke-width="1" />
     <text x="120" y="1720" fill="#888888" font-size="16" class="mono" letter-spacing="3">LINK IN BIO TO ORDER PIECE</text>
@@ -460,7 +510,7 @@ async function renderEditorialDarkSlide(packDir: string, packId: string, slideIn
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderEditorialDarkOutro(packDir: string, packId: string, slideIndex: number): Promise<string> {
@@ -478,29 +528,28 @@ async function renderEditorialDarkOutro(packDir: string, packId: string, slideIn
     <text x="120" y="170" fill="#888888" font-size="18" class="mono" letter-spacing="4">ARCHIVE FINDS // HOW TO SOURCING</text>
     <text x="960" y="170" text-anchor="end" fill="#888888" font-size="18" class="mono" letter-spacing="3">FINAL STEP</text>
 
-    <text x="120" y="300" fill="#ffffff" font-size="56" class="sans bold" letter-spacing="-1">HOW TO ORDER</text>
-    <text x="120" y="360" fill="#ffffff" font-size="56" class="sans bold" letter-spacing="-1">THESE GRAILS:</text>
+    <text x="120" y="270" fill="#ffffff" font-size="54" class="sans bold" letter-spacing="-1">HOW TO ORDER</text>
 
-    <rect x="120" y="440" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
-    <text x="160" y="500" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 01</text>
-    <text x="160" y="550" fill="#ffffff" font-size="32" class="sans bold">CLICK LINK IN BIO</text>
-    <text x="160" y="600" fill="#888888" font-size="20" class="sans">Head to archive-finds.vercel.app directly from our profile.</text>
+    <rect x="120" y="340" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
+    <text x="160" y="400" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 01</text>
+    <text x="160" y="450" fill="#ffffff" font-size="32" class="sans bold">VISIT LINK IN BIO</text>
+    <text x="160" y="500" fill="#888888" font-size="20" class="sans">Open our clean database frontend at archive-finds.vercel.app</text>
 
-    <rect x="120" y="720" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
-    <text x="160" y="780" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 02</text>
-    <text x="160" y="830" fill="#ffffff" font-size="32" class="sans bold">BROWSE 116+ VERIFIED PIECES</text>
-    <text x="160" y="880" fill="#888888" font-size="20" class="sans">Search by designer, piece name, category, or price range.</text>
+    <rect x="120" y="620" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
+    <text x="160" y="680" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 02</text>
+    <text x="160" y="730" fill="#ffffff" font-size="32" class="sans bold">BROWSE 116+ VERIFIED PIECES</text>
+    <text x="160" y="780" fill="#888888" font-size="20" class="sans">Search by designer, piece name, category, or price range.</text>
 
-    <rect x="120" y="1000" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
-    <text x="160" y="1060" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 03</text>
-    <text x="160" y="1110" fill="#ffffff" font-size="32" class="sans bold">TAP 'VIEW ITEM' FOR SUGARGOO</text>
-    <text x="160" y="1160" fill="#888888" font-size="20" class="sans">Instant direct routing to buy with automated agent shipping.</text>
+    <rect x="120" y="900" width="840" height="240" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
+    <text x="160" y="960" fill="#888888" font-size="18" class="mono" letter-spacing="2">STEP 03</text>
+    <text x="160" y="1010" fill="#ffffff" font-size="32" class="sans bold">TAP 'VIEW ITEM' FOR AGENT</text>
+    <text x="160" y="1060" fill="#888888" font-size="20" class="sans">Instant direct routing to buy with Sugargoo, Superbuy &amp; CNfans.</text>
 
-    <rect x="120" y="1320" width="840" height="380" fill="#ffffff" rx="6" />
-    <text x="540" y="1420" text-anchor="middle" fill="#000000" font-size="38" class="sans bold" letter-spacing="-1">SAVE THIS POST 📌</text>
-    <text x="540" y="1480" text-anchor="middle" fill="#000000" font-size="22" class="sans">Never lose access to rare designer archive spreadsheet finds.</text>
-    <line x1="200" y1="1540" x2="880" y2="1540" stroke="#000000" stroke-width="1" stroke-opacity="0.2" />
-    <text x="540" y="1620" text-anchor="middle" fill="#000000" font-size="28" class="mono bold" letter-spacing="2">@ARCHIVEFINDS // FOLLOW FOR DAILY DROPS</text>
+    <rect x="120" y="1220" width="840" height="480" fill="#ffffff" rx="6" />
+    <text x="540" y="1320" text-anchor="middle" fill="#000000" font-size="38" class="sans bold" letter-spacing="-1">SAVE THIS POST 📌</text>
+    <text x="540" y="1380" text-anchor="middle" fill="#000000" font-size="22" class="sans">Never lose access to rare designer archive spreadsheet finds.</text>
+    <line x1="200" y1="1440" x2="880" y2="1440" stroke="#000000" stroke-width="1" stroke-opacity="0.2" />
+    <text x="540" y="1520" text-anchor="middle" fill="#000000" font-size="28" class="mono bold" letter-spacing="2">@ARCHIVEFINDS // FOLLOW FOR DAILY DROPS</text>
   </svg>
   `;
 
@@ -514,7 +563,7 @@ async function renderEditorialDarkOutro(packDir: string, packId: string, slideIn
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 // 3. MINIMAL DARK
@@ -537,9 +586,9 @@ async function renderMinimalDarkCover(packDir: string, packId: string, title: st
     </text>
 
     <rect x="140" y="1120" width="800" height="340" fill="#141414" stroke="#262626" stroke-width="2" rx="20" />
-    <text x="540" y="1200" text-anchor="middle" fill="#ffffff" font-size="28" class="sans bold">CURATED SUGARGOO GRAILS (${count} PIECES)</text>
+    <text x="540" y="1200" text-anchor="middle" fill="#ffffff" font-size="28" class="sans bold">VERIFIED ARCHIVE GRAILS (${count} PIECES)</text>
     <text x="540" y="1260" text-anchor="middle" fill="#888888" font-size="22" class="sans">Direct archive links &amp; transparent pricing</text>
-    <text x="540" y="1320" text-anchor="middle" fill="#888888" font-size="22" class="sans">Zero gatekeeping • Updated daily</text>
+    <text x="540" y="1320" text-anchor="middle" fill="#888888" font-size="22" class="sans">Zero gatekeeping • Multi-agent checkout</text>
     <text x="540" y="1400" text-anchor="middle" fill="#ffffff" font-size="24" class="mono bold">archive-finds.vercel.app</text>
 
     <rect x="240" y="1600" width="600" height="96" fill="#ffffff" rx="48" />
@@ -557,13 +606,12 @@ async function renderMinimalDarkCover(packDir: string, packId: string, title: st
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderMinimalDarkSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
   const headline = formatViralHeadline(product);
   const heroBuffer = await loadProductImageBuffer(product, 880, 1050);
-  const priceVal = typeof product.price === "number" ? product.price : parseFloat(product.price) || 49;
 
   const svg = `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -597,7 +645,7 @@ async function renderMinimalDarkSlide(packDir: string, packId: string, slideInde
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 async function renderMinimalDarkOutro(packDir: string, packId: string, slideIndex: number): Promise<string> {
@@ -624,12 +672,15 @@ async function renderMinimalDarkOutro(packDir: string, packId: string, slideInde
 
     <rect x="140" y="1040" width="800" height="200" fill="#141414" stroke="#262626" stroke-width="2" rx="16" />
     <text x="190" y="1110" fill="#ffffff" font-size="32" class="sans bold">3. TAP 'VIEW ITEM'</text>
-    <text x="190" y="1170" fill="#888888" font-size="24" class="sans">Direct Sugargoo 1-click procurement order</text>
+    <text x="190" y="1170" fill="#888888" font-size="24" class="sans">1-click route to Sugargoo, Superbuy &amp; CNfans</text>
 
-    <rect x="140" y="1320" width="800" height="340" fill="#ffffff" rx="16" />
-    <text x="540" y="1420" text-anchor="middle" fill="#000000" font-size="40" class="sans bold">SAVE THIS POST 📌</text>
-    <text x="540" y="1480" text-anchor="middle" fill="#000000" font-size="24" class="sans">Never lose access to archive spreadsheet links</text>
-    <text x="540" y="1570" text-anchor="middle" fill="#000000" font-size="28" class="mono bold" letter-spacing="2">@ARCHIVEFINDS // DAILY DROPS</text>
+    <rect x="140" y="1320" width="800" height="220" fill="#ffffff" rx="16" />
+    <text x="540" y="1410" text-anchor="middle" fill="#000000" font-size="36" class="sans bold" letter-spacing="-1">SAVE THIS POST 📌</text>
+    <text x="540" y="1470" text-anchor="middle" fill="#555555" font-size="22" class="sans">Don't lose the spreadsheet links</text>
+
+    <text x="540" y="1740" text-anchor="middle" fill="#666666" font-size="16" class="mono" letter-spacing="3">
+      ARCHIVE FINDS • ${String(slideIndex).padStart(2, "0")}/${String(slideIndex).padStart(2, "0")}
+    </text>
   </svg>
   `;
 
@@ -643,38 +694,172 @@ async function renderMinimalDarkOutro(packDir: string, packId: string, slideInde
     .jpeg({ quality: 95 })
     .toFile(filePath);
 
-  return `/slides/generated/${packId}/${fileName}`;
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
-// -------------------------------------------------------------
-// VIRAL CAPTION ENGINE
-// -------------------------------------------------------------
-function generateViralCaption(title: string, products: any[]): string {
-  const brandNames = Array.from(new Set(products.map((p) => p.brand).filter(Boolean)));
-  const cleanTitle = title.replace(/\\n/g, " ").replace(/\n/g, " ");
+// 4. VINTAGE MOODBOARD (Pinterest Lookbook Aesthetic - Warm Bone & Editorial Typography)
+async function renderVintageMoodboardCover(packDir: string, packId: string, title: string, count: number): Promise<string> {
+  const headline = formatCoverHeadline(title);
 
-  const productList = products
-    .map((p, idx) => {
-      const price = typeof p.price === "number" ? p.price : parseFloat(p.price) || 49;
-      return `${idx + 1}. ${p.brand} - ${p.title || p.name} ($${price.toFixed(2)})`;
-    })
-    .join("\n");
+  const svg = `
+  <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; }
+      .bold { font-weight: 900; }
+      .mono { font-family: 'Courier New', Courier, monospace, sans-serif; }
+    </style>
 
-  const brandHashtags = brandNames
-    .map((b) => `#${b.toLowerCase().replace(/[^a-z0-9]/g, "")}`)
-    .slice(0, 5)
-    .join(" ");
+    <rect x="40" y="40" width="1000" height="1840" fill="none" stroke="#d5cfbe" stroke-width="2" />
+    <rect x="52" y="52" width="976" height="1816" fill="none" stroke="#d5cfbe" stroke-width="1" stroke-opacity="0.5" />
 
-  return `🔥 ${cleanTitle}
+    <text x="540" y="140" text-anchor="middle" fill="#7a7265" font-size="16" class="mono" letter-spacing="6">ARCHIVE FINDS • LOOKBOOK ARCHIVE</text>
+    <line x1="120" y1="170" x2="960" y2="170" stroke="#d5cfbe" stroke-width="1" />
 
-Curated from our verified community archive database. Direct 1-click Sugargoo links with transparent pricing and live stock tracking:
+    <rect x="420" y="340" width="240" height="42" fill="#2d2926" rx="21" />
+    <text x="540" y="367" text-anchor="middle" fill="#f5f2ea" font-size="15" class="mono bold" letter-spacing="3">LOOKBOOK</text>
 
-${productList}
+    <text x="540" y="${headline.startY}" text-anchor="middle" fill="#1c1917" font-size="${headline.fontSize}" class="serif bold" letter-spacing="-1">
+      ${headline.lines.map((l, i) => `<tspan x="540" dy="${i === 0 ? 0 : headline.lineHeight}">${l}</tspan>`).join("")}
+    </text>
 
-🔗 LINK IN BIO to find and order every single piece (archive-finds.vercel.app)
-📌 SAVE THIS POST so you don't lose the spreadsheet links!
+    <rect x="140" y="1080" width="800" height="380" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
+    <text x="540" y="1160" text-anchor="middle" fill="#1c1917" font-size="26" class="serif bold" letter-spacing="1">CURATED LOOKBOOK (${count} PIECES)</text>
+    <line x1="200" y1="1200" x2="880" y2="1200" stroke="#eee9df" stroke-width="1" />
+    <text x="540" y="1260" text-anchor="middle" fill="#78716c" font-size="22" class="sans">Archival Japanese &amp; European Runway Finds</text>
+    <text x="540" y="1320" text-anchor="middle" fill="#78716c" font-size="22" class="sans">Direct verified links • Multi-agent checkout</text>
+    <text x="540" y="1410" text-anchor="middle" fill="#1c1917" font-size="24" class="mono bold" letter-spacing="1">archive-finds.vercel.app</text>
 
-#archivefashion #archivefinds #fashionreps #qualityreps #grailed #streetwear ${brandHashtags} #designerfashion #fashiontiktok`;
+    <rect x="240" y="1580" width="600" height="96" fill="#2d2926" rx="6" />
+    <text x="540" y="1638" text-anchor="middle" fill="#f5f2ea" font-size="26" class="serif bold" letter-spacing="2">SWIPE TO VIEW LOOKBOOK ➔</text>
+  </svg>
+  `;
+
+  const fileName = `01_cover_vintage_moodboard.jpg`;
+  const filePath = path.join(packDir, fileName);
+
+  await sharp({
+    create: { width: WIDTH, height: HEIGHT, channels: 4, background: "#f5f2ea" },
+  })
+    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+    .jpeg({ quality: 95 })
+    .toFile(filePath);
+
+  return `/api/admin/slides/image/${packId}/${fileName}`;
+}
+
+async function renderVintageMoodboardSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
+  const brandName = escapeXml((product.brand || "ARCHIVE").toUpperCase());
+  const pieceName = escapeXml((product.title || product.name || "PIECE").toUpperCase());
+  const category = escapeXml((product.category || "GARMENT").toUpperCase());
+  const priceVal = typeof product.price === "number" ? product.price : parseFloat(product.price) || 49;
+  const price = `$${priceVal.toFixed(2)} USD`;
+  const slideNum = String(slideIndex).padStart(2, "0");
+  const totalNum = String(totalSlides).padStart(2, "0");
+
+  const heroBuffer = await loadProductImageBuffer(product, 820, 920);
+
+  const svg = `
+  <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; }
+      .bold { font-weight: 900; }
+      .mono { font-family: 'Courier New', Courier, monospace, sans-serif; }
+    </style>
+
+    <rect x="40" y="40" width="1000" height="1840" fill="none" stroke="#d5cfbe" stroke-width="2" />
+
+    <text x="80" y="110" fill="#7a7265" font-size="16" class="mono" letter-spacing="4">NO. ${slideNum} // ${totalNum}</text>
+    <text x="1000" y="110" text-anchor="end" fill="#7a7265" font-size="16" class="mono" letter-spacing="2">ARCHIVE LOOKBOOK</text>
+    <line x1="80" y1="130" x2="1000" y2="130" stroke="#d5cfbe" stroke-width="1" />
+
+    <text x="540" y="210" text-anchor="middle" fill="#1c1917" font-size="46" class="serif bold" letter-spacing="-0.5">${brandName}</text>
+    <text x="540" y="250" text-anchor="middle" fill="#78716c" font-size="18" class="mono" letter-spacing="3">[ ${category} ]</text>
+
+    <rect x="80" y="290" width="920" height="1060" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
+
+    <rect x="80" y="1390" width="920" height="380" fill="#2d2926" rx="8" />
+    <text x="120" y="1460" fill="#f5f2ea" font-size="32" class="serif bold">${pieceName.length > 34 ? pieceName.slice(0, 32) + "..." : pieceName}</text>
+    <text x="120" y="1505" fill="#a8a29e" font-size="18" class="mono" letter-spacing="2">ESTIMATED PROCURING COST</text>
+    
+    <text x="120" y="1575" fill="#ffffff" font-size="46" class="mono bold">${price}</text>
+
+    <rect x="680" y="1520" width="280" height="64" fill="#f5f2ea" rx="4" />
+    <text x="820" y="1560" text-anchor="middle" fill="#1c1917" font-size="18" class="mono bold" letter-spacing="2">ORDER LINK</text>
+
+    <line x1="120" y1="1635" x2="960" y2="1635" stroke="#44403c" stroke-width="1" />
+    <text x="120" y="1695" fill="#a8a29e" font-size="16" class="mono" letter-spacing="3">LINK IN BIO TO ORDER PIECE</text>
+    <text x="960" y="1695" text-anchor="end" fill="#f5f2ea" font-size="18" class="serif bold" letter-spacing="1">SWIPE ➔</text>
+  </svg>
+  `;
+
+  const fileName = `${slideNum}_${product.slug}_vintage_moodboard.jpg`;
+  const filePath = path.join(packDir, fileName);
+
+  await sharp({
+    create: { width: WIDTH, height: HEIGHT, channels: 4, background: "#f5f2ea" },
+  })
+    .composite([
+      { input: heroBuffer, top: 350, left: 130 },
+      { input: Buffer.from(svg), top: 0, left: 0 },
+    ])
+    .jpeg({ quality: 95 })
+    .toFile(filePath);
+
+  return `/api/admin/slides/image/${packId}/${fileName}`;
+}
+
+async function renderVintageMoodboardOutro(packDir: string, packId: string, slideIndex: number): Promise<string> {
+  const svg = `
+  <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; }
+      .bold { font-weight: 900; }
+      .mono { font-family: 'Courier New', Courier, monospace, sans-serif; }
+    </style>
+
+    <rect x="40" y="40" width="1000" height="1840" fill="none" stroke="#d5cfbe" stroke-width="2" />
+    <text x="540" y="120" text-anchor="middle" fill="#7a7265" font-size="16" class="mono" letter-spacing="6">ARCHIVE FINDS • HOW TO SOURCING</text>
+    <line x1="80" y1="150" x2="1000" y2="150" stroke="#d5cfbe" stroke-width="1" />
+
+    <text x="540" y="270" text-anchor="middle" fill="#1c1917" font-size="54" class="serif bold" letter-spacing="-1">HOW TO GET THESE PIECES</text>
+
+    <rect x="120" y="360" width="840" height="260" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
+    <text x="160" y="430" fill="#7a7265" font-size="16" class="mono" letter-spacing="3">STEP 01</text>
+    <text x="160" y="485" fill="#1c1917" font-size="30" class="serif bold">OPEN LINK IN BIO</text>
+    <text x="160" y="540" fill="#78716c" font-size="22" class="sans">Access our full archive catalog: archive-finds.vercel.app</text>
+
+    <rect x="120" y="660" width="840" height="260" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
+    <text x="160" y="730" fill="#7a7265" font-size="16" class="mono" letter-spacing="3">STEP 02</text>
+    <text x="160" y="785" fill="#1c1917" font-size="30" class="serif bold">BROWSE 116+ CURATED GRAILS</text>
+    <text x="160" y="840" fill="#78716c" font-size="22" class="sans">Filter by Rick Owens, Undercover, ERD, Outerwear or price.</text>
+
+    <rect x="120" y="960" width="840" height="260" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
+    <text x="160" y="1030" fill="#7a7265" font-size="16" class="mono" letter-spacing="3">STEP 03</text>
+    <text x="160" y="1085" fill="#1c1917" font-size="30" class="serif bold">CHOOSE YOUR AGENT &amp; ORDER</text>
+    <text x="160" y="1140" fill="#78716c" font-size="22" class="sans">1-click forwarding to Sugargoo, Superbuy, Mulebuy or CNfans.</text>
+
+    <rect x="120" y="1280" width="840" height="420" fill="#2d2926" rx="8" />
+    <text x="540" y="1390" text-anchor="middle" fill="#f5f2ea" font-size="38" class="serif bold" letter-spacing="1">SAVE THIS MOODBOARD 📌</text>
+    <text x="540" y="1450" text-anchor="middle" fill="#a8a29e" font-size="22" class="sans">Never lose access to verified high-fashion spreadsheet links.</text>
+    <line x1="200" y1="1510" x2="880" y2="1510" stroke="#44403c" stroke-width="1" />
+    <text x="540" y="1590" text-anchor="middle" fill="#f5f2ea" font-size="26" class="mono bold" letter-spacing="2">@ARCHIVEFINDS // DAILY LOOKBOOK DROPS</text>
+  </svg>
+  `;
+
+  const fileName = `${String(slideIndex).padStart(2, "0")}_outro_vintage_moodboard.jpg`;
+  const filePath = path.join(packDir, fileName);
+
+  await sharp({
+    create: { width: WIDTH, height: HEIGHT, channels: 4, background: "#f5f2ea" },
+  })
+    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+    .jpeg({ quality: 95 })
+    .toFile(filePath);
+
+  return `/api/admin/slides/image/${packId}/${fileName}`;
 }
 
 // -------------------------------------------------------------
@@ -697,10 +882,11 @@ export async function POST(req: NextRequest) {
     const allProducts: any[] = JSON.parse(fs.readFileSync(PRODUCTS_PATH, "utf-8"));
 
     // 2. Load generation history for anti-repetition / deduplication
+    const historyPath = getHistoryPath();
     let history: { generatedPacks: any[] } = { generatedPacks: [] };
-    if (fs.existsSync(HISTORY_PATH)) {
+    if (fs.existsSync(historyPath)) {
       try {
-        history = JSON.parse(fs.readFileSync(HISTORY_PATH, "utf-8"));
+        history = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
       } catch (e) {}
     }
 
@@ -724,7 +910,7 @@ export async function POST(req: NextRequest) {
       if (!customTitle) customTitle = `CURATED GRAILS\nVOLUME ${Date.now() % 1000}`;
     } else if (mode === "latest") {
       candidatePool = [...allProducts].reverse();
-      if (!customTitle) customTitle = `NEW ARCHIVE DROPS\nTHIS WEEK (${productCount} GRAILS)`;
+      if (!customTitle) customTitle = `NEW ARCHIVE DROPS\nTHIS WEEK\n(${productCount} GRAILS)`;
     } else {
       // Random mix
       candidatePool = [...allProducts].sort(() => Math.random() - 0.5);
@@ -744,7 +930,6 @@ export async function POST(req: NextRequest) {
     } else if (mode === "latest") {
       selectedProducts.push(...candidatePool.slice(0, productCount));
     } else {
-      // Pick fresh candidates first, fill rest if needed
       const pool = freshCandidates.length >= productCount ? freshCandidates : candidatePool;
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
       selectedProducts.push(...shuffled.slice(0, productCount));
@@ -754,16 +939,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "No matching products found to generate slides." }, { status: 400 });
     }
 
-    // 5. Create generated pack output folder
+    // 5. Create generated pack output folder (serverless-resilient)
+    const { dir: outputBaseDir } = getStorageBaseDir();
     const cleanDisplayTitle = customTitle.replace(/\\n/g, " ").replace(/\n/g, " ");
     const packSlug = slugify(cleanDisplayTitle) || "archive-pack";
     const packId = `${packSlug}-${Date.now()}`;
-    const packDir = path.join(OUTPUT_BASE_DIR, packId);
+    const packDir = path.join(outputBaseDir, packId);
     fs.mkdirSync(packDir, { recursive: true });
 
     const totalSlides = selectedProducts.length + 2; // Cover + Products + Outro
 
-    // 6. Render all 3 styles
+    // 6. Render all 4 styles
     // (a) Viral Minimal
     const viralMinimalSlides: any[] = [];
     const vmCoverUrl = await renderViralMinimalCover(packDir, packId, customTitle, selectedProducts.length);
@@ -806,8 +992,23 @@ export async function POST(req: NextRequest) {
     const mdOutroUrl = await renderMinimalDarkOutro(packDir, packId, totalSlides);
     minimalDarkSlides.push({ slideUrl: mdOutroUrl, title: "How to Order", type: "outro" });
 
-    // 7. Generate Viral Caption
-    const caption = generateViralCaption(customTitle, selectedProducts);
+    // (d) Vintage Moodboard (Pinterest Lookbook Style)
+    const vintageMoodboardSlides: any[] = [];
+    const vmModCoverUrl = await renderVintageMoodboardCover(packDir, packId, customTitle, selectedProducts.length);
+    vintageMoodboardSlides.push({ slideUrl: vmModCoverUrl, title: cleanDisplayTitle, type: "cover" });
+
+    for (let i = 0; i < selectedProducts.length; i++) {
+      const prod = selectedProducts[i];
+      const slideUrl = await renderVintageMoodboardSlide(packDir, packId, i + 2, totalSlides, prod);
+      vintageMoodboardSlides.push({ slideUrl, title: `${prod.brand} - ${prod.title || prod.name}`, type: "product", product: prod });
+    }
+
+    const vmModOutroUrl = await renderVintageMoodboardOutro(packDir, packId, totalSlides);
+    vintageMoodboardSlides.push({ slideUrl: vmModOutroUrl, title: "How to Order", type: "outro" });
+
+    // 7. Generate Viral Captions (All 5 angles)
+    const captionVariants = generateAllCaptionVariants(customTitle, selectedProducts);
+    const caption = captionVariants.viral_fomo || generateRandomViralCaption(customTitle, selectedProducts);
 
     // 8. Save to history
     const packData = {
@@ -820,18 +1021,24 @@ export async function POST(req: NextRequest) {
       productIds: selectedProducts.map((p) => String(p.id)),
       products: selectedProducts,
       caption,
+      captionVariants,
       createdAt: new Date().toISOString(),
       styles: {
         viral_minimal: viralMinimalSlides,
         editorial_dark: editorialDarkSlides,
         minimal_dark: minimalDarkSlides,
+        vintage_moodboard: vintageMoodboardSlides,
       },
       slides: viralMinimalSlides,
     };
 
-    history.generatedPacks = [packData, ...(history.generatedPacks || [])].slice(0, 50);
-    fs.mkdirSync(path.dirname(HISTORY_PATH), { recursive: true });
-    fs.writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2), "utf-8");
+    try {
+      history.generatedPacks = [packData, ...(history.generatedPacks || [])].slice(0, 50);
+      fs.mkdirSync(path.dirname(historyPath), { recursive: true });
+      fs.writeFileSync(historyPath, JSON.stringify(history, null, 2), "utf-8");
+    } catch (e) {
+      console.warn("Could not persist slide history to disk:", e);
+    }
 
     return NextResponse.json({
       success: true,
@@ -845,10 +1052,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
+    const historyPath = getHistoryPath();
     let history: { generatedPacks: any[] } = { generatedPacks: [] };
-    if (fs.existsSync(HISTORY_PATH)) {
+    if (fs.existsSync(historyPath)) {
       try {
-        history = JSON.parse(fs.readFileSync(HISTORY_PATH, "utf-8"));
+        history = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
       } catch (e) {}
     }
     return NextResponse.json({ success: true, history: history.generatedPacks || [] });

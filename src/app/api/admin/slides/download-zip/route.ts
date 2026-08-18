@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import JSZip from "jszip";
 
 export async function POST(req: NextRequest) {
@@ -15,16 +16,67 @@ export async function POST(req: NextRequest) {
 
     const zip = new JSZip();
 
-    slideUrls.forEach((slideRel, idx) => {
-      const cleanRel = slideRel.replace(/^\/+/, "");
-      const fullPath = path.join(process.cwd(), "public", cleanRel);
+    for (let idx = 0; idx < slideUrls.length; idx++) {
+      const slideUrl = slideUrls[idx];
+      let fileData: Buffer | null = null;
+      let entryFileName = `Slide_${String(idx + 1).padStart(2, "0")}.jpg`;
 
-      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-        const fileData = fs.readFileSync(fullPath);
-        const entryName = `Slide_${String(idx + 1).padStart(2, "0")}_${path.basename(fullPath)}`;
-        zip.file(entryName, fileData);
+      // 1. Check if URL contains /api/admin/slides/image/[packId]/[fileName]
+      const apiMatch = slideUrl.match(/\/api\/admin\/slides\/image\/([^/?#]+)\/([^/?#]+)/);
+      if (apiMatch) {
+        const packId = apiMatch[1];
+        const fileName = apiMatch[2];
+        entryFileName = `Slide_${String(idx + 1).padStart(2, "0")}_${fileName}`;
+        const possiblePaths = [
+          path.join(os.tmpdir(), "slides", "generated", packId, fileName),
+          path.join(process.cwd(), "public", "slides", "generated", packId, fileName),
+          path.join("/tmp", "slides", "generated", packId, fileName),
+        ];
+        for (const p of possiblePaths) {
+          if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+            fileData = fs.readFileSync(p);
+            break;
+          }
+        }
       }
-    });
+
+      // 2. Check local public file system
+      if (!fileData) {
+        const cleanRel = slideUrl.replace(/^\/+/, "");
+        const localPath = path.join(process.cwd(), "public", cleanRel);
+        if (fs.existsSync(localPath) && fs.statSync(localPath).isFile()) {
+          fileData = fs.readFileSync(localPath);
+          entryFileName = `Slide_${String(idx + 1).padStart(2, "0")}_${path.basename(localPath)}`;
+        }
+      }
+
+      // 3. Check os.tmpdir()
+      if (!fileData) {
+        const cleanRel = slideUrl.replace(/^\/+/, "");
+        const tmpPath = path.join(os.tmpdir(), cleanRel);
+        if (fs.existsSync(tmpPath) && fs.statSync(tmpPath).isFile()) {
+          fileData = fs.readFileSync(tmpPath);
+          entryFileName = `Slide_${String(idx + 1).padStart(2, "0")}_${path.basename(tmpPath)}`;
+        }
+      }
+
+      // 4. Remote HTTP fetch fallback if available
+      if (!fileData && (slideUrl.startsWith("http://") || slideUrl.startsWith("https://"))) {
+        try {
+          const res = await fetch(slideUrl);
+          if (res.ok) {
+            const arr = await res.arrayBuffer();
+            fileData = Buffer.from(arr);
+          }
+        } catch (e) {
+          console.warn("Failed to fetch slide for zip:", slideUrl, e);
+        }
+      }
+
+      if (fileData) {
+        zip.file(entryFileName, fileData);
+      }
+    }
 
     const zipBuffer = await zip.generateAsync({
       type: "nodebuffer",

@@ -30,12 +30,16 @@ import {
   X,
   ArrowRight,
   SlidersHorizontal,
+  Edit3,
+  CheckCircle2,
+  BookOpen,
 } from "lucide-react";
 import allProductsData from "@/lib/products/sheetProducts.json";
 import carouselPacks from "@/lib/products/carouselPacks.json";
 
-type SlideStyle = "viral_minimal" | "editorial_dark" | "minimal_dark";
+type SlideStyle = "viral_minimal" | "editorial_dark" | "minimal_dark" | "vintage_moodboard";
 type GeneratorMode = "latest" | "brand" | "category" | "random" | "custom";
+type CaptionAngle = "viral_fomo" | "grailed_comparison" | "underground_lore" | "minimal_clean" | "haul_sourcing";
 
 interface GeneratedPack {
   id: string;
@@ -47,11 +51,13 @@ interface GeneratedPack {
   productIds: string[];
   products: any[];
   caption: string;
+  captionVariants?: Record<string, string>;
   createdAt: string;
   styles: {
     viral_minimal: any[];
     editorial_dark: any[];
     minimal_dark: any[];
+    vintage_moodboard?: any[];
   };
   slides: any[];
 }
@@ -66,13 +72,13 @@ const STYLE_DEFINITIONS: {
     id: "viral_minimal",
     label: "Viral Minimal (White)",
     badge: "PRIMARY // VIRAL HOOK",
-    description: "Ultra-clean white canvas, bold centered headline, garment cutout.",
+    description: "Ultra-clean white canvas, bold centered headline, high-contrast garment cutout.",
   },
   {
     id: "editorial_dark",
     label: "Editorial Dark HUD",
     badge: "TECHWEAR // SPECS",
-    description: "Dark archive HUD layout with technical specs, price tag & Sugargoo badge.",
+    description: "Dark archive HUD layout with technical specs, price tag & verified badge.",
   },
   {
     id: "minimal_dark",
@@ -80,6 +86,20 @@ const STYLE_DEFINITIONS: {
     badge: "DARK MODE VIRAL",
     description: "Deep black minimalist canvas, bold white centered typography & garment focus.",
   },
+  {
+    id: "vintage_moodboard",
+    label: "Pinterest Moodboard (Bone)",
+    badge: "PINTEREST // LOOKBOOK",
+    description: "Warm bone editorial canvas, high-fashion serif type, gallery polaroid framing.",
+  },
+];
+
+const CAPTION_ANGLES: { id: CaptionAngle; label: string; badge: string }[] = [
+  { id: "viral_fomo", label: "🔥 Anti-Gatekeep", badge: "VIRAL FOMO" },
+  { id: "grailed_comparison", label: "💸 Stop Overpaying", badge: "RESALE SHOCK" },
+  { id: "underground_lore", label: "📂 Underground Lore", badge: "MUSEUM GRAILS" },
+  { id: "minimal_clean", label: "🖤 Minimal Aesthetic", badge: "CLEAN RUNWAY" },
+  { id: "haul_sourcing", label: "🚨 Agent Haul", badge: "DIRECT SOURCING" },
 ];
 
 const POPULAR_BRANDS = [
@@ -119,7 +139,7 @@ export default function AdminSlidesPage() {
   const [genMode, setGenMode] = useState<GeneratorMode>("latest");
   const [selectedBrand, setSelectedBrand] = useState<string>("Rick Owens");
   const [selectedCategory, setSelectedCategory] = useState<string>("Outerwear");
-  const [slideItemCount, setSlideItemCount] = useState<number>(5); // Number of garment items (pack will be items + 2 slides)
+  const [slideItemCount, setSlideItemCount] = useState<number>(5);
   const [customTitle, setCustomTitle] = useState<string>("");
   const [selectedCustomProductIds, setSelectedCustomProductIds] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -129,6 +149,12 @@ export default function AdminSlidesPage() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
   const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
   const [downloadingZip, setDownloadingZip] = useState<boolean>(false);
+
+  // Caption Engine State
+  const [selectedCaptionAngle, setSelectedCaptionAngle] = useState<CaptionAngle>("viral_fomo");
+  const [customCaptionText, setCustomCaptionText] = useState<string>("");
+  const [isEditingCaption, setIsEditingCaption] = useState<boolean>(false);
+  const [isRegeneratingCaption, setIsRegeneratingCaption] = useState<boolean>(false);
 
   // History & Custom Modal
   const [generationHistory, setGenerationHistory] = useState<GeneratedPack[]>([]);
@@ -143,6 +169,17 @@ export default function AdminSlidesPage() {
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  // Update caption text whenever active pack or angle changes
+  useEffect(() => {
+    if (activePack) {
+      if (activePack.captionVariants && activePack.captionVariants[selectedCaptionAngle]) {
+        setCustomCaptionText(activePack.captionVariants[selectedCaptionAngle]);
+      } else if (activePack.caption) {
+        setCustomCaptionText(activePack.caption);
+      }
+    }
+  }, [activePack, selectedCaptionAngle]);
 
   const fetchHistory = async () => {
     try {
@@ -226,6 +263,7 @@ export default function AdminSlidesPage() {
         setActivePack(data.pack);
         setCurrentSlideIndex(0);
         setActiveTab("generator");
+        setIsEditingCaption(false);
         fetchHistory();
       } else {
         alert(`Generation failed: ${data.error || "Unknown error"}`);
@@ -237,12 +275,44 @@ export default function AdminSlidesPage() {
     }
   };
 
+  // Regenerate Viral Caption on Demand
+  const handleRegenerateCaption = async () => {
+    if (!activePack) return;
+    setIsRegeneratingCaption(true);
+
+    try {
+      const res = await fetch("/api/admin/slides/caption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: activePack.title,
+          products: activePack.products,
+          style: selectedCaptionAngle,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.caption) {
+        setCustomCaptionText(data.caption);
+        if (data.variants) {
+          setActivePack((prev) => (prev ? { ...prev, captionVariants: data.variants } : prev));
+        }
+      }
+    } catch (e: any) {
+      console.warn("Error regenerating caption:", e);
+    } finally {
+      setIsRegeneratingCaption(false);
+    }
+  };
+
   // Copy Viral Caption to Clipboard
   const handleCopyCaption = () => {
     const textToCopy =
-      activeTab === "preset_packs"
+      customCaptionText ||
+      (activeTab === "preset_packs"
         ? carouselPacks[selectedPresetIndex]?.caption || ""
-        : activePack?.caption || "";
+        : activePack?.caption || "");
+
     if (textToCopy) {
       navigator.clipboard.writeText(textToCopy);
       setCopiedCaption(true);
@@ -327,7 +397,7 @@ export default function AdminSlidesPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-emerald-400 uppercase tracking-widest mb-2 rounded">
             <Flame className="w-3 h-3 fill-emerald-400" />
-            <span>VIRAL CONTENT PIPELINE 2.0 // SMART SOCIAL ENGINE</span>
+            <span>VIRAL CONTENT PIPELINE 2.0 // MULTI-ALGORITHM SOCIAL ENGINE</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-mono font-black uppercase tracking-wider text-white flex items-center gap-2.5">
             <Smartphone className="w-6 h-6 text-white" />
@@ -390,14 +460,14 @@ export default function AdminSlidesPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {STYLE_DEFINITIONS.map((def) => {
             const isSelected = selectedStyle === def.id;
             return (
               <button
                 key={def.id}
                 onClick={() => setSelectedStyle(def.id)}
-                className={`p-3.5 text-left border rounded-xl transition-all flex flex-col justify-between ${
+                className={`p-3.5 text-left border rounded-xl transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? "bg-neutral-800 border-white text-white ring-2 ring-white/40 shadow-md"
                     : "bg-neutral-950/60 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
@@ -408,6 +478,7 @@ export default function AdminSlidesPage() {
                     {def.id === "viral_minimal" && <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
                     {def.id === "editorial_dark" && <Sliders className="w-3.5 h-3.5 text-emerald-400" />}
                     {def.id === "minimal_dark" && <Eye className="w-3.5 h-3.5 text-cyan-400" />}
+                    {def.id === "vintage_moodboard" && <BookOpen className="w-3.5 h-3.5 text-amber-200" />}
                     {def.label}
                   </span>
                   {isSelected && (
@@ -446,7 +517,7 @@ export default function AdminSlidesPage() {
                   type="button"
                   onClick={() => handleGeneratePack("random")}
                   disabled={isGenerating}
-                  className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 font-mono text-xs uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 font-mono text-xs uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                   title="Generate a completely random unique mix of grails"
                 >
                   <Shuffle className="w-3.5 h-3.5 text-cyan-400" />
@@ -476,7 +547,7 @@ export default function AdminSlidesPage() {
                         setIsCustomPickerOpen(true);
                       }
                     }}
-                    className={`p-3 text-left border rounded-xl transition-all ${
+                    className={`p-3 text-left border rounded-xl transition-all cursor-pointer ${
                       genMode === m.id
                         ? "bg-neutral-800 border-emerald-500 text-white shadow-lg ring-1 ring-emerald-500"
                         : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-white"
@@ -544,7 +615,7 @@ export default function AdminSlidesPage() {
                   <button
                     type="button"
                     onClick={() => setIsCustomPickerOpen(true)}
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg text-xs font-mono text-emerald-400 flex items-center justify-between transition-colors"
+                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 hover:border-neutral-600 rounded-lg text-xs font-mono text-emerald-400 flex items-center justify-between transition-colors cursor-pointer"
                   >
                     <span>{selectedCustomProductIds.size} Pieces Selected</span>
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -568,7 +639,7 @@ export default function AdminSlidesPage() {
                       key={cnt}
                       type="button"
                       onClick={() => setSlideItemCount(cnt)}
-                      className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors ${
+                      className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
                         slideItemCount === cnt
                           ? "bg-white text-black border-white"
                           : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
@@ -603,14 +674,14 @@ export default function AdminSlidesPage() {
                   2. Custom Viral Hook / Title (Optional - Auto-generated if empty):
                 </label>
                 <span className="text-[10px] font-mono text-neutral-500">
-                  Use \n to split across 2 lines
+                  Use \n to split cleanly across lines
                 </span>
               </div>
               <input
                 type="text"
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
-                placeholder="e.g. TOP 5 RICK OWENS\nGRAILS UNDER $100"
+                placeholder="e.g. NEW ARCHIVE DROPS\nTHIS WEEK\n(7 GRAILS)"
                 className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-emerald-500"
               />
 
@@ -618,19 +689,19 @@ export default function AdminSlidesPage() {
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] font-mono">
                 <span className="text-neutral-500 shrink-0">⚡ Quick Hooks:</span>
                 {[
+                  `NEW ARCHIVE DROPS\nTHIS WEEK\n(${slideItemCount} GRAILS)`,
                   `TOP ${slideItemCount} ARCHIVE FINDS\nUNDER $100`,
                   `5 RICK OWENS GRAILS\nYOU MISSED`,
                   `THE BEST ARCHIVE\nJACKETS THIS SEASON`,
                   `UNDERCOVER GRAILS\nNO ONE TALKS ABOUT`,
-                  `TOP ${slideItemCount} STREETWEAR\nGRAILS OF ALL TIME`,
                 ].map((sug, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => suggestTitle(sug)}
-                    className="px-2.5 py-1 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white rounded-lg transition-colors whitespace-nowrap"
+                    className="px-2.5 py-1 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-white rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                   >
-                    {sug.replace(/\n/g, " ")}
+                    {sug.replace(/\\n/g, " ").replace(/\n/g, " ")}
                   </button>
                 ))}
               </div>
@@ -664,7 +735,9 @@ export default function AdminSlidesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left: 9:16 Interactive Mobile Frame (5 Cols) */}
               <div className="lg:col-span-5 flex flex-col items-center">
-                <div className="relative w-full max-w-[360px] aspect-[9/16] bg-neutral-950 border-2 border-neutral-800 rounded-2xl overflow-hidden shadow-2xl group">
+                <div className={`relative w-full max-w-[360px] aspect-[9/16] border-2 rounded-2xl overflow-hidden shadow-2xl group ${
+                  selectedStyle === "vintage_moodboard" ? "bg-[#f5f2ea] border-neutral-300" : "bg-neutral-950 border-neutral-800"
+                }`}>
                   <Image
                     key={`${currentSlide.slideUrl}_${selectedStyle}_${currentSlideIndex}`}
                     src={currentSlide.slideUrl}
@@ -672,7 +745,7 @@ export default function AdminSlidesPage() {
                     fill
                     priority
                     sizes="(max-width: 768px) 100vw, 400px"
-                    className="object-contain bg-black"
+                    className="object-contain"
                   />
 
                   {/* Top Overlay Badge */}
@@ -720,7 +793,7 @@ export default function AdminSlidesPage() {
                 <div className="flex items-center justify-between w-full max-w-[360px] mt-4">
                   <button
                     onClick={handlePrevSlide}
-                    className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg"
+                    className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" /> Prev
                   </button>
@@ -729,7 +802,7 @@ export default function AdminSlidesPage() {
                   </span>
                   <button
                     onClick={handleNextSlide}
-                    className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg"
+                    className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg cursor-pointer"
                   >
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
@@ -772,7 +845,7 @@ export default function AdminSlidesPage() {
                     <a
                       href={currentSlide.slideUrl}
                       download={`Slide_${String(currentSlideIndex + 1).padStart(2, "0")}_${activePack.id}_${selectedStyle}.jpg`}
-                      className="px-4 py-3.5 bg-neutral-950 text-white border border-neutral-700 font-mono text-xs font-bold uppercase tracking-wider hover:border-white transition-colors flex items-center justify-center gap-2 rounded-xl text-center"
+                      className="px-4 py-3.5 bg-neutral-950 text-white border border-neutral-700 font-mono text-xs font-bold uppercase tracking-wider hover:border-white transition-colors flex items-center justify-center gap-2 rounded-xl text-center cursor-pointer"
                     >
                       <Download className="w-4 h-4 text-neutral-400" />
                       <span>DOWNLOAD CURRENT SLIDE #{currentSlideIndex + 1}</span>
@@ -780,35 +853,113 @@ export default function AdminSlidesPage() {
                   </div>
                 </div>
 
-                {/* Ready-to-Copy Viral Caption */}
+                {/* VIRAL TIKTOK & INSTAGRAM CAPTION ENGINE */}
                 <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-4 shadow-xl">
-                  <div className="flex items-center justify-between">
+                  {/* Header & Main Actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-800 pb-3">
                     <div className="flex items-center gap-2">
                       <Hash className="w-4 h-4 text-emerald-400" />
-                      <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-300 font-bold">
-                        Viral TikTok & Instagram Caption
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200 font-bold">
+                        Viral TikTok &amp; IG Caption Engine
                       </h3>
                     </div>
-                    <button
-                      onClick={handleCopyCaption}
-                      className="px-3.5 py-1.5 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono uppercase tracking-wider hover:bg-emerald-900 transition-colors flex items-center gap-1.5 rounded-lg cursor-pointer font-bold"
-                    >
-                      {copiedCaption ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>COPIED TO CLIPBOARD!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>COPY CAPTION & HASHTAGS</span>
-                        </>
-                      )}
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {/* Regenerate Caption Button */}
+                      <button
+                        onClick={handleRegenerateCaption}
+                        disabled={isRegeneratingCaption}
+                        className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-[11px] font-mono uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        title="Generate a fresh hook and variation"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${isRegeneratingCaption ? "animate-spin" : ""}`} />
+                        <span>{isRegeneratingCaption ? "GENERATING..." : "REGENERATE"}</span>
+                      </button>
+
+                      {/* Edit Toggle Button */}
+                      <button
+                        onClick={() => setIsEditingCaption(!isEditingCaption)}
+                        className={`px-3 py-1.5 border text-[11px] font-mono uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                          isEditingCaption
+                            ? "bg-amber-950 text-amber-300 border-amber-800"
+                            : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
+                        }`}
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>{isEditingCaption ? "DONE" : "EDIT"}</span>
+                      </button>
+
+                      {/* Copy Button */}
+                      <button
+                        onClick={handleCopyCaption}
+                        className="px-3.5 py-1.5 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono uppercase tracking-wider hover:bg-emerald-900 transition-colors flex items-center gap-1.5 rounded-lg cursor-pointer font-bold"
+                      >
+                        {copiedCaption ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>COPIED!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>COPY CAPTION</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="p-4 bg-neutral-950 border border-neutral-800 rounded-xl font-mono text-xs text-neutral-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                    {activePack.caption}
+                  {/* Caption Angle Pills */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono uppercase text-neutral-400 font-bold">
+                      Select Algorithmic Hook Angle:
+                    </label>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                      {CAPTION_ANGLES.map((angle) => {
+                        const isSelected = selectedCaptionAngle === angle.id;
+                        return (
+                          <button
+                            key={angle.id}
+                            onClick={() => {
+                              setSelectedCaptionAngle(angle.id);
+                              if (activePack?.captionVariants?.[angle.id]) {
+                                setCustomCaptionText(activePack.captionVariants[angle.id]);
+                              }
+                            }}
+                            className={`px-2.5 py-1 text-[11px] font-mono rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                              isSelected
+                                ? "bg-emerald-950 text-emerald-400 border-emerald-600 font-bold ring-1 ring-emerald-500"
+                                : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
+                            }`}
+                          >
+                            {angle.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Caption Content Textarea / Display */}
+                  {isEditingCaption ? (
+                    <textarea
+                      value={customCaptionText}
+                      onChange={(e) => setCustomCaptionText(e.target.value)}
+                      rows={8}
+                      className="w-full p-4 bg-neutral-950 border border-amber-800/80 rounded-xl font-mono text-xs text-neutral-200 leading-relaxed focus:outline-none focus:border-amber-500"
+                    />
+                  ) : (
+                    <div className="p-4 bg-neutral-950 border border-neutral-800 rounded-xl font-mono text-xs text-neutral-300 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto">
+                      {customCaptionText || activePack.caption}
+                    </div>
+                  )}
+
+                  {/* Optimization & Length Status Badge */}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500 pt-1">
+                    <span className="flex items-center gap-1.5 text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Optimized for TikTok &amp; IG Reels algorithm</span>
+                    </span>
+                    <span>{(customCaptionText || activePack.caption).length} / 2,200 chars</span>
                   </div>
                 </div>
 
@@ -861,10 +1012,10 @@ export default function AdminSlidesPage() {
         </div>
       )}
 
-      {/* PRESET PACKS TAB */}
+      {/* PRESET PACKS VIEW TAB */}
       {activeTab === "preset_packs" && (
         <div className="space-y-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-neutral-800">
             {carouselPacks.map((pack, idx) => (
               <button
                 key={pack.id}
@@ -872,75 +1023,44 @@ export default function AdminSlidesPage() {
                   setSelectedPresetIndex(idx);
                   setCurrentSlideIndex(0);
                 }}
-                className={`p-3 text-left border transition-all flex flex-col justify-between h-32 rounded-xl ${
+                className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
                   selectedPresetIndex === idx
-                    ? "bg-neutral-800 border-white text-white ring-1 ring-white"
-                    : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-200"
+                    ? "bg-white text-black shadow-lg"
+                    : "bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800"
                 }`}
               >
-                <div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 block">
-                    {pack.vol} • {pack.slideCount} SLIDES
-                  </span>
-                  <h2 className="font-mono font-bold text-xs uppercase line-clamp-2 mt-1 text-white">
-                    {pack.title}
-                  </h2>
-                </div>
-                <span className="text-[9px] font-mono text-neutral-500 uppercase">
-                  {pack.badgeText}
-                </span>
+                {pack.title}
               </button>
             ))}
           </div>
 
-          {/* Preset Showcase */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-5 flex flex-col items-center">
-              <div className="relative w-full max-w-[360px] aspect-[9/16] bg-neutral-950 border-2 border-neutral-800 rounded-2xl overflow-hidden shadow-2xl group">
+              <div className="relative w-full max-w-[360px] aspect-[9/16] bg-neutral-950 border-2 border-neutral-800 rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  key={`${currentSlide.slideUrl}_${selectedStyle}`}
+                  key={`${currentSlide.slideUrl}_${selectedStyle}_${currentSlideIndex}`}
                   src={currentSlide.slideUrl}
                   alt={currentSlide.title || "Slide Preview"}
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, 400px"
-                  className="object-contain bg-black"
+                  className="object-contain"
                 />
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
-                  <span className="px-2.5 py-1 bg-black/85 backdrop-blur-md text-white text-[10px] font-mono tracking-widest uppercase border border-white/20 rounded">
-                    SLIDE {String(currentSlideIndex + 1).padStart(2, "0")} / {String(currentPackSlides.length).padStart(2, "0")}
-                  </span>
-                  <span className="px-2 py-0.5 bg-white text-black text-[9px] font-mono tracking-wider uppercase font-bold rounded">
-                    {currentSlide.type?.toUpperCase() || "SLIDE"}
-                  </span>
-                </div>
-                <button
-                  onClick={handlePrevSlide}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 text-white hover:bg-black border border-white/20 transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={handleNextSlide}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 text-white hover:bg-black border border-white/20 transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
               </div>
 
               <div className="flex items-center justify-between w-full max-w-[360px] mt-4">
                 <button
                   onClick={handlePrevSlide}
-                  className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg"
+                  className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-xs uppercase flex items-center gap-1 rounded-lg cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
-                <span className="text-xs font-mono text-neutral-400 truncate max-w-[180px]">
-                  {currentSlide.title}
+                <span className="text-xs font-mono text-neutral-400">
+                  {currentSlideIndex + 1} / {currentPackSlides.length}
                 </span>
                 <button
                   onClick={handleNextSlide}
-                  className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white font-mono text-xs uppercase flex items-center gap-1 rounded-lg"
+                  className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-xs uppercase flex items-center gap-1 rounded-lg cursor-pointer"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -956,7 +1076,7 @@ export default function AdminSlidesPage() {
                   <button
                     onClick={handleDownloadZip}
                     disabled={downloadingZip}
-                    className="px-4 py-3.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 rounded-xl"
+                    className="px-4 py-3.5 bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 rounded-xl cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     <span>DOWNLOAD ALL SLIDES (ZIP)</span>
@@ -964,7 +1084,7 @@ export default function AdminSlidesPage() {
                   <a
                     href={currentSlide.slideUrl}
                     download={`Slide_${currentSlideIndex + 1}.jpg`}
-                    className="px-4 py-3.5 bg-neutral-950 text-white border border-neutral-700 font-mono text-xs font-bold uppercase tracking-wider hover:border-white transition-colors flex items-center justify-center gap-2 rounded-xl text-center"
+                    className="px-4 py-3.5 bg-neutral-950 text-white border border-neutral-700 font-mono text-xs font-bold uppercase tracking-wider hover:border-white transition-colors flex items-center justify-center gap-2 rounded-xl text-center cursor-pointer"
                   >
                     <Download className="w-4 h-4 text-neutral-400" />
                     <span>DOWNLOAD CURRENT SLIDE</span>
@@ -975,11 +1095,11 @@ export default function AdminSlidesPage() {
               <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono uppercase tracking-widest text-neutral-300 font-bold">
-                    Caption & Hashtags
+                    Caption &amp; Hashtags
                   </span>
                   <button
                     onClick={handleCopyCaption}
-                    className="px-3 py-1 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono uppercase rounded-lg"
+                    className="px-3 py-1 bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono uppercase rounded-lg cursor-pointer"
                   >
                     {copiedCaption ? "COPIED!" : "COPY CAPTION"}
                   </button>
@@ -1040,13 +1160,13 @@ export default function AdminSlidesPage() {
                         setCurrentSlideIndex(0);
                         setActiveTab("generator");
                       }}
-                      className="px-3.5 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 font-mono text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 font-mono text-xs font-bold uppercase rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Open in Studio</span>
                     </button>
                     <span className="text-[10px] font-mono text-neutral-500">
-                      3 Styles Ready
+                      4 Styles Ready
                     </span>
                   </div>
                 </div>
@@ -1070,7 +1190,7 @@ export default function AdminSlidesPage() {
               </div>
               <button
                 onClick={() => setIsCustomPickerOpen(false)}
-                className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1093,7 +1213,7 @@ export default function AdminSlidesPage() {
                   <button
                     key={cat}
                     onClick={() => setCustomCategoryFilter(cat)}
-                    className={`px-2.5 py-1 text-[11px] font-mono rounded-lg border transition-colors whitespace-nowrap ${
+                    className={`px-2.5 py-1 text-[11px] font-mono rounded-lg border transition-colors whitespace-nowrap cursor-pointer ${
                       customCategoryFilter === cat
                         ? "bg-white text-black font-bold border-white"
                         : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white"
@@ -1176,7 +1296,7 @@ export default function AdminSlidesPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedCustomProductIds(new Set())}
-                  className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 font-mono text-xs rounded-lg transition-colors"
+                  className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 font-mono text-xs rounded-lg transition-colors cursor-pointer"
                 >
                   Clear All
                 </button>
@@ -1186,7 +1306,7 @@ export default function AdminSlidesPage() {
                     setIsCustomPickerOpen(false);
                     setSlideItemCount(Math.max(3, selectedCustomProductIds.size));
                   }}
-                  className="px-5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase rounded-lg transition-colors"
+                  className="px-5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase rounded-lg transition-colors cursor-pointer"
                 >
                   Done Selecting
                 </button>
