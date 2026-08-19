@@ -3428,5 +3428,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "138",
+    "title": "Mschf Wavy Baby",
+    "name": "Mschf Wavy Baby",
+    "brand": "Mschf",
+    "brandSlug": "mschf",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 35.56,
+    "sourcePrice": 35.56,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4451193847",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4451193847&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4451193847&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4451193847&memberId=1325437696506389977",
+    "imageUrl": "/products/mschf-mschf-wavy-baby-7459.png",
+    "localImage": "/products/mschf-mschf-wavy-baby-7459.png",
+    "slug": "mschf-mschf-wavy-baby-7459",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
