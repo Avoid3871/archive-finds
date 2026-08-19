@@ -3278,5 +3278,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | SS23 EDFU"
+  },
+  {
+    "id": "132",
+    "title": "Rick Owens Nylon Pusher Pants",
+    "name": "Rick Owens Nylon Pusher Pants",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "Denim",
+    "categorySlug": "denim",
+    "season": "",
+    "price": 51.7,
+    "sourcePrice": 51.7,
+    "estimatedRetail": 820.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4831285549",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4831285549&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4831285549&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4831285549&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-rick-owens-nylon-pusher-pants-6817.png",
+    "localImage": "/products/rick-owens-rick-owens-nylon-pusher-pants-6817.png",
+    "slug": "rick-owens-rick-owens-nylon-pusher-pants-6817",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
