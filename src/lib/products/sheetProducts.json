@@ -3328,5 +3328,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "134",
+    "title": "Balenciaga Strike derby`s",
+    "name": "Balenciaga Strike derby`s",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "FW21",
+    "price": 56.3,
+    "sourcePrice": 56.3,
+    "estimatedRetail": 1350.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4620070615",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620070615&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620070615&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620070615&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-strike-derby-s-7333.png",
+    "localImage": "/products/balenciaga-balenciaga-strike-derby-s-7333.png",
+    "slug": "balenciaga-balenciaga-strike-derby-s-7333",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | FW21"
   }
 ]
