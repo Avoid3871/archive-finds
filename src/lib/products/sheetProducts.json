@@ -3353,5 +3353,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | FW21"
+  },
+  {
+    "id": "135",
+    "title": "Rick Owens Doc Martens Pentagram",
+    "name": "Rick Owens Doc Martens Pentagram",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 24.89,
+    "sourcePrice": 24.89,
+    "estimatedRetail": 1850.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4435375942",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4435375942&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4435375942&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4435375942&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-rick-owens-doc-martens-pentagram-7366.png",
+    "localImage": "/products/rick-owens-rick-owens-doc-martens-pentagram-7366.png",
+    "slug": "rick-owens-rick-owens-doc-martens-pentagram-7366",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
