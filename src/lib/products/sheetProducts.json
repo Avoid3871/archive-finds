@@ -3403,5 +3403,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "137",
+    "title": "Bottega Veneta Puddle Boots",
+    "name": "Bottega Veneta Puddle Boots",
+    "brand": "Bottega Veneta",
+    "brandSlug": "bottega-veneta",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "",
+    "price": 47.41,
+    "sourcePrice": 47.41,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4437989769",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437989769&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437989769&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437989769&memberId=1325437696506389977",
+    "imageUrl": "/products/bottega-veneta-bottega-veneta-puddle-boots-7424.png",
+    "localImage": "/products/bottega-veneta-bottega-veneta-puddle-boots-7424.png",
+    "slug": "bottega-veneta-bottega-veneta-puddle-boots-7424",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
