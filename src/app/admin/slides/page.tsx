@@ -131,6 +131,31 @@ const CATEGORIES = [
   "Jewelry",
 ];
 
+const RANDOM_VIRAL_HOOKS = [
+  "TOP {count} ARCHIVE FINDS\\nUNDER $100",
+  "RARE ARCHIVE GRAILS\\nYOU MISSED ({count} PIECES)",
+  "TOP {count} UNDERGROUND GRAILS\\nNO ONE TALKS ABOUT",
+  "STOP OVERPAYING ON GRAILED\\n(TOP {count} FINDS)",
+  "SECRET ARCHIVE VAULT\\n(TOP {count} FINDS)",
+  "MY TOP {count} ARCHIVE PICKS\\nTHIS WEEK",
+  "TOP {count} JAPANESE & EUROPEAN\\nARCHIVE GRAILS",
+  "MUSEUM LEVEL GRAILS\\nFOR YOUR ROTATION ({count}X)",
+  "THE BEST ARCHIVE FINDS\\nON THE INTERNET ({count} GRAILS)",
+  "TOP {count} DESIGNER FINDS\\nUNDER $100",
+  "UNRELEASED & RARE GRAILS\\n(TOP {count} SELECTION)",
+  "TOP {count} MUST-HAVE PIECES\\nFOR YOUR WARDROBE",
+  "THE ULTIMATE ARCHIVE DROP\\n({count} GRAILS THIS WEEK)",
+  "TOP {count} VINTAGE SILHOUETTES\\nYOU NEED TO SEE",
+  "TOP {count} HEAVYWEIGHT GRAILS\\nWORTH EVERY PENNY",
+  "HIDDEN GRAIL FINDS\\n({count} PIECES YOU NEED)",
+  "BEST STATEMENT GRAILS\\nFOR THIS SEASON ({count}X)",
+];
+
+const getRandomViralHook = (count: number) => {
+  const tpl = RANDOM_VIRAL_HOOKS[Math.floor(Math.random() * RANDOM_VIRAL_HOOKS.length)];
+  return tpl.replace(/\{count\}/g, String(count));
+};
+
 export default function AdminSlidesPage() {
   const [activeTab, setActiveTab] = useState<"generator" | "preset_packs" | "history">("generator");
   const [selectedStyle, setSelectedStyle] = useState<SlideStyle>("viral_minimal");
@@ -237,18 +262,19 @@ export default function AdminSlidesPage() {
   }, [handleNextSlide, handlePrevSlide]);
 
   // Generate New Viral Slide Pack Action
-  const handleGeneratePack = async (overrideMode?: GeneratorMode) => {
+  const handleGeneratePack = async (overrideMode?: GeneratorMode, overrideTitle?: string) => {
     const modeToUse = overrideMode || genMode;
     setIsGenerating(true);
 
     try {
+      const titleToSend = overrideTitle !== undefined ? overrideTitle.trim() : customTitle.trim();
       const payload = {
         mode: modeToUse,
         brand: selectedBrand,
         category: selectedCategory,
         productIds: Array.from(selectedCustomProductIds),
         count: slideItemCount,
-        title: customTitle.trim() || undefined,
+        title: titleToSend || undefined,
         style: selectedStyle,
       };
 
@@ -515,10 +541,14 @@ export default function AdminSlidesPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handleGeneratePack("random")}
+                  onClick={() => {
+                    const freshHook = getRandomViralHook(slideItemCount);
+                    setCustomTitle(freshHook);
+                    handleGeneratePack("random", freshHook);
+                  }}
                   disabled={isGenerating}
                   className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 font-mono text-xs uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
-                  title="Generate a completely random unique mix of grails"
+                  title="Generate a completely random unique mix of grails with a fresh viral title"
                 >
                   <Shuffle className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Random Grail Mix</span>
@@ -543,7 +573,10 @@ export default function AdminSlidesPage() {
                     key={m.id}
                     onClick={() => {
                       setGenMode(m.id as GeneratorMode);
-                      if (m.id === "custom" && selectedCustomProductIds.size === 0) {
+                      if (m.id === "random") {
+                        const freshHook = getRandomViralHook(slideItemCount);
+                        setCustomTitle(freshHook);
+                      } else if (m.id === "custom" && selectedCustomProductIds.size === 0) {
                         setIsCustomPickerOpen(true);
                       }
                     }}
@@ -669,13 +702,24 @@ export default function AdminSlidesPage() {
 
             {/* Hook / Headline Input */}
             <div className="space-y-2 pt-2 border-t border-neutral-800">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <label className="text-xs font-mono font-bold uppercase text-neutral-300">
                   2. Custom Viral Hook / Title (Optional - Auto-generated if empty):
                 </label>
-                <span className="text-[10px] font-mono text-neutral-500">
-                  Use \n to split cleanly across lines
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCustomTitle(getRandomViralHook(slideItemCount))}
+                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer transition-colors bg-cyan-950/40 hover:bg-cyan-950/70 border border-cyan-800/60 px-2 py-0.5 rounded"
+                    title="Generate a random viral headline angle"
+                  >
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <span>🎲 Randomize Hook</span>
+                  </button>
+                  <span className="text-[10px] font-mono text-neutral-500">
+                    Use \n to split lines
+                  </span>
+                </div>
               </div>
               <input
                 type="text"
@@ -691,9 +735,9 @@ export default function AdminSlidesPage() {
                 {[
                   `NEW ARCHIVE DROPS\nTHIS WEEK\n(${slideItemCount} GRAILS)`,
                   `TOP ${slideItemCount} ARCHIVE FINDS\nUNDER $100`,
-                  `5 RICK OWENS GRAILS\nYOU MISSED`,
-                  `THE BEST ARCHIVE\nJACKETS THIS SEASON`,
-                  `UNDERCOVER GRAILS\nNO ONE TALKS ABOUT`,
+                  `STOP OVERPAYING ON GRAILED\n(TOP ${slideItemCount} FINDS)`,
+                  `TOP ${slideItemCount} UNDERGROUND GRAILS\nNO ONE TALKS ABOUT`,
+                  `SECRET ARCHIVE VAULT\n(${slideItemCount} GRAILS)`,
                 ].map((sug, idx) => (
                   <button
                     key={idx}

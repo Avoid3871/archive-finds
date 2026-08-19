@@ -214,11 +214,77 @@ function formatCoverHeadline(rawTitle: string) {
   };
 }
 
-function formatViralHeadline(product: any) {
-  const brand = product.brand || "Archive Selection";
-  let name = product.title || product.name || "Grail Piece";
+const KNOWN_FASHION_BRANDS = [
+  "Bottega Veneta",
+  "Rick Owens",
+  "Chrome Hearts",
+  "Maison Margiela",
+  "Raf Simons",
+  "Balenciaga",
+  "Undercover",
+  "Vetements",
+  "Enfants Riches Déprimés",
+  "Yohji Yamamoto",
+  "Issey Miyake",
+  "Comme des Garçons",
+  "Number (N)ine",
+  "Helmut Lang",
+  "Prada",
+  "Saint Laurent",
+  "Celine",
+  "Dior",
+  "Louis Vuitton",
+  "Kapital",
+  "Julius",
+  "Boris Bidjan Saberi",
+  "Gucci",
+  "Acne Studios",
+  "Supreme",
+  "Stussy",
+  "Arc'teryx",
+  "Vivienne Westwood",
+];
 
-  if (name.toLowerCase().startsWith(brand.toLowerCase())) {
+export const RANDOM_VIRAL_TITLES = [
+  "TOP {count} ARCHIVE FINDS\nUNDER $100",
+  "RARE ARCHIVE GRAILS\nYOU MISSED ({count} PIECES)",
+  "TOP {count} UNDERGROUND GRAILS\nNO ONE TALKS ABOUT",
+  "STOP OVERPAYING ON GRAILED\n(TOP {count} FINDS)",
+  "SECRET ARCHIVE VAULT\n(TOP {count} FINDS)",
+  "MY TOP {count} ARCHIVE PICKS\nTHIS WEEK",
+  "TOP {count} JAPANESE & EUROPEAN\nARCHIVE GRAILS",
+  "MUSEUM LEVEL GRAILS\nFOR YOUR ROTATION ({count}X)",
+  "THE BEST ARCHIVE FINDS\nON THE INTERNET ({count} GRAILS)",
+  "TOP {count} DESIGNER FINDS\nUNDER $100",
+  "UNRELEASED & RARE GRAILS\n(TOP {count} SELECTION)",
+  "TOP {count} MUST-HAVE PIECES\nFOR YOUR WARDROBE",
+  "THE ULTIMATE ARCHIVE DROP\n({count} GRAILS THIS WEEK)",
+  "TOP {count} VINTAGE SILHOUETTES\nYOU NEED TO SEE",
+  "TOP {count} HEAVYWEIGHT GRAILS\nWORTH EVERY PENNY",
+  "HIDDEN GRAIL FINDS\n({count} PIECES YOU NEED)",
+  "BEST STATEMENT GRAILS\nFOR THIS SEASON ({count}X)",
+  "CURATED ARCHIVE SELECTION\n(TOP {count} UNDERGROUND FINDS)",
+];
+
+export function getRandomViralTitle(count: number): string {
+  const tpl = RANDOM_VIRAL_TITLES[Math.floor(Math.random() * RANDOM_VIRAL_TITLES.length)];
+  return tpl.replace(/\{count\}/g, String(count));
+}
+
+function formatViralHeadline(product: any) {
+  let brand = (product.brand || "Archive Selection").trim();
+  let name = (product.title || product.name || "Grail Piece").trim();
+
+  // If brand is generic "Archive Selection", infer brand from product title if matched
+  if (brand.toLowerCase() === "archive selection" || !brand) {
+    for (const kb of KNOWN_FASHION_BRANDS) {
+      if (name.toLowerCase().startsWith(kb.toLowerCase())) {
+        brand = kb;
+        name = name.slice(kb.length).trim().replace(/^[-–—:]\s*/, "");
+        break;
+      }
+    }
+  } else if (name.toLowerCase().startsWith(brand.toLowerCase())) {
     name = name.slice(brand.length).trim().replace(/^[-–—:]\s*/, "");
   }
 
@@ -231,24 +297,39 @@ function formatViralHeadline(product: any) {
     .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
-  const maxLen = Math.max(cleanBrand.length, cleanName.length);
-  let fontSize = 70;
-  let lineHeight = 82;
+  // Wrap cleanName cleanly without any clipping (max 20 chars per line)
+  const nameLines = cleanName.length > 20 ? wrapWords(cleanName, 20) : [cleanName];
+  const allLines = [cleanBrand, ...nameLines];
+  const maxLineLen = Math.max(...allLines.map((l) => l.length), 0);
+
+  let fontSize = 64;
+  let lineHeight = 76;
   let startY = 380;
 
-  if (maxLen > 24) {
-    fontSize = 48;
-    lineHeight = 58;
-    startY = 355;
-  } else if (maxLen > 18) {
-    fontSize = 58;
-    lineHeight = 70;
-    startY = 368;
+  if (allLines.length >= 4 || maxLineLen > 24) {
+    fontSize = 38;
+    lineHeight = 46;
+    startY = 330;
+  } else if (allLines.length === 3 || maxLineLen > 18) {
+    fontSize = 46;
+    lineHeight = 56;
+    startY = 350;
+  } else if (allLines.length === 2) {
+    if (maxLineLen > 16) {
+      fontSize = 52;
+      lineHeight = 64;
+      startY = 365;
+    } else {
+      fontSize = 62;
+      lineHeight = 74;
+      startY = 380;
+    }
   }
 
   return {
-    line1: cleanBrand,
-    line2: cleanName.length > 28 ? cleanName.slice(0, 26) + "..." : cleanName,
+    brand: cleanBrand,
+    nameLines,
+    allLines,
     fontSize,
     lineHeight,
     startY,
@@ -315,8 +396,7 @@ async function renderViralMinimalSlide(packDir: string, packId: string, slideInd
     </style>
 
     <text x="540" y="${headline.startY}" text-anchor="middle" fill="#000000" font-size="${headline.fontSize}" class="sans bold" letter-spacing="-1.5">
-      <tspan x="540" dy="0">${escapeXml(headline.line1)}</tspan>
-      <tspan x="540" dy="${headline.lineHeight}">${escapeXml(headline.line2)}</tspan>
+      ${headline.allLines.map((l, i) => `<tspan x="540" dy="${i === 0 ? 0 : headline.lineHeight}">${escapeXml(l)}</tspan>`).join("")}
     </text>
 
     <text x="540" y="1740" text-anchor="middle" fill="#999999" font-size="16" class="mono" letter-spacing="3">
@@ -332,7 +412,7 @@ async function renderViralMinimalSlide(packDir: string, packId: string, slideInd
     create: { width: WIDTH, height: HEIGHT, channels: 4, background: "#ffffff" },
   })
     .composite([
-      { input: heroBuffer, top: 580, left: 100 },
+      { input: heroBuffer, top: 560, left: 100 },
       { input: Buffer.from(svg), top: 0, left: 0 },
     ])
     .jpeg({ quality: 95 })
@@ -455,13 +535,32 @@ async function renderEditorialDarkCover(packDir: string, packId: string, title: 
 
 async function renderEditorialDarkSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
   const heroBuffer = await loadProductImageBuffer(product, 840, 950);
-  const brandName = escapeXml((product.brand || "ARCHIVE").toUpperCase());
-  const pieceName = escapeXml((product.title || product.name || "PIECE").toUpperCase());
+  let brand = (product.brand || "ARCHIVE").trim();
+  let rawPieceName = (product.title || product.name || "PIECE").trim();
+
+  // Infer brand if default or strip brand prefix
+  if (brand.toLowerCase() === "archive selection" || !brand) {
+    for (const kb of KNOWN_FASHION_BRANDS) {
+      if (rawPieceName.toLowerCase().startsWith(kb.toLowerCase())) {
+        brand = kb;
+        rawPieceName = rawPieceName.slice(kb.length).trim().replace(/^[-–—:]\s*/, "");
+        break;
+      }
+    }
+  } else if (rawPieceName.toLowerCase().startsWith(brand.toLowerCase())) {
+    rawPieceName = rawPieceName.slice(brand.length).trim().replace(/^[-–—:]\s*/, "");
+  }
+
+  const brandName = escapeXml(brand.toUpperCase());
+  const pieceLines = wrapWords(rawPieceName.toUpperCase(), 24);
   const category = escapeXml((product.category || "OUTERWEAR").toUpperCase());
   const priceVal = typeof product.price === "number" ? product.price : parseFloat(product.price) || 49;
   const price = `$${priceVal.toFixed(2)} USD`;
   const slideNum = String(slideIndex).padStart(2, "0");
   const totalNum = String(totalSlides).padStart(2, "0");
+
+  const titleFontSize = pieceLines.length > 2 ? 26 : pieceLines.length === 2 ? 30 : 34;
+  const titleLineHeight = pieceLines.length > 2 ? 32 : 38;
 
   const svg = `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -481,8 +580,10 @@ async function renderEditorialDarkSlide(packDir: string, packId: string, slideIn
     <rect x="96" y="320" width="888" height="980" fill="none" stroke="#333333" stroke-width="2" rx="4" />
 
     <rect x="80" y="1340" width="920" height="450" fill="#141414" stroke="#262626" stroke-width="2" rx="4" />
-    <text x="120" y="1410" fill="#ffffff" font-size="34" class="sans bold" letter-spacing="-0.5">${pieceName.length > 34 ? pieceName.slice(0, 32) + "..." : pieceName}</text>
-    <text x="120" y="1450" fill="#888888" font-size="18" class="mono" letter-spacing="1">CURATED ARCHIVE SELECTION</text>
+    <text x="120" y="1405" fill="#ffffff" font-size="${titleFontSize}" class="sans bold" letter-spacing="-0.5">
+      ${pieceLines.slice(0, 3).map((l, i) => `<tspan x="120" dy="${i === 0 ? 0 : titleLineHeight}">${escapeXml(l)}</tspan>`).join("")}
+    </text>
+    <text x="120" y="${pieceLines.length > 1 ? 1465 : 1450}" fill="#888888" font-size="18" class="mono" letter-spacing="1">CURATED ARCHIVE SELECTION</text>
 
     <line x1="120" y1="1490" x2="960" y2="1490" stroke="#262626" stroke-width="1" />
     <text x="120" y="1545" fill="#888888" font-size="16" class="mono" letter-spacing="2">ESTIMATED PROCURING PRICE</text>
@@ -622,8 +723,7 @@ async function renderMinimalDarkSlide(packDir: string, packId: string, slideInde
     </style>
 
     <text x="540" y="${headline.startY}" text-anchor="middle" fill="#ffffff" font-size="${headline.fontSize}" class="sans bold" letter-spacing="-1.5">
-      <tspan x="540" dy="0">${escapeXml(headline.line1)}</tspan>
-      <tspan x="540" dy="${headline.lineHeight}">${escapeXml(headline.line2)}</tspan>
+      ${headline.allLines.map((l, i) => `<tspan x="540" dy="${i === 0 ? 0 : headline.lineHeight}">${escapeXml(l)}</tspan>`).join("")}
     </text>
 
     <text x="540" y="1740" text-anchor="middle" fill="#666666" font-size="16" class="mono" letter-spacing="3">
@@ -639,7 +739,7 @@ async function renderMinimalDarkSlide(packDir: string, packId: string, slideInde
     create: { width: WIDTH, height: HEIGHT, channels: 4, background: "#0a0a0a" },
   })
     .composite([
-      { input: heroBuffer, top: 580, left: 100 },
+      { input: heroBuffer, top: 560, left: 100 },
       { input: Buffer.from(svg), top: 0, left: 0 },
     ])
     .jpeg({ quality: 95 })
@@ -749,8 +849,24 @@ async function renderVintageMoodboardCover(packDir: string, packId: string, titl
 }
 
 async function renderVintageMoodboardSlide(packDir: string, packId: string, slideIndex: number, totalSlides: number, product: any): Promise<string> {
-  const brandName = escapeXml((product.brand || "ARCHIVE").toUpperCase());
-  const pieceName = escapeXml((product.title || product.name || "PIECE").toUpperCase());
+  let brand = (product.brand || "ARCHIVE").trim();
+  let rawPieceName = (product.title || product.name || "PIECE").trim();
+
+  // Infer brand if default or strip brand prefix
+  if (brand.toLowerCase() === "archive selection" || !brand) {
+    for (const kb of KNOWN_FASHION_BRANDS) {
+      if (rawPieceName.toLowerCase().startsWith(kb.toLowerCase())) {
+        brand = kb;
+        rawPieceName = rawPieceName.slice(kb.length).trim().replace(/^[-–—:]\s*/, "");
+        break;
+      }
+    }
+  } else if (rawPieceName.toLowerCase().startsWith(brand.toLowerCase())) {
+    rawPieceName = rawPieceName.slice(brand.length).trim().replace(/^[-–—:]\s*/, "");
+  }
+
+  const brandName = escapeXml(brand.toUpperCase());
+  const pieceLines = wrapWords(rawPieceName.toUpperCase(), 22);
   const category = escapeXml((product.category || "GARMENT").toUpperCase());
   const priceVal = typeof product.price === "number" ? product.price : parseFloat(product.price) || 49;
   const price = `$${priceVal.toFixed(2)} USD`;
@@ -758,6 +874,9 @@ async function renderVintageMoodboardSlide(packDir: string, packId: string, slid
   const totalNum = String(totalSlides).padStart(2, "0");
 
   const heroBuffer = await loadProductImageBuffer(product, 820, 920);
+
+  const titleFontSize = pieceLines.length > 2 ? 24 : pieceLines.length === 2 ? 28 : 32;
+  const titleLineHeight = pieceLines.length > 2 ? 30 : 36;
 
   const svg = `
   <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -780,8 +899,10 @@ async function renderVintageMoodboardSlide(packDir: string, packId: string, slid
     <rect x="80" y="290" width="920" height="1060" fill="#ffffff" stroke="#ded8cb" stroke-width="2" rx="8" />
 
     <rect x="80" y="1390" width="920" height="380" fill="#2d2926" rx="8" />
-    <text x="120" y="1460" fill="#f5f2ea" font-size="32" class="serif bold">${pieceName.length > 34 ? pieceName.slice(0, 32) + "..." : pieceName}</text>
-    <text x="120" y="1505" fill="#a8a29e" font-size="18" class="mono" letter-spacing="2">ESTIMATED PROCURING COST</text>
+    <text x="120" y="1450" fill="#f5f2ea" font-size="${titleFontSize}" class="serif bold">
+      ${pieceLines.slice(0, 3).map((l, i) => `<tspan x="120" dy="${i === 0 ? 0 : titleLineHeight}">${escapeXml(l)}</tspan>`).join("")}
+    </text>
+    <text x="120" y="${pieceLines.length > 1 ? 1520 : 1505}" fill="#a8a29e" font-size="18" class="mono" letter-spacing="2">ESTIMATED PROCURING COST</text>
     
     <text x="120" y="1575" fill="#ffffff" font-size="46" class="mono bold">${price}</text>
 
@@ -910,11 +1031,17 @@ export async function POST(req: NextRequest) {
       if (!customTitle) customTitle = `CURATED GRAILS\nVOLUME ${Date.now() % 1000}`;
     } else if (mode === "latest") {
       candidatePool = [...allProducts].reverse();
-      if (!customTitle) customTitle = `NEW ARCHIVE DROPS\nTHIS WEEK\n(${productCount} GRAILS)`;
+      const LATEST_TITLES = [
+        `NEW ARCHIVE DROPS\nTHIS WEEK\n(${productCount} GRAILS)`,
+        `FRESH GRAIL ARRIVALS\nTHIS WEEK (${productCount} PIECES)`,
+        `JUST CATALOGED\nTOP ${productCount} NEW DROPS`,
+        `THIS WEEK'S BEST DROPS\n(${productCount} ARCHIVE FINDS)`,
+      ];
+      if (!customTitle) customTitle = LATEST_TITLES[Math.floor(Math.random() * LATEST_TITLES.length)];
     } else {
-      // Random mix
+      // Random mix: dynamically pick from rich randomized viral hook pool
       candidatePool = [...allProducts].sort(() => Math.random() - 0.5);
-      if (!customTitle) customTitle = `MY TOP ${productCount} ARCHIVE\nFINDS UNDER $100`;
+      if (!customTitle) customTitle = getRandomViralTitle(productCount);
     }
 
     if (candidatePool.length === 0) {
