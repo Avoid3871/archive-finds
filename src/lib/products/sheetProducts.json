@@ -3578,5 +3578,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "144",
+    "title": "Dior Homme x Birkenstock Slides",
+    "name": "Dior Homme x Birkenstock Slides",
+    "brand": "Dior",
+    "brandSlug": "dior",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 57.78,
+    "sourcePrice": 57.78,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=6378597346",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6378597346&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6378597346&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6378597346&memberId=1325437696506389977",
+    "imageUrl": "/products/dior-dior-homme-x-birkenstock-slides-7777.png",
+    "localImage": "/products/dior-dior-homme-x-birkenstock-slides-7777.png",
+    "slug": "dior-dior-homme-x-birkenstock-slides-7777",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
