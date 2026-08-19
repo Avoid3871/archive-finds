@@ -3503,5 +3503,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | SS23"
+  },
+  {
+    "id": "141",
+    "title": "Balenciaga Defender Tire Tread Heavy Sneakers",
+    "name": "Balenciaga Defender Tire Tread Heavy Sneakers",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "FW22",
+    "price": 73.93,
+    "sourcePrice": 73.93,
+    "estimatedRetail": 1250.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4834599008",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4834599008&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4834599008&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4834599008&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-defender-tire-tread-heavy-sneakers-760.png",
+    "localImage": "/products/balenciaga-balenciaga-defender-tire-tread-heavy-sneakers-760.png",
+    "slug": "balenciaga-balenciaga-defender-tire-tread-heavy-sneakers-760",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | FW22"
   }
 ]
