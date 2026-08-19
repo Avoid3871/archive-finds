@@ -3553,5 +3553,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "143",
+    "title": "Alyx 1017 9Sm Chelsea Buckle Vibram Boots",
+    "name": "Alyx 1017 9Sm Chelsea Buckle Vibram Boots",
+    "brand": "Alyx",
+    "brandSlug": "alyx",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "",
+    "price": 100.07,
+    "sourcePrice": 100.07,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5668755813",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5668755813&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5668755813&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5668755813&memberId=1325437696506389977",
+    "imageUrl": "/products/alyx-alyx-1017-9sm-chelsea-buckle-vibram-boots-7718.png",
+    "localImage": "/products/alyx-alyx-1017-9sm-chelsea-buckle-vibram-boots-7718.png",
+    "slug": "alyx-alyx-1017-9sm-chelsea-buckle-vibram-boots-7718",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest"
   }
 ]
