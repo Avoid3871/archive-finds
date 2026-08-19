@@ -3478,5 +3478,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "140",
+    "title": "Balenciaga 3XL`s",
+    "name": "Balenciaga 3XL`s",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "SS23",
+    "price": 41.48,
+    "sourcePrice": 41.48,
+    "estimatedRetail": 1150.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5790335451",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5790335451&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5790335451&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5790335451&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-3xl-s-7576.png",
+    "localImage": "/products/balenciaga-balenciaga-3xl-s-7576.png",
+    "slug": "balenciaga-balenciaga-3xl-s-7576",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | SS23"
   }
 ]
