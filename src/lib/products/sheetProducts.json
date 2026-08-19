@@ -3453,5 +3453,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "139",
+    "title": "Raf Simons x Dr. Martens Steel Toe Derbies",
+    "name": "Raf Simons x Dr. Martens Steel Toe Derbies",
+    "brand": "Raf Simons",
+    "brandSlug": "raf-simons",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "",
+    "price": 66.67,
+    "sourcePrice": 66.67,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4620066101",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620066101&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620066101&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4620066101&memberId=1325437696506389977",
+    "imageUrl": "/products/raf-simons-raf-simons-x-dr-martens-steel-toe-derbies-7499.png",
+    "localImage": "/products/raf-simons-raf-simons-x-dr-martens-steel-toe-derbies-7499.png",
+    "slug": "raf-simons-raf-simons-x-dr-martens-steel-toe-derbies-7499",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
