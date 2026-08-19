@@ -3603,5 +3603,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "145",
+    "title": "Maison Margiela Replica Fur GAT",
+    "name": "Maison Margiela Replica Fur GAT",
+    "brand": "Maison Margiela",
+    "brandSlug": "maison-margiela",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "Iconic Permanent Collection",
+    "price": 64.89,
+    "sourcePrice": 64.89,
+    "estimatedRetail": 590.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5673392659",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673392659&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673392659&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5673392659&memberId=1325437696506389977",
+    "imageUrl": "/products/maison-margiela-maison-margiela-replica-fur-gat-7830.png",
+    "localImage": "/products/maison-margiela-maison-margiela-replica-fur-gat-7830.png",
+    "slug": "maison-margiela-maison-margiela-replica-fur-gat-7830",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | Iconic Permanent Collection"
   }
 ]
