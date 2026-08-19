@@ -3378,5 +3378,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "136",
+    "title": "Kiko Kostadinov Camper Boots",
+    "name": "Kiko Kostadinov Camper Boots",
+    "brand": "Kiko Kostadinov",
+    "brandSlug": "kiko-kostadinov",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "",
+    "price": 71.11,
+    "sourcePrice": 71.11,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=5849808314",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5849808314&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5849808314&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D5849808314&memberId=1325437696506389977",
+    "imageUrl": "/products/kiko-kostadinov-kiko-kostadinov-camper-boots-7403.png",
+    "localImage": "/products/kiko-kostadinov-kiko-kostadinov-camper-boots-7403.png",
+    "slug": "kiko-kostadinov-kiko-kostadinov-camper-boots-7403",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
