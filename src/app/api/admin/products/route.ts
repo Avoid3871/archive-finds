@@ -20,6 +20,15 @@ function saveProducts(products: any[]) {
   fs.writeFileSync(SHEET_PRODUCTS_PATH, JSON.stringify(products, null, 2), "utf-8");
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function GET() {
   try {
     const products = readProducts();
@@ -95,8 +104,58 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
     }
 
-    const prod = products[prodIndex];
+    const prod = { ...products[prodIndex] };
 
+    // 1. Full Product Update Action
+    if (action === "update") {
+      if (body.title !== undefined) {
+        prod.title = body.title;
+        prod.name = body.title;
+      }
+      if (body.brand !== undefined) {
+        prod.brand = body.brand;
+        prod.brandSlug = slugify(body.brand);
+      }
+      if (body.category !== undefined) {
+        prod.category = body.category;
+        prod.categorySlug = slugify(body.category);
+      }
+      if (body.price !== undefined) {
+        prod.price = typeof body.price === "number" ? body.price : parseFloat(body.price) || 0;
+      }
+      if (body.estimatedRetail !== undefined) {
+        prod.estimatedRetail = typeof body.estimatedRetail === "number" ? body.estimatedRetail : parseFloat(body.estimatedRetail) || 0;
+      }
+      if (body.imageUrl !== undefined) {
+        prod.imageUrl = body.imageUrl;
+        prod.localImage = body.imageUrl;
+      }
+      if (body.status !== undefined) {
+        prod.status = body.status;
+      }
+      if (body.sugargooUrl !== undefined) {
+        prod.sugargooUrl = body.sugargooUrl;
+        prod.affiliateLink = body.sugargooUrl;
+      }
+      if (body.directStoreLink !== undefined) {
+        prod.directStoreLink = body.directStoreLink;
+      }
+      if (body.era !== undefined) {
+        prod.era = body.era;
+      }
+
+      products[prodIndex] = prod;
+      saveProducts(products);
+
+      return NextResponse.json({
+        success: true,
+        message: `Product ${prod.title || prod.name} updated successfully!`,
+        product: prod,
+        products,
+      });
+    }
+
+    // 2. Image Rotation Action
     if (action === "rotate") {
       const imgRelPath = prod.imageUrl || prod.localImage;
       if (!imgRelPath) {
@@ -110,7 +169,6 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ success: false, error: "Image file not found on disk" }, { status: 404 });
       }
 
-      // Rotate using python PIL script
       const rotateScript = `
 from PIL import Image
 import sys
@@ -118,7 +176,6 @@ import sys
 img_path = sys.argv[1]
 degrees = int(sys.argv[2])
 img = Image.open(img_path)
-# PIL rotates counter-clockwise for positive degrees, so for CW degrees use 360 - degrees
 rotated = img.rotate((360 - degrees) % 360, expand=True)
 rotated.save(img_path)
 print("SUCCESS")
@@ -128,7 +185,6 @@ print("SUCCESS")
 
       await execFilePromise("python", [tempScriptPath, fullImgPath, String(degrees)]);
 
-      // Append cache buster to image url
       const timestamp = Date.now();
       const updatedUrl = `/${cleanImgPath}?t=${timestamp}`;
       prod.imageUrl = updatedUrl;
@@ -145,6 +201,7 @@ print("SUCCESS")
       });
     }
 
+    // 3. Status Toggle Action
     if (action === "toggle-status" || action === "set-status") {
       const currentStatus = prod.status || "ACTIVE";
       const newStatus = body.status || (currentStatus === "DRAFT" ? "ACTIVE" : "DRAFT");
