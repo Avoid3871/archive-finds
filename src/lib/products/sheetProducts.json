@@ -3678,5 +3678,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "148",
+    "title": "Rick Owens Pentragram Boots",
+    "name": "Rick Owens Pentragram Boots",
+    "brand": "Rick Owens",
+    "brandSlug": "rick-owens",
+    "category": "Footwear",
+    "categorySlug": "footwear",
+    "season": "FW19 LARRY",
+    "price": 23.56,
+    "sourcePrice": 23.56,
+    "estimatedRetail": 1950.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=4437724526&sku=0:7374705756&sku_id=48899629924",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437724526%26sku%3D0%3A7374705756%26sku_id%3D48899629924&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437724526%26sku%3D0%3A7374705756%26sku_id%3D48899629924&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D4437724526%26sku%3D0%3A7374705756%26sku_id%3D48899629924&memberId=1325437696506389977",
+    "imageUrl": "/products/rick-owens-rick-owens-pentragram-boots-29.png",
+    "localImage": "/products/rick-owens-rick-owens-pentragram-boots-29.png",
+    "slug": "rick-owens-rick-owens-pentragram-boots-29",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": true,
+    "notes": "1-Click Admin Ingest | FW19 LARRY"
   }
 ]
