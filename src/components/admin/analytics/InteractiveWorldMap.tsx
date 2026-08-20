@@ -62,58 +62,29 @@ export function InteractiveWorldMap({
     targetViewBox = "650 60 350 400"; // Focused on Asia-Pacific
   }
 
-  // Generate smooth incoming Bezier curves directly to Germany HQ (537.2, 104.1)
-  const incomingRoutes = [
-    {
-      id: "us-east-route",
-      from: "New York",
-      d: "M294.4,136.9 Q415.8,59.1 537.2,104.1",
-      color: "#38bdf8", // Cyan
-      strokeWidth: 1.8,
-    },
-    {
-      id: "us-west-route",
-      from: "Los Angeles",
-      d: "M171.5,155.4 Q354.3,30.0 537.2,104.1",
-      color: "#f59e0b", // Amber
-      strokeWidth: 1.6,
-    },
-    {
-      id: "ca-toronto-route",
-      from: "Toronto",
-      d: "M279.5,128.7 Q408.3,50.0 537.2,104.1",
-      color: "#38bdf8",
-      strokeWidth: 1.5,
-    },
-    {
-      id: "uk-london-route",
-      from: "London",
-      d: "M499.6,106.9 Q518.4,90.0 537.2,104.1",
-      color: "#10b981", // Emerald
-      strokeWidth: 2.0,
-    },
-    {
-      id: "fr-paris-route",
-      from: "Paris",
-      d: "M506.5,114.3 Q521.8,98.0 537.2,104.1",
-      color: "#10b981",
-      strokeWidth: 1.6,
-    },
-    {
-      id: "jp-tokyo-route",
-      from: "Tokyo",
-      d: "M887.9,150.9 Q712.5,45.0 537.2,104.1",
-      color: "#ec4899", // Pink
-      strokeWidth: 1.5,
-    },
-    {
-      id: "au-sydney-route",
-      from: "Sydney",
-      d: "M920.0,344.1 Q730.0,200.0 537.2,104.1",
-      color: "#a855f7", // Purple
-      strokeWidth: 1.4,
-    },
-  ];
+  // Dynamically generate smooth incoming Bezier curves for ANY active country directly into Germany Server HQ (537.2, 104.1)
+  const incomingRoutes = nonHqSpots.map((spot) => {
+    const hqX = hqSpot.svgX || 537.2;
+    const hqY = hqSpot.svgY || 104.1;
+    const midX = (spot.svgX + hqX) / 2;
+    const midY = Math.min(spot.svgY, hqY) - Math.abs(spot.svgX - hqX) * 0.16;
+    const d = `M${spot.svgX},${spot.svgY} Q${midX.toFixed(1)},${midY.toFixed(1)} ${hqX},${hqY}`;
+
+    const color =
+      spot.region === "americas"
+        ? "#38bdf8"
+        : spot.region === "europe"
+        ? "#10b981"
+        : "#ec4899";
+
+    return {
+      id: `${spot.id}-route`,
+      from: spot.city,
+      d,
+      color,
+      strokeWidth: spot.isTop ? 2.2 : 1.5,
+    };
+  });
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-2xl relative overflow-hidden">
