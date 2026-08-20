@@ -25,6 +25,7 @@ import {
   Download,
   Trash2,
   SlidersHorizontal,
+  Languages,
 } from "lucide-react";
 import { AnalyticsSummary } from "@/lib/analytics/analyticsStore";
 import { InteractiveTimelineChart } from "@/components/admin/analytics/InteractiveTimelineChart";
@@ -47,7 +48,21 @@ export default function AdminAnalyticsPage() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [purging, setPurging] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"graphs" | "table">("graphs");
+  const [lang, setLang] = useState<"de" | "en">("de");
   const [toastNotice, setToastNotice] = useState<string | null>(null);
+
+  // Load persisted language choice
+  useEffect(() => {
+    const saved = localStorage.getItem("af_analytics_lang");
+    if (saved === "en" || saved === "de") {
+      setLang(saved);
+    }
+  }, []);
+
+  const handleLanguageChange = (newLang: "de" | "en") => {
+    setLang(newLang);
+    localStorage.setItem("af_analytics_lang", newLang);
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -66,7 +81,11 @@ export default function AdminAnalyticsPage() {
   };
 
   const handlePurgeDevData = async () => {
-    if (!confirm("Are you sure you want to purge all local dev / test session events? This resets metrics to a clean organic audience baseline.")) {
+    const confirmMsg = lang === "de"
+      ? "Möchtest du wirklich alle lokalen Entwickler- und Test-Events bereinigen? Dadurch werden die Statistiken auf eine saubere organische Besucher-Basis zurückgesetzt."
+      : "Are you sure you want to purge all local dev / test session events? This resets metrics to a clean organic audience baseline.";
+
+    if (!confirm(confirmMsg)) {
       return;
     }
 
@@ -75,7 +94,11 @@ export default function AdminAnalyticsPage() {
       const res = await fetch("/api/admin/analytics/purge", { method: "POST" });
       const json = await res.json();
       if (json.success) {
-        setToastNotice("🧹 Dev test traffic purged! Analytics reset to clean organic baseline.");
+        setToastNotice(
+          lang === "de"
+            ? "🧹 Test-Traffic bereinigt! Analytics auf saubere Besucher-Basis zurückgesetzt."
+            : "🧹 Dev test traffic purged! Analytics reset to clean organic baseline."
+        );
         setTimeout(() => setToastNotice(null), 4000);
         await fetchAnalytics();
       }
@@ -92,6 +115,7 @@ export default function AdminAnalyticsPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const isDe = lang === "de";
   const totalAgentClicks = data?.totalAgentClicks || 0;
 
   return (
@@ -104,49 +128,74 @@ export default function AdminAnalyticsPage() {
         </div>
       )}
 
-      {/* TOP TITLE & VIEW MODE SWITCHER */}
+      {/* TOP TITLE & CONTROLS */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
             <h1 className="font-mono font-black text-xl sm:text-2xl uppercase tracking-widest text-white flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-emerald-400" />
-              <span>LIVE ANALYTICS &amp; CONVERSIONS</span>
+              <span>{isDe ? "LIVE ANALYTIK & CONVERSIONS" : "LIVE ANALYTICS & CONVERSIONS"}</span>
             </h1>
           </div>
           <p className="text-xs font-mono text-neutral-400 mt-1 flex items-center gap-2">
-            <span>Privacy-First Edge Tracker</span>
+            <span>{isDe ? "DSGVO-konformer Edge-Tracker" : "Privacy-First Edge Tracker"}</span>
             <span className="text-neutral-600">•</span>
-            <span className="text-emerald-400">Zero Cookies</span>
+            <span className="text-emerald-400">{isDe ? "Keine Cookies" : "Zero Cookies"}</span>
             <span className="text-neutral-600">•</span>
-            <span>100% GDPR / DSGVO Compliant</span>
+            <span>{isDe ? "Deutsche Uhrzeiten (MEZ)" : "100% GDPR Compliant"}</span>
           </p>
         </div>
 
-        {/* View Switcher (Graphs vs Table) & Actions */}
+        {/* Controls: Language Switcher + View Mode + Refresh */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Language Switcher (DE / EN) */}
+          <div className="flex items-center bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
+            <button
+              onClick={() => handleLanguageChange("de")}
+              className={`px-3 py-1.5 text-xs font-mono font-bold uppercase transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+                isDe
+                  ? "bg-emerald-500 text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <span>🇩🇪 DE</span>
+            </button>
+            <button
+              onClick={() => handleLanguageChange("en")}
+              className={`px-3 py-1.5 text-xs font-mono font-bold uppercase transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+                !isDe
+                  ? "bg-emerald-500 text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <span>🇬🇧 EN</span>
+            </button>
+          </div>
+
+          {/* View Switcher (Graphs vs Table) */}
           <div className="flex items-center bg-neutral-900 border border-neutral-800 p-1 rounded-xl">
             <button
               onClick={() => setViewMode("graphs")}
-              className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 rounded-lg cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 rounded-lg cursor-pointer ${
                 viewMode === "graphs"
                   ? "bg-white text-black shadow-md"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Graph &amp; Charts View</span>
+              <span>{isDe ? "Grafik-Ansicht" : "Graph View"}</span>
             </button>
             <button
               onClick={() => setViewMode("table")}
-              className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 rounded-lg cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-2 rounded-lg cursor-pointer ${
                 viewMode === "table"
                   ? "bg-white text-black shadow-md"
                   : "text-neutral-400 hover:text-white"
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
-              <span>Data Matrix View</span>
+              <span>{isDe ? "Tabellen-Matrix" : "Data Matrix"}</span>
             </button>
           </div>
 
@@ -157,7 +206,7 @@ export default function AdminAnalyticsPage() {
             className="px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white rounded-xl text-xs font-mono uppercase flex items-center gap-2 transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-emerald-400" : ""}`} />
-            <span>{refreshing ? "Updating..." : "Refresh"}</span>
+            <span>{refreshing ? (isDe ? "Aktualisiere..." : "Updating...") : (isDe ? "Aktualisieren" : "Refresh")}</span>
           </button>
         </div>
       </div>
@@ -167,7 +216,12 @@ export default function AdminAnalyticsPage() {
         <div className="flex items-center gap-2.5 text-neutral-300">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>
-            <strong className="text-emerald-400 uppercase">Operator Filter Active:</strong> Your own pageviews, test clicks &amp; admin sessions are automatically excluded from analytics metrics.
+            <strong className="text-emerald-400 uppercase">
+              {isDe ? "Operator-Filter Aktiv:" : "Operator Filter Active:"}
+            </strong>{" "}
+            {isDe
+              ? "Deine eigenen Seitenaufrufe, Test-Klicks und Admin-Sitzungen werden automatisch aus den Statistiken herausgefiltert."
+              : "Your own pageviews, test clicks & admin sessions are automatically excluded from analytics metrics."}
           </span>
         </div>
 
@@ -175,11 +229,11 @@ export default function AdminAnalyticsPage() {
           type="button"
           onClick={handlePurgeDevData}
           disabled={purging}
-          title="Reset past local test events and clean noise"
+          title={isDe ? "Alte lokale Test-Events löschen" : "Reset past local test events"}
           className="px-3 py-1.5 bg-neutral-950 hover:bg-red-950/60 text-neutral-400 hover:text-red-300 border border-neutral-800 hover:border-red-800 rounded-lg text-[11px] font-mono uppercase font-bold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-50"
         >
           <Trash2 className="w-3 h-3 text-red-400" />
-          <span>{purging ? "Purging..." : "Purge Dev Test Data"}</span>
+          <span>{purging ? (isDe ? "Bereinige..." : "Purging...") : (isDe ? "Test-Daten Bereinigen" : "Purge Dev Test Data")}</span>
         </button>
       </div>
 
@@ -188,7 +242,9 @@ export default function AdminAnalyticsPage() {
         {/* Metric 1: Total Pageviews */}
         <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Pageviews (Tracked)</span>
+            <span className="text-xs font-mono uppercase tracking-wider">
+              {isDe ? "Seitenaufrufe (Gesamt)" : "Pageviews (Tracked)"}
+            </span>
             <Eye className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="flex items-baseline justify-between">
@@ -197,18 +253,20 @@ export default function AdminAnalyticsPage() {
             </span>
             <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-0.5">
               <TrendingUp className="w-3 h-3" />
-              <span>Active</span>
+              <span>{isDe ? "Aktiv" : "Active"}</span>
             </span>
           </div>
           <p className="text-[11px] font-mono text-neutral-500">
-            Cookie-free organic visitor page impressions
+            {isDe ? "Organische Besucher-Impressionen" : "Cookie-free organic visitor impressions"}
           </p>
         </div>
 
         {/* Metric 2: Outgoing Agent Clicks */}
         <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Outgoing Agent Clicks</span>
+            <span className="text-xs font-mono uppercase tracking-wider">
+              {isDe ? "Ausgehende Agent-Klicks" : "Outgoing Agent Clicks"}
+            </span>
             <MousePointerClick className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline justify-between">
@@ -220,14 +278,16 @@ export default function AdminAnalyticsPage() {
             </span>
           </div>
           <p className="text-[11px] font-mono text-neutral-500">
-            Direct routing to Sugargoo, Superbuy &amp; CNfans
+            {isDe ? "Weiterleitungen zu Sugargoo, Superbuy etc." : "Direct routing to Sugargoo, Superbuy & CNfans"}
           </p>
         </div>
 
         {/* Metric 3: Top Performing Agent */}
         <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Top Affiliate Agent</span>
+            <span className="text-xs font-mono uppercase tracking-wider">
+              {isDe ? "Top Affiliate-Agent" : "Top Affiliate Agent"}
+            </span>
             <Sparkles className="w-4 h-4 text-amber-400" />
           </div>
           <div className="flex items-baseline justify-between">
@@ -235,35 +295,37 @@ export default function AdminAnalyticsPage() {
               SUGARGOO
             </span>
             <span className="text-[11px] font-mono text-neutral-400">
-              VIP Member ID
+              VIP Member
             </span>
           </div>
           <p className="text-[11px] font-mono text-neutral-500">
-            Default 1-click checkout routing
+            {isDe ? "Standardmäßiges 1-Klick-Routing" : "Default 1-click checkout routing"}
           </p>
         </div>
 
         {/* Metric 4: Compliance & Privacy Status */}
         <div className="p-5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-xs font-mono uppercase tracking-wider">Privacy &amp; GDPR</span>
+            <span className="text-xs font-mono uppercase tracking-wider">
+              {isDe ? "DSGVO & Datenschutz" : "Privacy & GDPR"}
+            </span>
             <ShieldCheck className="w-4 h-4 text-blue-400" />
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-mono font-bold text-white flex items-center gap-1.5">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              100% COMPLIANT
+              {isDe ? "100% KONFORM" : "100% COMPLIANT"}
             </span>
           </div>
           <p className="text-[11px] font-mono text-neutral-500">
-            No cookie banner required • Anonymized IPs
+            {isDe ? "Kein Cookie-Banner erforderlich" : "No cookie banner required • Anonymized IPs"}
           </p>
         </div>
       </div>
 
       {/* OPTIMAL POSTING TIMES & VIRALITY HEATMAP CARD */}
       {data?.optimalPostTimes && (
-        <OptimalPostTimesCard insights={data.optimalPostTimes} />
+        <OptimalPostTimesCard insights={data.optimalPostTimes} lang={lang} />
       )}
 
       {/* VIEW MODE 1: VISUAL GRAPHS & INTERACTIVE CHARTS */}
@@ -283,14 +345,16 @@ export default function AdminAnalyticsPage() {
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <MousePointerClick className="w-4 h-4 text-emerald-400" />
-                    <span>Affiliate Agent Routing Breakdown</span>
+                    <span>{isDe ? "Affiliate-Agenten Klickverteilung" : "Affiliate Agent Routing Breakdown"}</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Click volume distribution across all 7 supported Chinese shopping agents
+                    {isDe
+                      ? "Klickvolumen aufgeschlüsselt über alle 7 unterstützten Shopping-Agenten"
+                      : "Click volume distribution across all 7 supported Chinese shopping agents"}
                   </p>
                 </div>
                 <span className="text-xs font-mono font-bold text-neutral-400">
-                  {totalAgentClicks} Total Clicks
+                  {totalAgentClicks} {isDe ? "Klicks" : "Total Clicks"}
                 </span>
               </div>
 
@@ -308,7 +372,7 @@ export default function AdminAnalyticsPage() {
                           {config.label}
                         </span>
                         <span className="text-neutral-400">
-                          <strong className="text-white">{count}</strong> clicks ({percentage}%)
+                          <strong className="text-white">{count}</strong> {isDe ? "Klicks" : "clicks"} ({percentage}%)
                         </span>
                       </div>
                       <div className="w-full h-2.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
@@ -329,10 +393,10 @@ export default function AdminAnalyticsPage() {
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <Users className="w-4 h-4 text-cyan-400" />
-                    <span>Traffic Inflow Channels</span>
+                    <span>{isDe ? "Traffic-Einstiegskanäle" : "Traffic Inflow Channels"}</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Where your viral haul visitors originate from
+                    {isDe ? "Woher deine viralen Besucher kommen" : "Where your viral haul visitors originate from"}
                   </p>
                 </div>
               </div>
@@ -348,7 +412,9 @@ export default function AdminAnalyticsPage() {
                       <span className="text-xs font-mono text-white font-medium">{src.source}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-white">{src.count} views</span>
+                      <span className="text-xs font-mono font-bold text-white">
+                        {src.count} {isDe ? "Aufrufe" : "views"}
+                      </span>
                       <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-neutral-400 text-[10px] font-mono rounded">
                         {src.percentage}%
                       </span>
@@ -367,10 +433,12 @@ export default function AdminAnalyticsPage() {
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <Globe className="w-4 h-4 text-emerald-400" />
-                    <span>Geographic Audience (Country Split)</span>
+                    <span>{isDe ? "Geografische Zielgruppe (Länder-Split)" : "Geographic Audience (Country Split)"}</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Cleaned of developer local noise • Organic visitor regions
+                    {isDe
+                      ? "Bereinigt um Entwickler-Zugriffe • Echte Besucher-Herkunft"
+                      : "Cleaned of developer local noise • Organic visitor regions"}
                   </p>
                 </div>
               </div>
@@ -402,10 +470,12 @@ export default function AdminAnalyticsPage() {
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <Smartphone className="w-4 h-4 text-purple-400" />
-                    <span>Device &amp; Platform Ratio</span>
+                    <span>{isDe ? "Geräte- & Plattform-Verhältnis" : "Device & Platform Ratio"}</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Optimized for mobile TikTok / Instagram in-app browsers
+                    {isDe
+                      ? "Optimiert für TikTok / Instagram In-App-Browser"
+                      : "Optimized for mobile TikTok / Instagram in-app browsers"}
                   </p>
                 </div>
               </div>
@@ -453,10 +523,12 @@ export default function AdminAnalyticsPage() {
               <div>
                 <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" />
-                  <span>Top Sourced Grails (Product Level CTR)</span>
+                  <span>{isDe ? "Top Sourced Grails (Produkt-Klickraten)" : "Top Sourced Grails (Product Level CTR)"}</span>
                 </h2>
                 <p className="text-xs font-mono text-neutral-500">
-                  Most engaged fashion pieces across your TikTok &amp; IG audience
+                  {isDe
+                    ? "Die am meisten geklickten Designer-Pieces deiner TikTok- & IG-Zielgruppe"
+                    : "Most engaged fashion pieces across your TikTok & IG audience"}
                 </p>
               </div>
             </div>
@@ -466,12 +538,12 @@ export default function AdminAnalyticsPage() {
                 <thead>
                   <tr className="border-b border-neutral-800 text-neutral-500 uppercase text-[10px]">
                     <th className="py-2.5 px-3">#</th>
-                    <th className="py-2.5 px-3">Designer</th>
-                    <th className="py-2.5 px-3">Piece Title</th>
-                    <th className="py-2.5 px-3">Category</th>
-                    <th className="py-2.5 px-3">Price</th>
-                    <th className="py-2.5 px-3 text-right">Agent Clicks</th>
-                    <th className="py-2.5 px-3 text-right">Action</th>
+                    <th className="py-2.5 px-3">{isDe ? "Designer" : "Designer"}</th>
+                    <th className="py-2.5 px-3">{isDe ? "Piece Name" : "Piece Title"}</th>
+                    <th className="py-2.5 px-3">{isDe ? "Kategorie" : "Category"}</th>
+                    <th className="py-2.5 px-3">{isDe ? "Preis" : "Price"}</th>
+                    <th className="py-2.5 px-3 text-right">{isDe ? "Agent-Klicks" : "Agent Clicks"}</th>
+                    <th className="py-2.5 px-3 text-right">{isDe ? "Aktion" : "Action"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-800/60">
@@ -489,7 +561,7 @@ export default function AdminAnalyticsPage() {
                           target="_blank"
                           className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors"
                         >
-                          <span>View</span>
+                          <span>{isDe ? "Ansehen" : "View"}</span>
                           <ArrowUpRight className="w-3 h-3" />
                         </Link>
                       </td>
