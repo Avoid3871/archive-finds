@@ -1,0 +1,41 @@
+# ========================================================
+# ARCHIVE FINDS // STRICT ROBOTS DIRECTIVE & ANTI-CRAWLER
+# ========================================================
+
+# 1. Completely Disallow Aggressive AI Training & Data Scraper Bots
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: CCBot
+User-agent: ClaudeBot
+User-agent: Anthropic-ai
+User-agent: Bytespider
+User-agent: Diffbot
+User-agent: Scrapy
+User-agent: PerplexityBot
+User-agent: cohere-ai
+User-agent: Omgilibot
+User-agent: FacebookBot
+User-agent: Amazonbot
+User-agent: SemrushBot
+User-agent: AhrefsBot
+User-agent: DotBot
+User-agent: PetalBot
+User-agent: DataForSeoBot
+Disallow: /
+
+# 2. General Crawlers: Strictly Restrict Backend, APIs, and Admin Systems
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api
+Disallow: /api/
+Disallow: /scratch/
+Disallow: /storage/
+Disallow: /products/uploads/
+Allow: /
+Allow: /saved
+Allow: /product/
+Allow: /mission
+Allow: /privacy
+Allow: /terms
+Allow: /legal
