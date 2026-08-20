@@ -592,7 +592,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     ];
   }
 
-  // 1. Search Demand Gaps Intelligence
+  // 1. Search Demand Gaps Intelligence (100% Authentic Live User Searches Only)
   const hasLiveSearches = searchCountMap.size > 0;
   let searchDemandGaps: SearchDemandGap[] = [];
 
@@ -614,59 +614,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         isLive: true,
       };
     });
-  } else {
-    // Curated Fashion Demand Benchmarks
-    searchDemandGaps = [
-      {
-        query: "Maison Margiela German Army Trainers",
-        count: 18,
-        inCatalog: false,
-        matchCount: 0,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-        isLive: false,
-      },
-      {
-        query: "Chrome Hearts Cemetery Cross Patch Hoodie",
-        count: 14,
-        inCatalog: false,
-        matchCount: 0,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-        isLive: false,
-      },
-      {
-        query: "Undercover 85 Distressed Denim",
-        count: 12,
-        inCatalog: false,
-        matchCount: 0,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-        isLive: false,
-      },
-      {
-        query: "Rick Owens Bauhaus Cargo Pants",
-        count: 16,
-        inCatalog: true,
-        matchCount: 2,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-        isLive: false,
-      },
-      {
-        query: "Enfants Riches Déprimés Silk Shirt",
-        count: 9,
-        inCatalog: false,
-        matchCount: 0,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
-        isLive: false,
-      },
-      {
-        query: "Raf Simons Riot Riot Riot Bomber",
-        count: 11,
-        inCatalog: true,
-        matchCount: 1,
-        lastSearched: new Date(Date.now() - 1000 * 60 * 200).toISOString(),
-        isLive: false,
-      },
-    ];
   }
+
   searchDemandGaps.sort((a, b) => b.count - a.count);
 
   // 2. Slide Theme & Content Concept ROI Attribution
