@@ -39,10 +39,13 @@ export interface GeoHotspot {
   lon: string;
   x: number; // SVG X coordinate in percentage (0-100)
   y: number; // SVG Y coordinate in percentage (0-100)
+  svgX: number; // Exact SVG coordinate in 0..1000
+  svgY: number; // Exact SVG coordinate in 0..500
   visitors: number;
   percentage: number;
   flag: string;
   isTop: boolean;
+  isHub?: boolean;
 }
 
 export interface DeviceItem {
@@ -448,8 +451,26 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     ];
   }
 
-  // Precise Geographic Fashion Capitals with accurate SVG coordinate percentages
+  // Precise Geographic Fashion Capitals with accurate SVG coordinates
   const geoHotspots: GeoHotspot[] = [
+    {
+      id: "de-berlin",
+      name: "Germany (Berlin / Server HQ)",
+      countryCode: "DE",
+      region: "europe",
+      city: "Berlin (HQ)",
+      lat: "52.5200° N",
+      lon: "13.4050° E",
+      x: 53.72,
+      y: 20.82,
+      svgX: 537.2,
+      svgY: 104.1,
+      visitors: Math.round(totalPageviews * 0.15),
+      percentage: 15,
+      flag: "🇩🇪",
+      isTop: true,
+      isHub: true,
+    },
     {
       id: "us-east",
       name: "United States (New York)",
@@ -460,6 +481,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "74.0060° W",
       x: 29.44,
       y: 27.38,
+      svgX: 294.4,
+      svgY: 136.9,
       visitors: Math.round(totalPageviews * 0.28),
       percentage: 28,
       flag: "🇺🇸",
@@ -475,6 +498,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "118.2437° W",
       x: 17.15,
       y: 31.08,
+      svgX: 171.5,
+      svgY: 155.4,
       visitors: Math.round(totalPageviews * 0.17),
       percentage: 17,
       flag: "🇺🇸",
@@ -490,25 +515,12 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "0.1278° W",
       x: 49.96,
       y: 21.38,
+      svgX: 499.6,
+      svgY: 106.9,
       visitors: Math.round(totalPageviews * 0.21),
       percentage: 21,
       flag: "🇬🇧",
       isTop: true,
-    },
-    {
-      id: "de-berlin",
-      name: "Germany (Berlin / Frankfurt)",
-      countryCode: "DE",
-      region: "europe",
-      city: "Berlin",
-      lat: "52.5200° N",
-      lon: "13.4050° E",
-      x: 53.72,
-      y: 20.82,
-      visitors: Math.round(totalPageviews * 0.15),
-      percentage: 15,
-      flag: "🇩🇪",
-      isTop: false,
     },
     {
       id: "fr-paris",
@@ -520,6 +532,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "2.3522° E",
       x: 50.65,
       y: 22.86,
+      svgX: 506.5,
+      svgY: 114.3,
       visitors: Math.round(totalPageviews * 0.10),
       percentage: 10,
       flag: "🇫🇷",
@@ -535,6 +549,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "79.3832° W",
       x: 27.95,
       y: 25.75,
+      svgX: 279.5,
+      svgY: 128.7,
       visitors: Math.round(totalPageviews * 0.09),
       percentage: 9,
       flag: "🇨🇦",
@@ -550,6 +566,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "139.6503° E",
       x: 88.79,
       y: 30.18,
+      svgX: 887.9,
+      svgY: 150.9,
       visitors: Math.round(totalPageviews * 0.06),
       percentage: 6,
       flag: "🇯🇵",
@@ -565,6 +583,8 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       lon: "151.2093° E",
       x: 92.00,
       y: 68.82,
+      svgX: 920.0,
+      svgY: 344.1,
       visitors: Math.round(totalPageviews * 0.04),
       percentage: 4,
       flag: "🇦🇺",
