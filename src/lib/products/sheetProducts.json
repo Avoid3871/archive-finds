@@ -3628,5 +3628,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | Iconic Permanent Collection"
+  },
+  {
+    "id": "146",
+    "title": "Balenciaga Marn Cargo Pants",
+    "name": "Balenciaga Marn Cargo Pants",
+    "brand": "Balenciaga",
+    "brandSlug": "balenciaga",
+    "category": "Denim",
+    "categorySlug": "denim",
+    "season": "",
+    "price": 53.04,
+    "sourcePrice": 53.04,
+    "estimatedRetail": 890.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=7535592636&wfr=BuyercopyURL&share_relation=45e41ae9d34aa304_1430506717_1&spider_token=7647",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D7535592636%26wfr%3DBuyercopyURL%26share_relation%3D45e41ae9d34aa304_1430506717_1%26spider_token%3D7647&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D7535592636%26wfr%3DBuyercopyURL%26share_relation%3D45e41ae9d34aa304_1430506717_1%26spider_token%3D7647&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D7535592636%26wfr%3DBuyercopyURL%26share_relation%3D45e41ae9d34aa304_1430506717_1%26spider_token%3D7647&memberId=1325437696506389977",
+    "imageUrl": "/products/balenciaga-balenciaga-marn-cargo-pants-9893.png",
+    "localImage": "/products/balenciaga-balenciaga-marn-cargo-pants-9893.png",
+    "slug": "balenciaga-balenciaga-marn-cargo-pants-9893",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
