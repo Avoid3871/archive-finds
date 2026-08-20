@@ -648,7 +648,9 @@
       "grail"
     ],
     "isFeatured": false,
-    "isRare": false
+    "isRare": false,
+    "status": "APPROVED",
+    "isDelisted": false
   },
   {
     "id": "27",
