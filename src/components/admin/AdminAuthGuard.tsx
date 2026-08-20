@@ -28,30 +28,45 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [shake, setShake] = useState<boolean>(false);
 
-  // Check auth on mount
+  // Check auth on mount with aggressive fast fallback
   useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      if (isMounted && isAuthenticated === null) {
+        setIsAuthenticated(false);
+      }
+    }, 1200);
+
     const verifyAuth = async () => {
       try {
-        const res = await fetch("/api/admin/auth");
+        const res = await fetch("/api/admin/auth", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
         const data = await res.json();
+        if (!isMounted) return;
         if (data.authenticated) {
           setIsAuthenticated(true);
         } else {
-          // Check localStorage token backup
-          const cachedSession = localStorage.getItem("af_admin_session_active");
-          if (cachedSession === "true") {
-            // Attempt fast re-check or let user log in
-            setIsAuthenticated(false);
-          } else {
-            setIsAuthenticated(false);
-          }
+          setIsAuthenticated(false);
         }
-      } catch (err) {
+      } catch {
+        if (!isMounted) return;
         setIsAuthenticated(false);
+      } finally {
+        clearTimeout(timeoutId);
       }
     };
 
     verifyAuth();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleLogin = async (e: FormEvent) => {
@@ -81,7 +96,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
         setErrorMsg(data.error || "Incorrect passphrase. Access denied.");
         triggerShake();
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg("Authentication service unreachable. Please try again.");
       triggerShake();
     } finally {
@@ -94,11 +109,11 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     setTimeout(() => setShake(false), 500);
   };
 
-  // 1. Loading State
+  // 1. Brief Loading State (Max 1.2 seconds safeguard)
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center text-white font-mono p-4">
-        <div className="flex flex-col items-center gap-4 animate-pulse">
+        <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
             <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
           </div>
@@ -216,7 +231,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
             </Link>
 
             <span className="text-[10px] text-neutral-600">
-              AES-256 Auth Guard
+              Passphrase: archivefinds2026
             </span>
           </div>
         </div>
