@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordAnalyticsEvent } from "@/lib/analytics/analyticsStore";
 
+function parseDeviceFromUserAgent(ua: string): string {
+  const lower = ua.toLowerCase();
+  if (lower.includes("iphone") || lower.includes("ipad") || lower.includes("ipod")) {
+    return "Mobile (iOS / iPhone)";
+  }
+  if (lower.includes("android")) {
+    return "Mobile (Android)";
+  }
+  if (lower.includes("macintosh") || lower.includes("mac os")) {
+    return "Desktop (macOS / Apple)";
+  }
+  if (lower.includes("windows")) {
+    return "Desktop (Windows / PC)";
+  }
+  if (lower.includes("linux")) {
+    return "Desktop (Linux)";
+  }
+  return "Mobile (Direct / App)";
+}
+
+function parseCountryCode(req: NextRequest, bodyCountry?: string): string {
+  const vercelCountry = req.headers.get("x-vercel-ip-country");
+  if (vercelCountry && vercelCountry.length === 2) return vercelCountry.toUpperCase();
+
+  const cfCountry = req.headers.get("cf-ipcountry");
+  if (cfCountry && cfCountry.length === 2) return cfCountry.toUpperCase();
+
+  if (bodyCountry && bodyCountry.length === 2) return bodyCountry.toUpperCase();
+
+  // Accept-Language fallback
+  const acceptLang = req.headers.get("accept-language") || "";
+  if (acceptLang.includes("de")) return "DE";
+  if (acceptLang.includes("fr")) return "FR";
+  if (acceptLang.includes("en-gb") || acceptLang.includes("en-GB")) return "GB";
+  if (acceptLang.includes("en-ca") || acceptLang.includes("en-CA")) return "CA";
+  if (acceptLang.includes("ja")) return "JP";
+
+  return "US";
+}
+
 export async function POST(req: NextRequest) {
   try {
     let body;
@@ -11,6 +51,10 @@ export async function POST(req: NextRequest) {
     } else {
       body = await req.json();
     }
+
+    const ua = req.headers.get("user-agent") || "";
+    const device = parseDeviceFromUserAgent(ua);
+    const countryCode = parseCountryCode(req, body?.countryCode);
 
     if (body && body.type) {
       recordAnalyticsEvent({
@@ -23,6 +67,8 @@ export async function POST(req: NextRequest) {
         price: typeof body.price === "number" ? body.price : undefined,
         query: body.query,
         style: body.style,
+        countryCode,
+        device,
       });
     }
 

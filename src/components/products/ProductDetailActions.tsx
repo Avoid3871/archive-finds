@@ -8,17 +8,14 @@ import { SavePieceButton } from "@/components/products/SavePieceButton";
 import { ProductPrice } from "@/components/products/ProductPrice";
 import { AGENTS_CONFIG, AgentId } from "@/lib/agents/agentConfig";
 import { resolveAgentUrl } from "@/lib/agents/agentResolver";
-import { getResaleBenchmark } from "@/lib/products/pricingUtils";
 import {
   ShieldCheck,
   Sparkles,
   Truck,
-  Flame,
   Gift,
   Share2,
   Check,
   ArrowUpRight,
-  TrendingUp,
 } from "lucide-react";
 
 interface ProductDetailActionsProps {
@@ -32,7 +29,6 @@ export function ProductDetailActions({ product }: ProductDetailActionsProps) {
   );
   const [copied, setCopied] = useState<boolean>(false);
 
-  const benchmark = getResaleBenchmark(product.price, product.brand, product.category);
   const currentAgent = AGENTS_CONFIG[selectedAgentId] || AGENTS_CONFIG.sugargoo;
 
   const handleAgentChange = (agentId: AgentId, resolvedUrl: string) => {
@@ -49,7 +45,7 @@ export function ProductDetailActions({ product }: ProductDetailActionsProps) {
       try {
         await navigator.share({
           title: `${product.brand} - ${product.name}`,
-          text: `Found this ${product.brand} grail on Archive Finds for $${product.price}:`,
+          text: `Found this ${product.brand} grail on Archive Finds:`,
           url: shareUrl,
         });
         return;
@@ -69,43 +65,15 @@ export function ProductDetailActions({ product }: ProductDetailActionsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Live Social Proof Badge */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-mono">
-        <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-        <span>HIGH DEMAND</span>
-        <span className="text-neutral-500">•</span>
-        <span className="text-neutral-300">18 collectors viewed this piece today</span>
-      </div>
-
-      {/* Resale Price Comparison & Value Shock Display */}
-      <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl space-y-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="flex items-baseline gap-3">
-            <ProductPrice
-              price={product.price}
-              className="text-2xl sm:text-3xl font-mono font-black text-black"
-            />
-            <span className="text-xs font-mono text-neutral-500 uppercase tracking-wider">
-              DIRECT PROCURING
-            </span>
-          </div>
-
-          <div className="text-right">
-            <span className="text-xs font-mono text-neutral-500 line-through">
-              Est. Resale: ${benchmark.estimatedResale} USD
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-xs font-mono pt-2 border-t border-neutral-200/60">
-          <span className="text-emerald-700 font-bold flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5" />
-            Save ${benchmark.savingsDollars} ({benchmark.discountPercent}% below secondary market)
-          </span>
-          <span className="text-neutral-500 text-[10px] uppercase">
-            Grailed / StockX Benchmark
-          </span>
-        </div>
+      {/* Dynamic Price Display */}
+      <div className="flex items-baseline gap-3 pb-4 border-b border-neutral-200">
+        <ProductPrice
+          price={product.price}
+          className="text-2xl sm:text-3xl font-mono font-black text-black"
+        />
+        <span className="text-xs font-mono text-neutral-500 uppercase tracking-wider">
+          ESTIMATED PROCURING PRICE
+        </span>
       </div>
 
       {/* Agent Selector & Routing */}
@@ -121,7 +89,7 @@ export function ProductDetailActions({ product }: ProductDetailActionsProps) {
             <Gift className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
               <span className="text-emerald-400 font-bold uppercase">
-                {selectedAgentId === "sugargoo" ? "$140 Shipping Coupons" : `${currentAgent.name} VIP Discount`}
+                {selectedAgentId === "sugargoo" ? "$140 Shipping Coupons" : `${currentAgent.name} VIP Partner`}
               </span>
               <p className="text-[11px] text-neutral-400 font-light">
                 {selectedAgentId === "sugargoo"
@@ -222,15 +190,10 @@ export function ProductDetailActions({ product }: ProductDetailActionsProps) {
           <p className="text-[10px] font-mono text-neutral-500 uppercase truncate max-w-[130px]">
             {product.brand}
           </p>
-          <div className="flex items-baseline gap-1.5">
-            <ProductPrice
-              price={product.price}
-              className="text-base font-black font-mono text-black"
-            />
-            <span className="text-[10px] font-mono text-neutral-500 line-through">
-              ${benchmark.estimatedResale}
-            </span>
-          </div>
+          <ProductPrice
+            price={product.price}
+            className="text-base font-black font-mono text-black"
+          />
         </div>
         <div className="flex-grow max-w-[210px]">
           <AffiliateButton

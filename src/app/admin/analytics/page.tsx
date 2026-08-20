@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Globe,
   Smartphone,
+  Laptop,
   Eye,
   Layers,
   ArrowUpRight,
@@ -182,7 +183,7 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {/* AGENT BREAKDOWN & TRAFFIC SOURCES GRID */}
+      {/* ROW 1: AGENT BREAKDOWN & TRAFFIC SOURCES */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Multi-Agent Click Distribution (7 cols) */}
         <div className="lg:col-span-7 bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-6 shadow-xl">
@@ -276,17 +277,108 @@ export default function AdminAnalyticsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
 
-          <div className="p-3.5 bg-neutral-950 border border-neutral-800 rounded-lg flex items-center justify-between text-xs font-mono">
-            <span className="text-neutral-400">Want full Geo &amp; Device analytics?</span>
-            <a
-              href="https://vercel.com/analytics"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white hover:underline flex items-center gap-1 font-bold"
-            >
-              Open Vercel <ArrowUpRight className="w-3 h-3" />
-            </a>
+      {/* ROW 2: LIVE GEO / COUNTRIES & DEVICE BREAKDOWNS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Geo Countries (7 cols) */}
+        <div className="lg:col-span-7 bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-6 shadow-xl">
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+            <div>
+              <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-emerald-400" />
+                <span>Geographic Audience (Countries)</span>
+              </h2>
+              <p className="text-xs font-mono text-neutral-500">
+                Real-time country distribution parsed from incoming visitor headers
+              </p>
+            </div>
+            <span className="text-xs font-mono text-emerald-400 font-bold">
+              Live Edge Geo
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {(data?.countries || []).map((c, idx) => (
+              <div
+                key={c.code || idx}
+                className="p-3.5 bg-neutral-950 border border-neutral-800/80 rounded-lg space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="font-bold text-white flex items-center gap-2">
+                    <span className="text-base">{c.flag}</span>
+                    <span>{c.country}</span>
+                  </span>
+                  <span className="text-emerald-400 font-bold">
+                    {c.percentage}%
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.max(c.percentage, 5)}%` }}
+                  />
+                </div>
+                <div className="text-[10px] font-mono text-neutral-500 flex justify-between">
+                  <span>Code: {c.code}</span>
+                  <span>{c.count} impressions</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Devices & OS (5 cols) */}
+        <div className="lg:col-span-5 bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-6 shadow-xl">
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+            <div>
+              <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-blue-400" />
+                <span>Devices &amp; Platforms</span>
+              </h2>
+              <p className="text-xs font-mono text-neutral-500">
+                Mobile vs. Desktop audience breakdown
+              </p>
+            </div>
+            <span className="text-xs font-mono text-blue-400 font-bold">
+              Device Split
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {(data?.devices || []).map((dev, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-neutral-950 border border-neutral-800/80 rounded-lg space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="font-bold text-white flex items-center gap-2">
+                    {dev.type === "mobile" ? (
+                      <Smartphone className="w-4 h-4 text-cyan-400" />
+                    ) : (
+                      <Laptop className="w-4 h-4 text-purple-400" />
+                    )}
+                    <span>{dev.device}</span>
+                  </span>
+                  <span className="text-blue-400 font-bold">
+                    {dev.percentage}%
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      dev.type === "mobile" ? "bg-cyan-400" : "bg-purple-400"
+                    }`}
+                    style={{ width: `${Math.max(dev.percentage, 5)}%` }}
+                  />
+                </div>
+                <div className="text-[10px] font-mono text-neutral-500 flex justify-between">
+                  <span className="capitalize">{dev.type} Hardware</span>
+                  <span>{dev.count} sessions</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

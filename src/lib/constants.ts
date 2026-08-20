@@ -4,8 +4,8 @@ export const SITE_CONFIG = {
   description: "A premier editorial discovery platform for curated archive pieces, rare garments, and designer fashion.",
   url: "https://archive-finds.vercel.app",
   socials: {
-    tiktok: "https://tiktok.com/@archivefinds",
-    instagram: "https://instagram.com/archivefinds",
+    tiktok: "https://www.tiktok.com/@arch1v4",
+    instagram: "https://www.instagram.com/arch1v4_finds/",
   },
 };
 

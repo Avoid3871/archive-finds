@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { getResaleBenchmark } from "@/lib/products/pricingUtils";
 import {
   Bookmark,
   Trash2,
@@ -13,8 +12,6 @@ import {
   Check,
   Share2,
   Sparkles,
-  TrendingUp,
-  ExternalLink,
 } from "lucide-react";
 
 export default function SavedGrailsPage() {
@@ -22,14 +19,7 @@ export default function SavedGrailsPage() {
   const [copiedLinks, setCopiedLinks] = useState(false);
   const [shared, setShared] = useState(false);
 
-  // Calculate haul totals & secondary market savings
   const totalDirectPrice = savedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
-  const totalEstimatedResale = savedProducts.reduce((sum, p) => {
-    const bm = getResaleBenchmark(p.price, p.brand, p.category);
-    return sum + bm.estimatedResale;
-  }, 0);
-  const totalSavings = Math.max(0, totalEstimatedResale - totalDirectPrice);
-  const totalDiscountPercent = totalEstimatedResale > 0 ? Math.round((totalSavings / totalEstimatedResale) * 100) : 0;
 
   const handleCopyAllLinks = () => {
     if (savedProducts.length === 0) return;
@@ -47,7 +37,7 @@ export default function SavedGrailsPage() {
 
   const handleShareHaul = async () => {
     if (savedProducts.length === 0) return;
-    const shareText = `Check out my curated ${savedProducts.length}x archive grail rotation on Archive Finds ($${totalDirectPrice.toFixed(2)} vs ~~$${totalEstimatedResale.toFixed(2)}~~ market value):\nhttps://archive-finds.vercel.app/saved?ref=share`;
+    const shareText = `Check out my curated ${savedProducts.length}x archive grail rotation on Archive Finds:\nhttps://archive-finds.vercel.app/saved?ref=share`;
 
     if (navigator.share) {
       try {
@@ -140,41 +130,20 @@ export default function SavedGrailsPage() {
         )}
       </div>
 
-      {/* HAUL VALUE BENCHMARK SUMMARY (When items present) */}
+      {/* HAUL ESTIMATED TOTAL (When items present) */}
       {savedCount > 0 && (
-        <div className="p-5 bg-neutral-900 text-white rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
-              <TrendingUp className="w-4 h-4" />
-              <span>HAUL VALUE SAVINGS BENCHMARK</span>
-            </div>
-            <p className="text-xs text-neutral-400 font-light">
-              Combined secondary market resell comparison for all {savedCount} saved garments.
-            </p>
+        <div className="p-4 sm:p-5 bg-neutral-900 text-white rounded-xl flex items-center justify-between gap-4 shadow-md font-mono">
+          <div>
+            <span className="text-xs text-neutral-400 uppercase tracking-wider block">
+              Curated Vault Total ({savedCount} Pieces)
+            </span>
+            <span className="text-2xl font-black text-white">
+              ${totalDirectPrice.toFixed(2)} USD
+            </span>
           </div>
-
-          <div className="flex flex-wrap items-baseline gap-4 sm:gap-6 font-mono">
-            <div>
-              <span className="text-[10px] text-neutral-500 uppercase block">Direct Sourcing</span>
-              <span className="text-xl sm:text-2xl font-black text-white">
-                ${totalDirectPrice.toFixed(2)} USD
-              </span>
-            </div>
-
-            <div className="border-l border-neutral-800 pl-4 sm:pl-6">
-              <span className="text-[10px] text-neutral-500 uppercase block">Est. Grailed Market</span>
-              <span className="text-lg text-neutral-400 line-through">
-                ${totalEstimatedResale.toFixed(2)} USD
-              </span>
-            </div>
-
-            <div className="border-l border-neutral-800 pl-4 sm:pl-6">
-              <span className="text-[10px] text-emerald-400 uppercase font-bold block">Total Savings</span>
-              <span className="text-xl sm:text-2xl font-black text-emerald-400">
-                -${totalSavings.toFixed(2)} ({totalDiscountPercent}%)
-              </span>
-            </div>
-          </div>
+          <p className="text-xs text-neutral-400 font-light hidden sm:block">
+            Direct agent procurement prices across verified community sources.
+          </p>
         </div>
       )}
 
