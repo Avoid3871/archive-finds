@@ -2233,30 +2233,6 @@
   },
   {
     "id": "89",
-    "title": "Yohji Yamamoto Hannya Wool Sweater",
-    "name": "Yohji Yamamoto Hannya Wool Sweater",
-    "brand": "Yohji Yamamoto",
-    "brandSlug": "yohji-yamamoto",
-    "category": "Outerwear",
-    "categorySlug": "outerwear",
-    "price": 89,
-    "sourcePrice": 89,
-    "estimatedRetail": 756,
-    "directStoreLink": "https://item.taobao.com/item.htm?id=584052634642",
-    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584052634642&memberId=1325437696506389977",
-    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584052634642&memberId=1325437696506389977",
-    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D584052634642&memberId=1325437696506389977",
-    "imageUrl": "/products/yohji-yamamoto-yohji-yamamoto-hannya-wool-sweater-990.png",
-    "localImage": "/products/yohji-yamamoto-yohji-yamamoto-hannya-wool-sweater-990.png",
-    "slug": "yohji-yamamoto-yohji-yamamoto-hannya-wool-sweater-990",
-    "status": "APPROVED",
-    "verified": true,
-    "isFeatured": true,
-    "isRare": true,
-    "notes": "1-Click Admin Ingest"
-  },
-  {
-    "id": "90",
     "title": "Chrome Hearts Cross Necklace",
     "name": "Chrome Hearts Cross Necklace",
     "brand": "Chrome Hearts",
@@ -2280,7 +2256,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "91",
+    "id": "90",
     "title": "Chrome Hearts Long Sleeve , thoughts on the embroidery and details?",
     "name": "Chrome Hearts Long Sleeve , thoughts on the embroidery and details?",
     "brand": "Chrome Hearts",
@@ -2304,7 +2280,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "92",
+    "id": "91",
     "title": "Review - Chrome Hearts Sunglasses",
     "name": "Review - Chrome Hearts Sunglasses",
     "brand": "Chrome Hearts",
@@ -2328,7 +2304,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "93",
+    "id": "92",
     "title": "Chrome Hearts Sterling Silver Cross Eyeglasses",
     "name": "Chrome Hearts Sterling Silver Cross Eyeglasses",
     "brand": "Chrome Hearts",
@@ -2352,7 +2328,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "94",
+    "id": "93",
     "title": "Chrome Hearts .925 Sterling Silver Cross Ring",
     "name": "Chrome Hearts .925 Sterling Silver Cross Ring",
     "brand": "Chrome Hearts",
@@ -2376,7 +2352,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "95",
+    "id": "94",
     "title": "Vivienne Westwood Black Orb",
     "name": "Vivienne Westwood Black Orb",
     "brand": "Vivienne Westwood",
@@ -2400,7 +2376,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "96",
+    "id": "95",
     "title": "Vivienne Westwood Man SS03 'Orb & Skull' Embroidered Cotton Shirt",
     "name": "Vivienne Westwood Man SS03 'Orb & Skull' Embroidered Cotton Shirt",
     "brand": "Vivienne Westwood",
@@ -2425,7 +2401,7 @@
     "notes": "1-Click Admin Ingest | SS03"
   },
   {
-    "id": "97",
+    "id": "96",
     "title": "Balenciaga AW18 World Food Programme (WFP) Printed Oversized T-Shirt",
     "name": "Balenciaga AW18 World Food Programme (WFP) Printed Oversized T-Shirt",
     "brand": "Balenciaga",
@@ -2450,7 +2426,7 @@
     "notes": "1-Click Admin Ingest | AW18"
   },
   {
-    "id": "98",
+    "id": "97",
     "title": "Chrome Hearts .925 Sterling Silver Cross Eyeglasses",
     "name": "Chrome Hearts .925 Sterling Silver Cross Eyeglasses",
     "brand": "Chrome Hearts",
@@ -2475,7 +2451,7 @@
     "notes": "1-Click Admin Ingest | Eyewear Archive"
   },
   {
-    "id": "99",
+    "id": "98",
     "title": "Balenciaga Hb Zip",
     "name": "Balenciaga Hb Zip",
     "brand": "Balenciaga",
@@ -2500,7 +2476,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "100",
+    "id": "99",
     "title": "Maison Margiela Mm6 X Salomon",
     "name": "Maison Margiela Mm6 X Salomon",
     "brand": "Maison Margiela",
@@ -2525,7 +2501,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "101",
+    "id": "100",
     "title": "Chrome Hearts Archive Collection Beanie",
     "name": "Chrome Hearts Archive Collection Beanie",
     "brand": "Chrome Hearts",
@@ -2550,7 +2526,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "102",
+    "id": "101",
     "title": "S/S 2003 SLEEVELESS HOODIE",
     "brand": "RAF SIMONS",
     "category": "Hoodies",
@@ -2573,7 +2549,7 @@
     "createdAt": "2026-08-17T12:32:46.170Z"
   },
   {
-    "id": "103",
+    "id": "102",
     "title": "A/W 2019 DAMASK FLEECE",
     "brand": "KAPITAL",
     "category": "Outerwear",
@@ -2596,7 +2572,7 @@
     "createdAt": "2026-08-17T12:40:50.929Z"
   },
   {
-    "id": "104",
+    "id": "103",
     "title": "ONLINE CERAMICS - LIFE LIVED IN LSD TEE",
     "name": "ONLINE CERAMICS - LIFE LIVED IN LSD TEE",
     "brand": "ONLINE CERAMICS",
@@ -2621,7 +2597,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "105",
+    "id": "104",
     "title": "RICK OWENS - LONG SLEEVE SHIRT COMBO",
     "name": "RICK OWENS - LONG SLEEVE SHIRT COMBO",
     "brand": "RICK OWENS",
@@ -2646,7 +2622,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "106",
+    "id": "105",
     "title": "SOA - PUFFER JACKET",
     "name": "SOA - PUFFER JACKET",
     "brand": "SOA",
@@ -2671,7 +2647,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "107",
+    "id": "106",
     "title": "RICK OWENS - F/W 2022 STROBE FUR LEATHER COAT",
     "name": "RICK OWENS - F/W 2022 STROBE FUR LEATHER COAT",
     "brand": "RICK OWENS",
@@ -2696,7 +2672,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "108",
+    "id": "107",
     "title": "KAPITAL - GAUDY SWEATER",
     "name": "KAPITAL - GAUDY SWEATER",
     "brand": "KAPITAL",
@@ -2721,7 +2697,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "109",
+    "id": "108",
     "title": "Mastermind Japan - MASTERMIND SWEATER",
     "name": "Mastermind Japan - MASTERMIND SWEATER",
     "brand": "Mastermind Japan",
@@ -2746,7 +2722,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "110",
+    "id": "109",
     "title": "Saint Laurent - TEDDY JACKET",
     "name": "Saint Laurent - TEDDY JACKET",
     "brand": "Saint Laurent",
@@ -2771,7 +2747,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "111",
+    "id": "110",
     "title": "Enfants Riches Déprimés - FADED GRAY SWEATER",
     "name": "Enfants Riches Déprimés - FADED GRAY SWEATER",
     "brand": "Enfants Riches Déprimés",
@@ -2796,7 +2772,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "112",
+    "id": "111",
     "title": "Raf Simons sweater Ck205",
     "name": "Raf Simons sweater Ck205",
     "brand": "Raf Simons",
@@ -2821,7 +2797,7 @@
     "notes": "1-Click Admin Ingest | AW16 'Nightmares and Dreams'"
   },
   {
-    "id": "113",
+    "id": "112",
     "title": "Enfants Riches Déprimés - CRY FOR HELP JACKET",
     "name": "Enfants Riches Déprimés - CRY FOR HELP JACKET",
     "brand": "Enfants Riches Déprimés",
@@ -2846,7 +2822,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "114",
+    "id": "113",
     "title": "Bauhaus - BAUHAUS HARNESS",
     "name": "Bauhaus - BAUHAUS HARNESS",
     "brand": "Bauhaus",
@@ -2871,7 +2847,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "115",
+    "id": "114",
     "title": "Rick Owens - F/W 2018 SISYPHUS PUFFER",
     "name": "Rick Owens - F/W 2018 SISYPHUS PUFFER",
     "brand": "Rick Owens",
@@ -2896,7 +2872,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "116",
+    "id": "115",
     "title": "Balenciaga Destroyed Caps Hoodie",
     "name": "Balenciaga Destroyed Caps Hoodie",
     "brand": "Balenciaga",
@@ -2921,7 +2897,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "117",
+    "id": "116",
     "title": "Balenciaga S S 2021 Turn Wide Black Zip-Up",
     "name": "Balenciaga S S 2021 Turn Wide Black Zip-Up",
     "brand": "Balenciaga",
@@ -2946,7 +2922,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "118",
+    "id": "117",
     "title": "Celine Classic Wool & Calfskin Leather Trimmed Teddy Bomber Jacket",
     "name": "Celine Classic Wool & Calfskin Leather Trimmed Teddy Bomber Jacket",
     "brand": "Celine",
@@ -2971,7 +2947,7 @@
     "notes": "1-Click Admin Ingest | Permanent Collection"
   },
   {
-    "id": "119",
+    "id": "118",
     "title": "Rick Owens Gimp Puffer Jacket",
     "name": "Rick Owens Gimp Puffer Jacket",
     "brand": "Rick Owens",
@@ -2996,7 +2972,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "120",
+    "id": "119",
     "title": "Rick Owens Tommy Oversized T-Shirt",
     "name": "Rick Owens Tommy Oversized T-Shirt",
     "brand": "Rick Owens",
@@ -3021,7 +2997,7 @@
     "notes": "1-Click Admin Ingest | Mainline Archive"
   },
   {
-    "id": "121",
+    "id": "120",
     "title": "Balenciaga 3B Trackpants",
     "name": "Balenciaga 3B Trackpants",
     "brand": "Balenciaga",
@@ -3046,7 +3022,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "122",
+    "id": "121",
     "title": "A/W 2005 85 BORO DENIM",
     "brand": "UNDERCOVER",
     "category": "Denim",
@@ -3070,7 +3046,7 @@
     "createdAt": "2026-08-18T12:54:50.715Z"
   },
   {
-    "id": "123",
+    "id": "122",
     "title": "DESTROYED DENIM",
     "brand": "BALENCIAGA",
     "category": "Denim",
@@ -3094,7 +3070,7 @@
     "createdAt": "2026-08-18T12:54:52.291Z"
   },
   {
-    "id": "124",
+    "id": "123",
     "title": "MONOGRAM BOYHOOD PUFFER",
     "brand": "LOUIS VUITTON",
     "category": "Outerwear",
@@ -3118,7 +3094,7 @@
     "createdAt": "2026-08-18T12:55:25.460Z"
   },
   {
-    "id": "125",
+    "id": "124",
     "title": "Vetements Cut Up Zip Up Deconstructed Hoodie",
     "name": "Vetements Cut Up Zip Up Deconstructed Hoodie",
     "brand": "Vetements",
@@ -3143,7 +3119,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "126",
+    "id": "125",
     "title": "Rick Owens F/W 2022 Drkshdw Paneled Pants",
     "name": "Rick Owens F/W 2022 Drkshdw Paneled Pants",
     "brand": "Rick Owens",
@@ -3168,7 +3144,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "127",
+    "id": "126",
     "title": "Rick Owens DRKSHDW Bolan Banana Wide Leg Jeans",
     "name": "Rick Owens DRKSHDW Bolan Banana Wide Leg Jeans",
     "brand": "Rick Owens",
@@ -3193,7 +3169,7 @@
     "notes": "1-Click Admin Ingest | SS23 EDFU"
   },
   {
-    "id": "128",
+    "id": "127",
     "title": "Rick Owens Nylon Pusher Pants",
     "name": "Rick Owens Nylon Pusher Pants",
     "brand": "Rick Owens",
@@ -3218,7 +3194,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "129",
+    "id": "128",
     "title": "Salomon Xt6",
     "name": "Salomon Xt6",
     "brand": "Salomon",
@@ -3243,7 +3219,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "130",
+    "id": "129",
     "title": "Balenciaga Strike derby`s",
     "name": "Balenciaga Strike derby`s",
     "brand": "Balenciaga",
@@ -3268,7 +3244,7 @@
     "notes": "1-Click Admin Ingest | FW21"
   },
   {
-    "id": "131",
+    "id": "130",
     "title": "Rick Owens Doc Martens Pentagram",
     "name": "Rick Owens Doc Martens Pentagram",
     "brand": "Rick Owens",
@@ -3293,7 +3269,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "132",
+    "id": "131",
     "title": "Kiko Kostadinov Camper Boots",
     "name": "Kiko Kostadinov Camper Boots",
     "brand": "Kiko Kostadinov",
@@ -3318,7 +3294,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "133",
+    "id": "132",
     "title": "Bottega Veneta Puddle Boots",
     "name": "Bottega Veneta Puddle Boots",
     "brand": "Bottega Veneta",
@@ -3343,7 +3319,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "134",
+    "id": "133",
     "title": "Mschf Wavy Baby",
     "name": "Mschf Wavy Baby",
     "brand": "Mschf",
@@ -3368,7 +3344,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "135",
+    "id": "134",
     "title": "Raf Simons x Dr. Martens Steel Toe Derbies",
     "name": "Raf Simons x Dr. Martens Steel Toe Derbies",
     "brand": "Raf Simons",
@@ -3393,7 +3369,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "136",
+    "id": "135",
     "title": "Balenciaga 3XL`s",
     "name": "Balenciaga 3XL`s",
     "brand": "Balenciaga",
@@ -3418,7 +3394,7 @@
     "notes": "1-Click Admin Ingest | SS23"
   },
   {
-    "id": "137",
+    "id": "136",
     "title": "Balenciaga Defender Tire Tread Heavy Sneakers",
     "name": "Balenciaga Defender Tire Tread Heavy Sneakers",
     "brand": "Balenciaga",
@@ -3443,7 +3419,7 @@
     "notes": "1-Click Admin Ingest | FW22"
   },
   {
-    "id": "138",
+    "id": "137",
     "title": "Balenciaga S S 2022 Mold Closed-Toe Sandal",
     "name": "Balenciaga S S 2022 Mold Closed-Toe Sandal",
     "brand": "Balenciaga",
@@ -3468,7 +3444,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "139",
+    "id": "138",
     "title": "Alyx 1017 9Sm Chelsea Buckle Vibram Boots",
     "name": "Alyx 1017 9Sm Chelsea Buckle Vibram Boots",
     "brand": "Alyx",
@@ -3493,7 +3469,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "140",
+    "id": "139",
     "title": "Dior Homme x Birkenstock Slides",
     "name": "Dior Homme x Birkenstock Slides",
     "brand": "Dior",
@@ -3518,7 +3494,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "141",
+    "id": "140",
     "title": "Maison Margiela Replica Fur GAT",
     "name": "Maison Margiela Replica Fur GAT",
     "brand": "Maison Margiela",
@@ -3543,7 +3519,7 @@
     "notes": "1-Click Admin Ingest | Iconic Permanent Collection"
   },
   {
-    "id": "142",
+    "id": "141",
     "title": "Balenciaga Marn Cargo Pants",
     "name": "Balenciaga Marn Cargo Pants",
     "brand": "Balenciaga",
@@ -3568,7 +3544,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "143",
+    "id": "142",
     "title": "Dior Homme Archive Collection Dh Beck Guitar Polo Shirt",
     "name": "Dior Homme Archive Collection Dh Beck Guitar Polo Shirt",
     "brand": "Dior",
@@ -3593,7 +3569,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "144",
+    "id": "143",
     "title": "Rick Owens Pentragram Boots",
     "name": "Rick Owens Pentragram Boots",
     "brand": "Rick Owens",
@@ -3618,7 +3594,7 @@
     "notes": "1-Click Admin Ingest | FW19 LARRY"
   },
   {
-    "id": "145",
+    "id": "144",
     "title": "Enfants Riches Déprimés 25 Fw",
     "name": "Enfants Riches Déprimés 25 Fw",
     "brand": "Enfants Riches Déprimés",
@@ -3643,7 +3619,7 @@
     "notes": "1-Click Admin Ingest"
   },
   {
-    "id": "146",
+    "id": "145",
     "title": "Comme des Garçons Ss03 Netting Tee",
     "name": "Comme des Garçons Ss03 Netting Tee",
     "brand": "Comme des Garçons",

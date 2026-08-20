@@ -1,9 +1,9 @@
 {
   "lastAudit": "2026-08-20T16:29:20.714125+00:00",
-  "totalChecked": 146,
+  "totalChecked": 145,
   "healthyCount": 67,
   "deadCount": 1,
-  "flaggedCount": 78,
+  "flaggedCount": 77,
   "items": [
     {
       "id": "26",
@@ -144,20 +144,6 @@
       "statusCode": 200,
       "message": "Approved & verified by admin",
       "testedAt": "2026-08-20T16:29:05.631444+00:00"
-    },
-    {
-      "id": "89",
-      "title": "EvanXX Yohji Yamamoto 2018 fall/winter stalker coat",
-      "slug": "yohji-yamamoto-evanxx-yohji-yamamoto-2018-fall-winter-stalke",
-      "brand": "Yohji Yamamoto",
-      "directLink": "https://item.taobao.com/item.htm?id=677959109914&ft=t",
-      "directStoreLink": "https://item.taobao.com/item.htm?id=677959109914&ft=t",
-      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D677959109914%26ft%3Dt&memberId=1325437696506389977",
-      "imageUrl": "/products/yohji-yamamoto-evanxx-yohji-yamamoto-2018-fall-winter-stalke.png",
-      "status": "FLAGGED",
-      "statusCode": 200,
-      "message": "Taobao login wall — cannot verify stock server-side",
-      "testedAt": "2026-08-20T16:29:05.631479+00:00"
     },
     {
       "id": "105",
