@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent, FormEvent } from "react";
 import {
   X,
   Upload,
@@ -16,6 +16,11 @@ import {
   Zap,
   RotateCw,
   Scissors,
+  Clipboard,
+  Search,
+  Undo2,
+  Sliders,
+  CheckCircle2,
 } from "lucide-react";
 
 export interface Product {
@@ -88,6 +93,7 @@ export function EditProductModal({
   const [imageUrl, setImageUrl] = useState(
     product.imageUrl || product.localImage || ""
   );
+  const [rawOriginalUrl, setRawOriginalUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"ACTIVE" | "DRAFT">(
     product.status === "DRAFT" ? "DRAFT" : "ACTIVE"
   );
@@ -99,15 +105,47 @@ export function EditProductModal({
   );
 
   const [isUploading, setIsUploading] = useState(false);
+  const [isCuttingOut, setIsCuttingOut] = useState(false);
+  const [isSearchingPhotos, setIsSearchingPhotos] = useState(false);
+  const [sellerPhotos, setSellerPhotos] = useState<string[]>([]);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [removeBgOnUpload, setRemoveBgOnUpload] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successNotice, setSuccessNotice] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const showNotification = (msg: string) => {
+    setSuccessNotice(msg);
+    setTimeout(() => setSuccessNotice(""), 3500);
+  };
 
+  // 1. Global Clipboard Paste Listener (Ctrl + V)
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf("image") !== -1) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            await processUploadedFile(file, "Pasted from clipboard");
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [removeBgOnUpload, title, product.slug]);
+
+  // Upload processor for files and clipboard blobs
+  const processUploadedFile = async (file: File, sourceLabel: string = "Uploaded") => {
     setIsUploading(true);
     setErrorMsg("");
 
@@ -125,16 +163,153 @@ export function EditProductModal({
       const data = await res.json();
       if (res.ok && data.success && data.imageUrl) {
         setImageUrl(data.imageUrl);
+        if (data.rawUrl) setRawOriginalUrl(data.rawUrl);
+        showNotification(
+          data.isCutout
+            ? `✨ ${sourceLabel} & Studio background removed!`
+            : `📸 ${sourceLabel} successfully!`
+        );
       } else {
         setErrorMsg(data.error || "Failed to upload image.");
       }
     } catch (err: any) {
-      setErrorMsg("Image upload failed: " + err.message);
+      setErrorMsg("Upload error: " + err.message);
     } finally {
       setIsUploading(false);
     }
   };
 
+  const handleFileInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processUploadedFile(file, "Uploaded file");
+    }
+  };
+
+  // 2. 1-Click Background Remover on Current Image
+  const handleRemoveBackgroundCurrent = async () => {
+    if (!imageUrl) return;
+
+    setIsCuttingOut(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/admin/products/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageSrc: imageUrl,
+          removeBg: true,
+          name: title || product.slug,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.imageUrl) {
+        if (!rawOriginalUrl) setRawOriginalUrl(imageUrl);
+        setImageUrl(data.imageUrl);
+        showNotification("✨ Background removed! Studio cutout created.");
+      } else {
+        setErrorMsg(data.error || "Cutout failed.");
+      }
+    } catch (err: any) {
+      setErrorMsg("Cutout error: " + err.message);
+    } finally {
+      setIsCuttingOut(false);
+    }
+  };
+
+  // 3. Revert to Raw Original Image
+  const handleRevertOriginalBackground = () => {
+    if (rawOriginalUrl) {
+      setImageUrl(rawOriginalUrl);
+      showNotification("↺ Restored original photo background.");
+    }
+  };
+
+  // 4. Fetch Seller / Studio Alternative Photos
+  const handleFetchSellerPhotos = async () => {
+    setIsSearchingPhotos(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/admin/fetch-studio-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `${brand} ${title}`,
+          marketUrl: directStoreLink || product.directStoreLink,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && Array.isArray(data.images) && data.images.length > 0) {
+        setSellerPhotos(data.images);
+        setShowPhotoGallery(true);
+        showNotification(`🔍 Found ${data.images.length} seller photos!`);
+      } else {
+        setErrorMsg("No alternative seller photos found for this link.");
+      }
+    } catch (err: any) {
+      setErrorMsg("Photo fetch error: " + err.message);
+    } finally {
+      setIsSearchingPhotos(false);
+    }
+  };
+
+  // Select a photo from the fetched gallery
+  const handleSelectGalleryPhoto = async (photoUrl: string) => {
+    setImageUrl(photoUrl);
+    setRawOriginalUrl(photoUrl);
+    setShowPhotoGallery(false);
+
+    if (removeBgOnUpload) {
+      setIsCuttingOut(true);
+      try {
+        const res = await fetch("/api/admin/products/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageSrc: photoUrl,
+            removeBg: true,
+            name: title || product.slug,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.imageUrl) {
+          setImageUrl(data.imageUrl);
+          showNotification("✨ Seller photo imported & background removed!");
+        }
+      } catch {
+        // keep raw
+      } finally {
+        setIsCuttingOut(false);
+      }
+    } else {
+      showNotification("📸 Selected seller photo applied.");
+    }
+  };
+
+  // Drag & Drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processUploadedFile(file, "Dropped image");
+    }
+  };
+
+  // Save product form
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -186,7 +361,7 @@ export function EditProductModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden my-8">
+      <div className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden my-8">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-neutral-950/80">
           <div className="flex items-center gap-2.5">
@@ -194,12 +369,12 @@ export function EditProductModal({
             <div>
               <h2 className="font-mono font-black text-sm uppercase tracking-widest text-white flex items-center gap-2">
                 <span>AF // PRODUCT STUDIO EDITOR</span>
-                <span className="px-2 py-0.5 bg-neutral-800 text-[10px] text-neutral-400 rounded">
+                <span className="px-2 py-0.5 bg-neutral-800 text-[10px] text-neutral-400 rounded font-mono">
                   ID: #{product.id}
                 </span>
               </h2>
               <p className="text-[10px] font-mono text-neutral-400">
-                Slug: {product.slug}
+                Slug: {product.slug} • Press <strong className="text-white font-mono">Ctrl + V</strong> anywhere to paste an image
               </p>
             </div>
           </div>
@@ -213,23 +388,46 @@ export function EditProductModal({
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto font-sans">
+        <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[82vh] overflow-y-auto font-sans">
+          {/* Notifications */}
+          {successNotice && (
+            <div className="p-3 bg-emerald-950/80 border border-emerald-500/80 text-emerald-300 rounded-xl text-xs font-mono flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{successNotice}</span>
+            </div>
+          )}
+
           {errorMsg && (
-            <div className="p-3 bg-red-950/60 border border-red-800 text-red-300 rounded-xl text-xs font-mono">
+            <div className="p-3 bg-red-950/80 border border-red-800 text-red-300 rounded-xl text-xs font-mono">
               {errorMsg}
             </div>
           )}
 
-          {/* Grid Layout: Image Preview / Upload (Left) & Product Details (Right) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Left Column: Image Management (5 cols) */}
-            <div className="md:col-span-5 space-y-4">
-              <label className="block text-xs font-mono uppercase tracking-wider text-neutral-300 font-bold">
-                Studio Garment Cutout
-              </label>
+          {/* Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column: Image Studio & Cutout Controls (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 font-bold flex items-center gap-1.5">
+                  <Scissors className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Garment Image Studio</span>
+                </label>
+                <span className="text-[10px] font-mono text-neutral-500">
+                  Clipboard (Ctrl+V) Active
+                </span>
+              </div>
 
-              {/* Current Image Display Box */}
-              <div className="w-full aspect-square bg-neutral-950 border border-neutral-800 rounded-xl p-4 flex items-center justify-center relative overflow-hidden group">
+              {/* Garment Preview Box with Drag & Drop */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full aspect-square bg-neutral-950 rounded-2xl p-4 flex items-center justify-center relative overflow-hidden group border-2 transition-all ${
+                  isDragging
+                    ? "border-emerald-400 bg-emerald-950/20 scale-[1.02]"
+                    : "border-neutral-800"
+                }`}
+              >
                 <img
                   src={imageUrl || "/placeholder.png"}
                   alt={title}
@@ -238,52 +436,138 @@ export function EditProductModal({
                     e.currentTarget.src = "/placeholder.png";
                   }}
                 />
-                {isUploading && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white gap-2 font-mono text-xs">
-                    <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-                    <span>Processing Cutout...</span>
+
+                {/* Loading Overlay */}
+                {(isUploading || isCuttingOut) && (
+                  <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center text-white gap-2 font-mono text-xs">
+                    <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
+                    <span>{isCuttingOut ? "Removing Background (ONNX)..." : "Uploading & Processing..."}</span>
+                  </div>
+                )}
+
+                {/* Drop indicator */}
+                {isDragging && (
+                  <div className="absolute inset-0 bg-emerald-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-emerald-300 font-mono text-xs">
+                    <Upload className="w-8 h-8 animate-bounce mb-2 text-emerald-400" />
+                    <span>Drop Image Here</span>
                   </div>
                 )}
               </div>
 
-              {/* Upload Controls */}
-              <div className="space-y-2">
+              {/* Action Buttons: Cutout, Revert, Seller Photos */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* 1-Click Cutout Button */}
+                <button
+                  type="button"
+                  onClick={handleRemoveBackgroundCurrent}
+                  disabled={isCuttingOut || isUploading || !imageUrl}
+                  title="Run local AI rembg background removal on this image"
+                  className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-1.5 border border-neutral-700 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <Scissors className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Cutout BG</span>
+                </button>
+
+                {/* Revert Background */}
+                <button
+                  type="button"
+                  onClick={handleRevertOriginalBackground}
+                  disabled={!rawOriginalUrl || rawOriginalUrl === imageUrl}
+                  title="Revert back to the original photo with full background"
+                  className="py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-1.5 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  <Undo2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Raw Photo</span>
+                </button>
+              </div>
+
+              {/* Upload & Search Bar */}
+              <div className="space-y-2.5 pt-1">
                 <input
                   type="file"
                   ref={fileInputRef}
-                  onChange={handleFileUpload}
+                  onChange={handleFileInputChange}
                   accept="image/*"
                   className="hidden"
                 />
 
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="w-full py-2.5 px-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-neutral-700 disabled:opacity-50"
-                >
-                  <Upload className="w-4 h-4 text-emerald-400" />
-                  <span>Upload New Photo</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="py-2.5 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Upload File</span>
+                  </button>
 
-                {/* Auto Cutout Option */}
-                <label className="flex items-center gap-2 text-xs font-mono text-neutral-400 cursor-pointer pt-1">
+                  <button
+                    type="button"
+                    onClick={handleFetchSellerPhotos}
+                    disabled={isSearchingPhotos}
+                    title="Fetch all high-res studio seller photos from Weidian Thor API & Taobao"
+                    className="py-2.5 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSearchingPhotos ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                    ) : (
+                      <Search className="w-3.5 h-3.5 text-amber-400" />
+                    )}
+                    <span>Store Photos</span>
+                  </button>
+                </div>
+
+                {/* Auto Background Removal Switch */}
+                <div className="p-3 bg-neutral-950 border border-neutral-800/90 rounded-xl flex items-center justify-between text-xs font-mono">
+                  <span className="text-neutral-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Auto-Cutout on Upload / Paste</span>
+                  </span>
                   <input
                     type="checkbox"
                     checked={removeBgOnUpload}
                     onChange={(e) => setRemoveBgOnUpload(e.target.checked)}
-                    className="rounded bg-neutral-950 border-neutral-800 text-emerald-500 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded bg-neutral-900 border-neutral-700 text-emerald-500 focus:ring-0 cursor-pointer"
                   />
-                  <span className="flex items-center gap-1">
-                    <Scissors className="w-3 h-3 text-emerald-400" />
-                    Auto-Cutout Background (Transparent PNG)
-                  </span>
-                </label>
+                </div>
 
-                {/* Direct Image URL fallback */}
-                <div className="pt-2">
-                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400 mb-1">
-                    Or Direct Image URL / Path
+                {/* Gallery Dropdown if photos were fetched */}
+                {showPhotoGallery && sellerPhotos.length > 0 && (
+                  <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
+                      <span>Select Seller Photo:</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPhotoGallery(false)}
+                        className="text-neutral-500 hover:text-white"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {sellerPhotos.map((pUrl, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectGalleryPhoto(pUrl)}
+                          className="aspect-square bg-neutral-900 border border-neutral-800 hover:border-emerald-400 rounded-lg p-1 overflow-hidden transition-all cursor-pointer group"
+                        >
+                          <img
+                            src={pUrl}
+                            alt={`Seller Photo ${idx}`}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Direct Image URL input */}
+                <div>
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-neutral-500 mb-1">
+                    Direct Image URL or Path
                   </label>
                   <input
                     type="text"
@@ -296,8 +580,8 @@ export function EditProductModal({
               </div>
             </div>
 
-            {/* Right Column: Text & Categorization Details (7 cols) */}
-            <div className="md:col-span-7 space-y-4">
+            {/* Right Column: Piece Details, Brand, Category, Pricing (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
               {/* Product Title / Name */}
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-neutral-300 font-bold mb-1.5">
@@ -307,7 +591,7 @@ export function EditProductModal({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Rick Owens Bauhaus Cargo Pants"
+                  placeholder="e.g. Comme des Garçons Ss03 Netting Tee"
                   className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-sm font-sans font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all"
                   required
                 />
@@ -322,7 +606,7 @@ export function EditProductModal({
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  placeholder="e.g. Enfants Riches Déprimés"
+                  placeholder="e.g. COMME DES GARÇONS"
                   className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-xs font-mono uppercase text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500"
                 />
                 {/* Brand Quick Pills */}
@@ -481,7 +765,7 @@ export function EditProductModal({
 
             <button
               type="submit"
-              disabled={isSaving || isUploading}
+              disabled={isSaving || isUploading || isCuttingOut}
               className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-mono uppercase font-black tracking-wider transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
             >
               {isSaving ? (

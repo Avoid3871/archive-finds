@@ -3,29 +3,79 @@ import fs from "fs";
 import path from "path";
 import { execFile } from "child_process";
 import util from "util";
+import urllib from "urllib";
 
 const execFilePromise = util.promisify(execFile);
 const UPLOADS_DIR = path.join(process.cwd(), "public", "products", "uploads");
 
-// Ensure upload directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const removeBg = formData.get("removeBg") === "true";
-    const customName = formData.get("name") as string | null;
+    const contentType = req.headers.get("content-type") || "";
+    let buffer: Buffer | null = null;
+    let removeBg = true;
+    let customName = "product_image";
+    let originalRawUrl = "";
 
-    if (!file) {
-      return NextResponse.json({ success: false, error: "No image file provided" }, { status: 400 });
+    // 1. JSON Request (Base64 data or existing URL cutout)
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      const { imageSrc, name, action } = body;
+      removeBg = body.removeBg !== false;
+      if (name) customName = name;
+
+      if (!imageSrc) {
+        return NextResponse.json({ success: false, error: "imageSrc is required" }, { status: 400 });
+      }
+
+      if (imageSrc.startsWith("data:image/")) {
+        const base64Data = imageSrc.replace(/^data:image\/\w+;base64,/, "");
+        buffer = Buffer.from(base64Data, "base64");
+      } else if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://")) {
+        // Fetch remote URL
+        const res = await fetch(imageSrc, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          },
+        });
+        if (!res.ok) {
+          return NextResponse.json({ success: false, error: "Failed to download image from URL" }, { status: 400 });
+        }
+        buffer = Buffer.from(await res.arrayBuffer());
+      } else if (imageSrc.startsWith("/")) {
+        // Local public file path
+        const localPath = path.join(process.cwd(), "public", imageSrc.split("?")[0].replace(/^\//, ""));
+        if (fs.existsSync(localPath)) {
+          buffer = fs.readFileSync(localPath);
+          originalRawUrl = imageSrc;
+        } else {
+          return NextResponse.json({ success: false, error: "Local file not found" }, { status: 404 });
+        }
+      }
+    } else {
+      // 2. Multipart FormData (File upload or clipboard blob)
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      removeBg = formData.get("removeBg") !== "false";
+      const name = formData.get("name") as string | null;
+      if (name) customName = name;
+
+      if (!file) {
+        return NextResponse.json({ success: false, error: "No image file provided" }, { status: 400 });
+      }
+
+      buffer = Buffer.from(await file.arrayBuffer());
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!buffer) {
+      return NextResponse.json({ success: false, error: "No valid image data could be parsed" }, { status: 400 });
+    }
+
     const timestamp = Date.now();
-    const safeBaseName = (customName || file.name || "product_upload")
+    const safeBaseName = customName
       .toLowerCase()
       .replace(/[^a-z0-9_-]/g, "_")
       .slice(0, 40);
@@ -34,10 +84,10 @@ export async function POST(req: NextRequest) {
     const rawFilePath = path.join(UPLOADS_DIR, rawFileName);
 
     fs.writeFileSync(rawFilePath, buffer);
+    const rawPublicUrl = `/products/uploads/${rawFileName}`;
+    let finalImageUrl = rawPublicUrl;
 
-    let finalImageUrl = `/products/uploads/${rawFileName}`;
-
-    // If background removal is requested, run local rembg pipeline
+    // Run Python rembg background cutout if requested
     if (removeBg) {
       const cutoutFileName = `cutout_${safeBaseName}_${timestamp}.png`;
       const cutoutFilePath = path.join(UPLOADS_DIR, cutoutFileName);
@@ -52,7 +102,6 @@ output_path = sys.argv[2]
 
 try:
     img = Image.open(input_path)
-    # Convert RGBA
     img = img.convert("RGBA")
     output = rembg.remove(img)
     output.save(output_path, "PNG")
@@ -72,16 +121,17 @@ except Exception as e:
         }
       } catch (rembgError) {
         console.warn("Rembg cutout failed, falling back to raw image:", rembgError);
-        // Fallback to raw uploaded image
       }
     }
 
     return NextResponse.json({
       success: true,
       imageUrl: finalImageUrl,
-      message: "Image uploaded and processed successfully!",
+      rawUrl: rawPublicUrl,
+      isCutout: finalImageUrl !== rawPublicUrl,
+      message: removeBg ? "Studio cutout created successfully!" : "Raw image saved successfully!",
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Failed to upload image" }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || "Failed to process image" }, { status: 500 });
   }
 }
