@@ -1,9 +1,9 @@
 {
   "lastAudit": "2026-08-20T16:29:20.714125+00:00",
   "totalChecked": 148,
-  "healthyCount": 65,
+  "healthyCount": 66,
   "deadCount": 1,
-  "flaggedCount": 82,
+  "flaggedCount": 81,
   "items": [
     {
       "id": "26",
@@ -126,9 +126,9 @@
       "directStoreLink": "https://item.taobao.com/item.htm?id=718406302167",
       "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D718406302167&memberId=1325437696506389977",
       "imageUrl": "/products/sheet/grid_r11_c02_image25.png",
-      "status": "FLAGGED",
+      "status": "HEALTHY",
       "statusCode": 200,
-      "message": "Taobao login wall — cannot verify stock server-side",
+      "message": "Approved & verified by admin",
       "testedAt": "2026-08-20T16:29:05.631452+00:00"
     },
     {
