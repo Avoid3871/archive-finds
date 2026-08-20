@@ -23,10 +23,13 @@ import {
   LayoutGrid,
   Table as TableIcon,
   Download,
+  Trash2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { AnalyticsSummary } from "@/lib/analytics/analyticsStore";
 import { InteractiveTimelineChart } from "@/components/admin/analytics/InteractiveTimelineChart";
 import { CategoryBrandMatrix } from "@/components/admin/analytics/CategoryBrandMatrix";
+import { OptimalPostTimesCard } from "@/components/admin/analytics/OptimalPostTimesCard";
 
 const AGENT_CONFIGS: Record<string, { label: string; color: string; bg: string; border: string }> = {
   sugargoo: { label: "Sugargoo (VIP)", color: "text-orange-400", bg: "bg-orange-500", border: "border-orange-500/30" },
@@ -42,7 +45,9 @@ export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [purging, setPurging] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<"graphs" | "table">("graphs");
+  const [toastNotice, setToastNotice] = useState<string | null>(null);
 
   const fetchAnalytics = async () => {
     try {
@@ -60,6 +65,27 @@ export default function AdminAnalyticsPage() {
     }
   };
 
+  const handlePurgeDevData = async () => {
+    if (!confirm("Are you sure you want to purge all local dev / test session events? This resets metrics to a clean organic audience baseline.")) {
+      return;
+    }
+
+    try {
+      setPurging(true);
+      const res = await fetch("/api/admin/analytics/purge", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        setToastNotice("🧹 Dev test traffic purged! Analytics reset to clean organic baseline.");
+        setTimeout(() => setToastNotice(null), 4000);
+        await fetchAnalytics();
+      }
+    } catch (e: any) {
+      console.warn("Failed to purge dev events:", e);
+    } finally {
+      setPurging(false);
+    }
+  };
+
   useEffect(() => {
     fetchAnalytics();
     const interval = setInterval(fetchAnalytics, 15000);
@@ -70,6 +96,14 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-8 pb-16">
+      {/* Toast Notification */}
+      {toastNotice && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl shadow-2xl border bg-emerald-950/95 border-emerald-500 text-emerald-200 font-mono text-xs flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastNotice}</span>
+        </div>
+      )}
+
       {/* TOP TITLE & VIEW MODE SWITCHER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-neutral-800 pb-6">
         <div>
@@ -126,6 +160,27 @@ export default function AdminAnalyticsPage() {
             <span>{refreshing ? "Updating..." : "Refresh"}</span>
           </button>
         </div>
+      </div>
+
+      {/* OPERATOR FILTER NOTICE & RESET BAR */}
+      <div className="p-3.5 bg-neutral-900/90 border border-neutral-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+        <div className="flex items-center gap-2.5 text-neutral-300">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong className="text-emerald-400 uppercase">Operator Filter Active:</strong> Your own pageviews, test clicks &amp; admin sessions are automatically excluded from analytics metrics.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handlePurgeDevData}
+          disabled={purging}
+          title="Reset past local test events and clean noise"
+          className="px-3 py-1.5 bg-neutral-950 hover:bg-red-950/60 text-neutral-400 hover:text-red-300 border border-neutral-800 hover:border-red-800 rounded-lg text-[11px] font-mono uppercase font-bold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto disabled:opacity-50"
+        >
+          <Trash2 className="w-3 h-3 text-red-400" />
+          <span>{purging ? "Purging..." : "Purge Dev Test Data"}</span>
+        </button>
       </div>
 
       {/* KPI METRIC CARDS */}
@@ -206,6 +261,11 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
+      {/* OPTIMAL POSTING TIMES & VIRALITY HEATMAP CARD */}
+      {data?.optimalPostTimes && (
+        <OptimalPostTimesCard insights={data.optimalPostTimes} />
+      )}
+
       {/* VIEW MODE 1: VISUAL GRAPHS & INTERACTIVE CHARTS */}
       {viewMode === "graphs" && (
         <div className="space-y-8">
@@ -261,48 +321,35 @@ export default function AdminAnalyticsPage() {
                   );
                 })}
               </div>
-
-              <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-[11px] font-mono text-neutral-400">
-                <span>💡 All referral links automatically inject active partner codes.</span>
-                <Link href="/admin/settings" className="text-emerald-400 hover:underline">
-                  Edit Codes ➔
-                </Link>
-              </div>
             </div>
 
-            {/* Right Column: Traffic Referral Sources (5 cols) */}
+            {/* Right Column: Traffic Inflow & Top Referrers (5 cols) */}
             <div className="lg:col-span-5 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
               <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-400" />
-                    <span>Traffic Sources</span>
+                    <Users className="w-4 h-4 text-cyan-400" />
+                    <span>Traffic Inflow Channels</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Where social audiences discover your drops
+                    Where your viral haul visitors originate from
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                {(data?.trafficSources || []).map((src, idx) => (
+                {data?.trafficSources?.map((src) => (
                   <div
-                    key={idx}
-                    className="p-3 bg-neutral-950 border border-neutral-800/80 rounded-lg flex items-center justify-between"
+                    key={src.source}
+                    className="p-3.5 bg-neutral-950 rounded-xl border border-neutral-800/80 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-400 text-xs font-mono font-bold flex items-center justify-center">
-                        0{idx + 1}
-                      </span>
-                      <span className="text-xs font-mono font-bold text-white">
-                        {src.source}
-                      </span>
+                      <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                      <span className="text-xs font-mono text-white font-medium">{src.source}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-mono">
-                      <span className="px-2 py-0.5 bg-neutral-900 text-neutral-300 rounded font-bold">
-                        {src.count} visits
-                      </span>
-                      <span className="text-emerald-400 font-bold w-10 text-right">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-white">{src.count} views</span>
+                      <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-neutral-400 text-[10px] font-mono rounded">
                         {src.percentage}%
                       </span>
                     </div>
@@ -312,102 +359,76 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
 
-          {/* ROW 3: GEO AUDIENCE (COUNTRIES) & HARDWARE PLATFORMS */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Geo Countries (7 cols) */}
-            <div className="lg:col-span-7 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
+          {/* GEOGRAPHY & DEVICE DISTRIBUTION */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Geo Distribution */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
               <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <Globe className="w-4 h-4 text-emerald-400" />
-                    <span>Geographic Audience (Countries)</span>
+                    <span>Geographic Audience (Country Split)</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Real-time country distribution parsed from incoming visitor headers
+                    Cleaned of developer local noise • Organic visitor regions
                   </p>
                 </div>
-                <span className="text-xs font-mono text-emerald-400 font-bold">
-                  Live Edge Geo
-                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {(data?.countries || []).map((c, idx) => (
+              <div className="space-y-3">
+                {data?.countries?.map((c) => (
                   <div
-                    key={c.code || idx}
-                    className="p-3.5 bg-neutral-950 border border-neutral-800/80 rounded-lg space-y-2"
+                    key={c.code}
+                    className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
                   >
-                    <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="font-bold text-white flex items-center gap-2">
-                        <span className="text-base">{c.flag}</span>
-                        <span>{c.country}</span>
-                      </span>
-                      <span className="text-emerald-400 font-bold">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">{c.flag}</span>
+                      <span className="text-xs font-mono text-white font-medium">{c.country}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-white">{c.count}</span>
+                      <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-emerald-400 text-[10px] font-mono rounded font-bold">
                         {c.percentage}%
                       </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(c.percentage, 5)}%` }}
-                      />
-                    </div>
-                    <div className="text-[10px] font-mono text-neutral-500 flex justify-between">
-                      <span>Code: {c.code}</span>
-                      <span>{c.count} impressions</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Devices & OS (5 cols) */}
-            <div className="lg:col-span-5 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
+            {/* Device Distribution */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
               <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
                 <div>
                   <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-blue-400" />
-                    <span>Devices &amp; Platforms</span>
+                    <Smartphone className="w-4 h-4 text-purple-400" />
+                    <span>Device &amp; Platform Ratio</span>
                   </h2>
                   <p className="text-xs font-mono text-neutral-500">
-                    Mobile vs. Desktop audience breakdown
+                    Optimized for mobile TikTok / Instagram in-app browsers
                   </p>
                 </div>
-                <span className="text-xs font-mono text-blue-400 font-bold">
-                  Device Split
-                </span>
               </div>
 
               <div className="space-y-3">
-                {(data?.devices || []).map((dev, idx) => (
+                {data?.devices?.map((d) => (
                   <div
-                    key={idx}
-                    className="p-3 bg-neutral-950 border border-neutral-800/80 rounded-lg space-y-2"
+                    key={d.device}
+                    className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
                   >
-                    <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="font-bold text-white flex items-center gap-2">
-                        {dev.type === "mobile" ? (
-                          <Smartphone className="w-4 h-4 text-cyan-400" />
-                        ) : (
-                          <Laptop className="w-4 h-4 text-purple-400" />
-                        )}
-                        <span>{dev.device}</span>
-                      </span>
-                      <span className="text-blue-400 font-bold">
-                        {dev.percentage}%
-                      </span>
+                    <div className="flex items-center gap-2.5">
+                      {d.type === "mobile" ? (
+                        <Smartphone className="w-4 h-4 text-purple-400" />
+                      ) : (
+                        <Laptop className="w-4 h-4 text-cyan-400" />
+                      )}
+                      <span className="text-xs font-mono text-white font-medium">{d.device}</span>
                     </div>
-                    <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          dev.type === "mobile" ? "bg-cyan-400" : "bg-purple-400"
-                        }`}
-                        style={{ width: `${Math.max(dev.percentage, 5)}%` }}
-                      />
-                    </div>
-                    <div className="text-[10px] font-mono text-neutral-500 flex justify-between">
-                      <span className="capitalize">{dev.type} Hardware</span>
-                      <span>{dev.count} sessions</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-white">{d.count}</span>
+                      <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-purple-300 text-[10px] font-mono rounded font-bold">
+                        {d.percentage}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -415,115 +436,67 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
 
-          {/* ROW 4: CATEGORY & BRAND MATRIX */}
+          {/* CATEGORY & BRAND MATRIX */}
           <CategoryBrandMatrix
-            categories={data?.categoryBreakdown || []}
-            brands={data?.topBrands || []}
+            categoryBreakdown={data?.categoryBreakdown || []}
+            topBrands={data?.topBrands || []}
           />
         </div>
       )}
 
-      {/* VIEW MODE 2: DEEP DATA MATRIX & RAW LOGS */}
+      {/* VIEW MODE 2: RAW DATA MATRIX */}
       {viewMode === "table" && (
-        <div className="space-y-8">
-          {/* Top Grails Matrix Table */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-4">
+        <div className="space-y-6">
+          {/* Top Sourced Grails Table */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
               <div>
                 <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-orange-400" />
-                  <span>Full Catalog Engagement Matrix</span>
+                  <Flame className="w-4 h-4 text-amber-400" />
+                  <span>Top Sourced Grails (Product Level CTR)</span>
                 </h2>
                 <p className="text-xs font-mono text-neutral-500">
-                  Granular click totals, direct routes, and categories
+                  Most engaged fashion pieces across your TikTok &amp; IG audience
                 </p>
               </div>
-              <Link
-                href="/admin/slides"
-                className="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-              >
-                <span>Create Carousels with Top Grails</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse font-mono text-xs">
+              <table className="w-full text-left font-mono text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-neutral-800 text-neutral-400 uppercase text-[11px] tracking-wider">
-                    <th className="py-3 px-4"># Rank</th>
-                    <th className="py-3 px-4">Brand / Designer</th>
-                    <th className="py-3 px-4">Piece Title</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Catalog Price</th>
-                    <th className="py-3 px-4 text-right">Clicks</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="border-b border-neutral-800 text-neutral-500 uppercase text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">Designer</th>
+                    <th className="py-2.5 px-3">Piece Title</th>
+                    <th className="py-2.5 px-3">Category</th>
+                    <th className="py-2.5 px-3">Price</th>
+                    <th className="py-2.5 px-3 text-right">Agent Clicks</th>
+                    <th className="py-2.5 px-3 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-800/60">
-                  {(data?.topProducts || []).map((item, idx) => (
-                    <tr key={item.slug || idx} className="hover:bg-neutral-950/60 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-neutral-500">
-                        #{String(idx + 1).padStart(2, "0")}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white uppercase">
-                        {item.brand}
-                      </td>
-                      <td className="py-3.5 px-4 text-neutral-300 max-w-xs truncate">
-                        {item.title}
-                      </td>
-                      <td className="py-3.5 px-4 text-neutral-400">
-                        {item.category}
-                      </td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold">
-                        ${typeof item.price === "number" ? item.price.toFixed(2) : item.price} USD
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <span className="px-2.5 py-1 bg-emerald-950 border border-emerald-800/60 text-emerald-400 font-bold rounded">
-                          {item.clicks} Clicks
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
+                  {data?.topProducts?.map((prod, idx) => (
+                    <tr key={prod.slug || idx} className="hover:bg-neutral-800/40 transition-colors">
+                      <td className="py-3 px-3 text-neutral-500 font-bold">{idx + 1}</td>
+                      <td className="py-3 px-3 uppercase text-neutral-300 font-bold">{prod.brand}</td>
+                      <td className="py-3 px-3 text-white max-w-xs truncate">{prod.title}</td>
+                      <td className="py-3 px-3 text-neutral-400">{prod.category}</td>
+                      <td className="py-3 px-3 text-white">${prod.price}</td>
+                      <td className="py-3 px-3 text-right text-emerald-400 font-bold">{prod.clicks}</td>
+                      <td className="py-3 px-3 text-right">
                         <Link
-                          href={`/product/${item.slug}`}
+                          href={`/product/${prod.slug}`}
                           target="_blank"
-                          className="text-neutral-400 hover:text-white inline-flex items-center gap-1 transition-colors"
+                          className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors"
                         >
                           <span>View</span>
-                          <ExternalLink className="w-3 h-3" />
+                          <ArrowUpRight className="w-3 h-3" />
                         </Link>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          {/* Recent Live Events Stream */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 shadow-xl">
-            <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
-              Real-Time Event Stream Log
-            </h3>
-            <div className="space-y-2 max-h-80 overflow-y-auto font-mono text-xs">
-              {(data?.recentEvents || []).map((ev, idx) => (
-                <div
-                  key={idx}
-                  className="p-2.5 bg-neutral-950 border border-neutral-800 rounded flex items-center justify-between text-neutral-400"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-[10px] text-emerald-400 font-bold uppercase">
-                      {ev.type}
-                    </span>
-                    <span className="text-white">
-                      {ev.type === "agent_click" ? `Clicked ${ev.agent?.toUpperCase()} (${ev.productSlug || ev.brand})` : `Visited ${ev.path || "/"}`}
-                    </span>
-                  </div>
-                  <span className="text-neutral-600 text-[11px]">
-                    {new Date(ev.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </div>

@@ -43,6 +43,15 @@ function parseCountryCode(req: NextRequest, bodyCountry?: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Check Server-Side Operator Auth Cookie & Ignore Header
+    const adminCookie = req.cookies.get("af_admin_session");
+    const ignoreCookie = req.cookies.get("af_ignore_analytics")?.value === "true";
+    const ignoreHeader = req.headers.get("x-ignore-analytics") === "true";
+
+    if (adminCookie || ignoreCookie || ignoreHeader) {
+      return NextResponse.json({ success: true, ignored: true, reason: "admin_self_traffic" });
+    }
+
     let body;
     const contentType = req.headers.get("content-type") || "";
     if (contentType.includes("application/json") || contentType.includes("text/plain")) {
@@ -50,6 +59,10 @@ export async function POST(req: NextRequest) {
       body = JSON.parse(raw);
     } else {
       body = await req.json();
+    }
+
+    if (body?.isAdmin || body?.path?.startsWith("/admin")) {
+      return NextResponse.json({ success: true, ignored: true, reason: "admin_self_traffic" });
     }
 
     const ua = req.headers.get("user-agent") || "";
