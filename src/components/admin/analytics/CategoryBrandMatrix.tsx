@@ -5,12 +5,17 @@ import { CategoryItem } from "@/lib/analytics/analyticsStore";
 import { Tag, Sparkles, Layers } from "lucide-react";
 
 interface CategoryBrandMatrixProps {
-  categories: CategoryItem[];
-  brands: { brand: string; clicks: number; percentage: number }[];
+  categories?: CategoryItem[];
+  categoryBreakdown?: CategoryItem[];
+  brands?: { brand: string; clicks: number; percentage: number }[];
+  topBrands?: { brand: string; clicks: number; percentage: number }[];
 }
 
-export function CategoryBrandMatrix({ categories, brands }: CategoryBrandMatrixProps) {
+export function CategoryBrandMatrix(props: CategoryBrandMatrixProps) {
   const [activeView, setActiveView] = useState<"categories" | "brands">("brands");
+
+  const brandList = props.brands || props.topBrands || [];
+  const categoryList = props.categories || props.categoryBreakdown || [];
 
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-xl">
@@ -57,7 +62,7 @@ export function CategoryBrandMatrix({ categories, brands }: CategoryBrandMatrixP
       {/* Visual Chart Bars */}
       <div className="space-y-4">
         {activeView === "brands"
-          ? brands.map((b, idx) => (
+          ? brandList.map((b, idx) => (
               <div key={b.brand || idx} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="font-bold text-white uppercase flex items-center gap-2">
@@ -78,7 +83,7 @@ export function CategoryBrandMatrix({ categories, brands }: CategoryBrandMatrixP
                 </div>
               </div>
             ))
-          : categories.map((c, idx) => (
+          : categoryList.map((c, idx) => (
               <div key={c.category || idx} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="font-bold text-white uppercase flex items-center gap-2">
