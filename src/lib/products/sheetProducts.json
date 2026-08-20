@@ -3703,5 +3703,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | FW19 LARRY"
+  },
+  {
+    "id": "149",
+    "title": "Enfants Riches Déprimés 25 Fw",
+    "name": "Enfants Riches Déprimés 25 Fw",
+    "brand": "Enfants Riches Déprimés",
+    "brandSlug": "enfants-riches-d-prim-s",
+    "category": "Outerwear",
+    "categorySlug": "outerwear",
+    "season": "",
+    "price": 51.7,
+    "sourcePrice": 51.7,
+    "estimatedRetail": 2800.0,
+    "directStoreLink": "https://weidian.com/item.html?p=iphone&itemID=7727455483&a=b&wfr=BuyercopyURL&distributorId=2055273736&share_relation=dcf9db1f6f993d3e_2055273736_1",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3Fp%3Diphone%26itemID%3D7727455483%26a%3Db%26wfr%3DBuyercopyURL%26distributorId%3D2055273736%26share_relation%3Ddcf9db1f6f993d3e_2055273736_1&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3Fp%3Diphone%26itemID%3D7727455483%26a%3Db%26wfr%3DBuyercopyURL%26distributorId%3D2055273736%26share_relation%3Ddcf9db1f6f993d3e_2055273736_1&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3Fp%3Diphone%26itemID%3D7727455483%26a%3Db%26wfr%3DBuyercopyURL%26distributorId%3D2055273736%26share_relation%3Ddcf9db1f6f993d3e_2055273736_1&memberId=1325437696506389977",
+    "imageUrl": "/products/enfants-riches-d-prim-s-enfants-riches-d-prim-s-25-fw-97.png",
+    "localImage": "/products/enfants-riches-d-prim-s-enfants-riches-d-prim-s-25-fw-97.png",
+    "slug": "enfants-riches-d-prim-s-enfants-riches-d-prim-s-25-fw-97",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
