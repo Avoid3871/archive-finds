@@ -110,23 +110,23 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/mission" className="text-neutral-300 hover:text-white transition-colors font-medium">
-                  Our Mission & Disclaimer
+                <Link href="/mission" className="text-neutral-300 hover:text-white transition-colors">
+                  Our Mission
                 </Link>
               </li>
               <li>
-                <Link href="/discover" className="text-neutral-300 hover:text-white transition-colors">
-                  All Finds
+                <Link href="/privacy" className="text-neutral-300 hover:text-white transition-colors">
+                  Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/new" className="text-neutral-300 hover:text-white transition-colors">
-                  Latest Drops
+                <Link href="/terms" className="text-neutral-300 hover:text-white transition-colors">
+                  Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/search" className="text-neutral-300 hover:text-white transition-colors">
-                  Instant Search
+                <Link href="/legal" className="text-neutral-300 hover:text-white transition-colors">
+                  Legal Notice / Imprint
                 </Link>
               </li>
               <li>

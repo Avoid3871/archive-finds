@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Layers,
+  BarChart3,
   Smartphone,
   FileSpreadsheet,
   Activity,
@@ -57,6 +58,7 @@ export function AdminSidebarNav({ initialProductCount = 91 }: { initialProductCo
 
   const navItems = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
+    { href: "/admin/analytics", label: "Live Analytics", icon: BarChart3 },
     { href: "/admin/products", label: `Products (${productCount})`, icon: Layers },
     { href: "/admin/slides", label: "9:16 Slide Studio", icon: Smartphone },
     { href: "/admin/sources", label: "Sheet Sources", icon: FileSpreadsheet },
