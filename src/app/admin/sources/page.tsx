@@ -36,6 +36,9 @@ import {
   Clipboard,
   ImagePlus,
   FileUp,
+  Wand2,
+  Key,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { ARCHIVE_BRANDS, BRAND_NAMES, normalizeBrand, getAllKnownBrands } from "@/lib/constants/brands";
@@ -221,6 +224,13 @@ export default function AdminSourcesPage() {
   const [customImageUrlInput, setCustomImageUrlInput] = useState<string>("");
   const [imageSearchQuery, setImageSearchQuery] = useState<string>("");
 
+  // Gemini AI Studio Recreate State
+  const [isGeneratingGemini, setIsGeneratingGemini] = useState<boolean>(false);
+  const [showGeminiKeyInput, setShowGeminiKeyInput] = useState<boolean>(false);
+  const [geminiApiKey, setGeminiApiKey] = useState<string>("");
+  const [geminiError, setGeminiError] = useState<string | null>(null);
+  const [geminiSuccessMsg, setGeminiSuccessMsg] = useState<string | null>(null);
+
   const [ingestModalProgress, setIngestModalProgress] = useState<{
     isIngesting: boolean;
     percent: number;
@@ -282,6 +292,64 @@ export default function AdminSourcesPage() {
       console.error("AI Identify failed:", err);
     } finally {
       setIsAutoIdentifyingTitle(false);
+    }
+  };
+
+  const handleGeminiStudioRecreate = async () => {
+    if (!editingItem) return;
+    setIsGeneratingGemini(true);
+    setGeminiError(null);
+    setGeminiSuccessMsg(null);
+
+    const title = editFormData.title || editingItem.title;
+    const brand = editFormData.brand || editingItem.brand;
+    const category = editFormData.category || editingItem.category;
+
+    try {
+      const res = await fetch("/api/admin/products/ai-recreate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          brand,
+          category,
+          apiKey: geminiApiKey.trim() || undefined,
+          autoCutout: true,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.needsApiKey) {
+          setShowGeminiKeyInput(true);
+          setGeminiError("Bitte gib deinen Google Gemini API Key ein.");
+        } else {
+          setGeminiError(data.error || "Gemini Generierung fehlgeschlagen.");
+        }
+        return;
+      }
+
+      if (data.imageUrl) {
+        setSelectedImageSrc(data.imageUrl);
+        setEditingItem((prev) =>
+          prev
+            ? {
+                ...prev,
+                imageUrl: data.imageUrl,
+                localImage: data.imageUrl,
+              }
+            : null
+        );
+        setAlternateImages((prev) => [data.imageUrl, ...prev.filter((img) => img !== data.imageUrl)]);
+        setGeminiSuccessMsg("✨ 4K Studio Flat-Lay erfolgreich mit Gemini AI generiert & freigestellt!");
+        setShowGeminiKeyInput(false);
+        setTimeout(() => setGeminiSuccessMsg(null), 5000);
+      }
+    } catch (err: any) {
+      setGeminiError(err.message || "Netzwerkfehler bei Gemini Generierung.");
+    } finally {
+      setIsGeneratingGemini(false);
     }
   };
 
@@ -3122,14 +3190,85 @@ export default function AdminSourcesPage() {
                         </span>
                       </div>
                     )}
+
+                    {/* Gemini AI Studio Generation Overlay */}
+                    {isGeneratingGemini && (
+                      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-20">
+                        <Loader2 className="w-7 h-7 animate-spin text-purple-400" />
+                        <span className="text-xs font-mono font-bold text-purple-300 text-center px-4">
+                          ✨ Generating 4K Studio Flat-Lay with Gemini AI &amp; Removing Background...
+                        </span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Gemini AI Studio Recreate Button (Prominent) */}
+                  <button
+                    type="button"
+                    onClick={handleGeminiStudioRecreate}
+                    disabled={isGeneratingGemini || isApplyingCutout}
+                    title="Nutzt Google Gemini / Imagen 3 um das Stück ohne Model als 4K Studio-Flat-Lay freigestellt zu generieren"
+                    className="w-full py-2.5 px-3 bg-gradient-to-r from-purple-950/90 via-indigo-950/90 to-purple-950/90 hover:from-purple-900 hover:to-indigo-900 text-purple-200 hover:text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-purple-700/60 shadow-lg shadow-purple-950/40 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isGeneratingGemini ? (
+                      <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4 text-purple-400" />
+                    )}
+                    <span>✨ Gemini AI Studio Recreate</span>
+                  </button>
+
+                  {/* Inline Gemini API Key Drawer if requested */}
+                  {showGeminiKeyInput && (
+                    <div className="p-3 bg-neutral-950 border border-purple-800/80 rounded-xl space-y-2 animate-in fade-in">
+                      <div className="flex items-center justify-between text-xs font-mono text-purple-300">
+                        <span className="flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-purple-400" />
+                          Google Gemini API Key
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowGeminiKeyInput(false)}
+                          className="text-neutral-500 hover:text-white text-[10px]"
+                        >
+                          Close
+                        </button>
+                      </div>
+                      <input
+                        type="password"
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        className="w-full px-3 py-1.5 bg-neutral-900 border border-neutral-700 rounded-lg text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleGeminiStudioRecreate}
+                        className="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-mono font-bold uppercase transition-colors cursor-pointer"
+                      >
+                        Key Speichern &amp; Generieren
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Feedback Messages */}
+                  {geminiError && (
+                    <p className="text-[10px] font-mono text-red-400 bg-red-950/50 border border-red-800/60 p-2 rounded-lg">
+                      ⚠️ {geminiError}
+                    </p>
+                  )}
+                  {geminiSuccessMsg && (
+                    <p className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/60 p-2 rounded-lg">
+                      {geminiSuccessMsg}
+                    </p>
+                  )}
 
                   {/* Left Column Quick Upload & Paste Bar */}
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isApplyingCutout}
+                      disabled={isApplyingCutout || isGeneratingGemini}
                       className="px-2.5 py-1.5 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white rounded-lg text-[10px] font-mono flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
                       title="Upload custom image file from your computer"
                     >
@@ -3140,7 +3279,7 @@ export default function AdminSourcesPage() {
                     <button
                       type="button"
                       onClick={handleClipboardPasteImage}
-                      disabled={isApplyingCutout}
+                      disabled={isApplyingCutout || isGeneratingGemini}
                       className="px-2.5 py-1.5 bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white rounded-lg text-[10px] font-mono flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
                       title="Paste image from clipboard or press Ctrl+V"
                     >
