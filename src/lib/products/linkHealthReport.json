@@ -1,9 +1,9 @@
 {
   "lastAudit": "2026-08-20T16:29:20.714125+00:00",
-  "totalChecked": 148,
+  "totalChecked": 147,
   "healthyCount": 66,
   "deadCount": 1,
-  "flaggedCount": 81,
+  "flaggedCount": 80,
   "items": [
     {
       "id": "26",
@@ -130,20 +130,6 @@
       "statusCode": 200,
       "message": "Approved & verified by admin",
       "testedAt": "2026-08-20T16:29:05.631452+00:00"
-    },
-    {
-      "id": "74",
-      "title": "Walter Van Beirendonck Felt Watch",
-      "slug": "archive-selection-walter-van-beirendonck-felt-watch",
-      "brand": "Archive Selection",
-      "directLink": "https://item.taobao.com/item.htm?id=655287380011",
-      "directStoreLink": "https://item.taobao.com/item.htm?id=655287380011",
-      "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fitem.taobao.com%2Fitem.htm%3Fid%3D655287380011&memberId=1325437696506389977",
-      "imageUrl": "/products/sheet/grid_r57_c05_image270.png",
-      "status": "FLAGGED",
-      "statusCode": 200,
-      "message": "Taobao login wall — cannot verify stock server-side",
-      "testedAt": "2026-08-20T16:29:05.631464+00:00"
     },
     {
       "id": "57",
