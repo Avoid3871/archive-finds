@@ -961,8 +961,22 @@ export default function AdminSourcesPage() {
       }
     } finally {
       setIsScanningSheet(false);
+      sheetAbortControllerRef.current = null;
       fetchDiscoveredSheet();
     }
+  };
+
+  const handleStopSheetScan = () => {
+    if (sheetAbortControllerRef.current) {
+      sheetAbortControllerRef.current.abort();
+    }
+    setIsScanningSheet(false);
+    setSheetScanProgress((prev) => ({
+      ...prev,
+      phase: "ABORTED",
+      message: "🛑 Scan vom Benutzer abgebrochen.",
+    }));
+    setSheetLiveLogs((prev) => [...prev, "🛑 [AF_SHEET_LOG] Extraction scan stopped by user."]);
   };
 
   const handleDismissSheetItem = async (id: string, rawMarketUrl: string, action: "dismiss" | "blacklist" = "dismiss") => {
@@ -2367,23 +2381,34 @@ export default function AdminSourcesPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3">
-                <button
-                  onClick={handleScanSheet}
-                  disabled={isScanningSheet}
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isScanningSheet ? (
-                    <>
+                {isScanningSheet ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled
+                      className="px-4 py-2.5 bg-neutral-800 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 cursor-not-allowed opacity-80"
+                    >
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       <span>Scanning Sheet...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4 fill-black" />
-                      <span>Extract & Ingest Sheet</span>
-                    </>
-                  )}
-                </button>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStopSheetScan}
+                      className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-red-600/40 animate-pulse cursor-pointer"
+                      title="Google Sheet Scan sofort anhalten"
+                    >
+                      <Square className="w-3.5 h-3.5 fill-current" />
+                      <span>Stop Scan</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleScanSheet}
+                    className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 fill-black" />
+                    <span>Extract & Ingest Sheet</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2487,19 +2512,19 @@ export default function AdminSourcesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
               <span className="text-[10px] font-mono uppercase text-neutral-500 block">Queue Ready</span>
-              <p className="text-xl font-mono font-bold text-white">{discoveredSheetItems.length} Grails</p>
+              <p className="text-xl font-mono font-bold text-white">{(discoveredSheetItems.length).toLocaleString("de-DE")} Grails</p>
             </div>
             <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
               <span className="text-[10px] font-mono uppercase text-red-400 block">Dead Links Filtered</span>
-              <p className="text-xl font-mono font-bold text-red-400">{sheetStats.deadCount} OOS</p>
+              <p className="text-xl font-mono font-bold text-red-400">{(sheetStats.deadCount || 0).toLocaleString("de-DE")} Inaktiv</p>
             </div>
             <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
               <span className="text-[10px] font-mono uppercase text-emerald-400 block">Ingested to Live Store</span>
-              <p className="text-xl font-mono font-bold text-emerald-400">{sheetStats.ingestedCount} Pieces</p>
+              <p className="text-xl font-mono font-bold text-emerald-400">{(sheetStats.ingestedCount || 0).toLocaleString("de-DE")} Pieces</p>
             </div>
             <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
               <span className="text-[10px] font-mono uppercase text-neutral-500 block">Total Scanned Registry</span>
-              <p className="text-xl font-mono font-bold text-neutral-300">{sheetStats.totalRegistry} Tested</p>
+              <p className="text-xl font-mono font-bold text-neutral-300">{(sheetStats.totalRegistry || 0).toLocaleString("de-DE")} Geprüft</p>
             </div>
           </div>
 
