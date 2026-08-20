@@ -21,6 +21,8 @@ import {
   Undo2,
   Sliders,
   CheckCircle2,
+  Key,
+  Wand2,
 } from "lucide-react";
 
 export interface Product {
@@ -106,6 +108,9 @@ export function EditProductModal({
 
   const [isUploading, setIsUploading] = useState(false);
   const [isCuttingOut, setIsCuttingOut] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState("");
   const [isSearchingPhotos, setIsSearchingPhotos] = useState(false);
   const [sellerPhotos, setSellerPhotos] = useState<string[]>([]);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
@@ -118,7 +123,7 @@ export function EditProductModal({
 
   const showNotification = (msg: string) => {
     setSuccessNotice(msg);
-    setTimeout(() => setSuccessNotice(""), 3500);
+    setTimeout(() => setSuccessNotice(""), 4000);
   };
 
   // 1. Global Clipboard Paste Listener (Ctrl + V)
@@ -227,7 +232,49 @@ export function EditProductModal({
     }
   };
 
-  // 4. Fetch Seller / Studio Alternative Photos
+  // 4. ✨ Gemini AI Studio Recreate
+  const handleAiRecreate = async () => {
+    setIsGeneratingAi(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/admin/products/ai-recreate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          brand,
+          category,
+          imageSrc: imageUrl,
+          apiKey: geminiApiKey.trim() || undefined,
+          autoCutout: removeBgOnUpload,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.needsApiKey) {
+        setShowApiKeyInput(true);
+        setErrorMsg("Please enter your Google Gemini API Key below to enable AI Studio generation.");
+        return;
+      }
+
+      if (res.ok && data.success && data.imageUrl) {
+        if (!rawOriginalUrl) setRawOriginalUrl(imageUrl);
+        setImageUrl(data.imageUrl);
+        setShowApiKeyInput(false);
+        showNotification(data.message || "✨ Flawless Studio Flat-Lay generated with Gemini Imagen 3!");
+      } else {
+        setErrorMsg(data.error || "AI generation failed.");
+      }
+    } catch (err: any) {
+      setErrorMsg("AI Generation error: " + err.message);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
+  // 5. Fetch Seller / Studio Alternative Photos
   const handleFetchSellerPhotos = async () => {
     setIsSearchingPhotos(true);
     setErrorMsg("");
@@ -374,7 +421,7 @@ export function EditProductModal({
                 </span>
               </h2>
               <p className="text-[10px] font-mono text-neutral-400">
-                Slug: {product.slug} • Press <strong className="text-white font-mono">Ctrl + V</strong> anywhere to paste an image
+                Slug: {product.slug} • Paste image via <strong className="text-white font-mono">Ctrl + V</strong> anywhere
               </p>
             </div>
           </div>
@@ -405,15 +452,15 @@ export function EditProductModal({
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column: Image Studio & Cutout Controls (5 cols) */}
-            <div className="lg:col-span-5 space-y-4">
+            {/* Left Column: Image Studio & AI Recreator (5 cols) */}
+            <div className="lg:col-span-5 space-y-3.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-mono uppercase tracking-wider text-neutral-300 font-bold flex items-center gap-1.5">
                   <Scissors className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Garment Image Studio</span>
                 </label>
                 <span className="text-[10px] font-mono text-neutral-500">
-                  Clipboard (Ctrl+V) Active
+                  Ctrl+V Active
                 </span>
               </div>
 
@@ -437,11 +484,22 @@ export function EditProductModal({
                   }}
                 />
 
-                {/* Loading Overlay */}
-                {(isUploading || isCuttingOut) && (
-                  <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center text-white gap-2 font-mono text-xs">
+                {/* Loading Overlays */}
+                {(isUploading || isCuttingOut || isGeneratingAi) && (
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white gap-2.5 font-mono text-xs p-4 text-center">
                     <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
-                    <span>{isCuttingOut ? "Removing Background (ONNX)..." : "Uploading & Processing..."}</span>
+                    <span className="text-emerald-300 font-bold">
+                      {isGeneratingAi
+                        ? "✨ Generating Studio Flat-Lay (Imagen 3)..."
+                        : isCuttingOut
+                        ? "✂️ Removing Background (ONNX)..."
+                        : "📸 Uploading & Processing..."}
+                    </span>
+                    {isGeneratingAi && (
+                      <span className="text-[10px] text-neutral-400">
+                        Synthesizing luxury editorial catalog shot
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -454,13 +512,61 @@ export function EditProductModal({
                 )}
               </div>
 
-              {/* Action Buttons: Cutout, Revert, Seller Photos */}
+              {/* Gemini AI Recreate Button (Prominent) */}
+              <button
+                type="button"
+                onClick={handleAiRecreate}
+                disabled={isGeneratingAi || isUploading || isCuttingOut}
+                title="Use Google Gemini / Imagen 3 to generate a pristine 4K editorial flat-lay studio photo of this piece"
+                className="w-full py-2.5 px-3 bg-gradient-to-r from-purple-950/90 via-indigo-950/90 to-purple-950/90 hover:from-purple-900 hover:to-indigo-900 text-purple-200 hover:text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-purple-700/60 shadow-lg shadow-purple-950/40 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isGeneratingAi ? (
+                  <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+                ) : (
+                  <Wand2 className="w-4 h-4 text-purple-400" />
+                )}
+                <span>✨ Gemini AI Studio Recreate</span>
+              </button>
+
+              {/* Inline API Key Drawer if requested */}
+              {showApiKeyInput && (
+                <div className="p-3 bg-neutral-950 border border-purple-800/80 rounded-xl space-y-2 animate-in fade-in">
+                  <div className="flex items-center justify-between text-xs font-mono text-purple-300">
+                    <span className="flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-purple-400" />
+                      Google Gemini API Key
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeyInput(false)}
+                      className="text-neutral-500 hover:text-white text-[10px]"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <input
+                    type="password"
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="w-full px-3 py-1.5 bg-neutral-900 border border-neutral-700 rounded-lg text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAiRecreate}
+                    className="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-mono font-bold uppercase transition-colors cursor-pointer"
+                  >
+                    Save Key &amp; Generate Flat-Lay
+                  </button>
+                </div>
+              )}
+
+              {/* Action Buttons: Cutout & Revert */}
               <div className="grid grid-cols-2 gap-2">
-                {/* 1-Click Cutout Button */}
                 <button
                   type="button"
                   onClick={handleRemoveBackgroundCurrent}
-                  disabled={isCuttingOut || isUploading || !imageUrl}
+                  disabled={isCuttingOut || isUploading || isGeneratingAi || !imageUrl}
                   title="Run local AI rembg background removal on this image"
                   className="py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-1.5 border border-neutral-700 transition-colors cursor-pointer disabled:opacity-50"
                 >
@@ -468,7 +574,6 @@ export function EditProductModal({
                   <span>Cutout BG</span>
                 </button>
 
-                {/* Revert Background */}
                 <button
                   type="button"
                   onClick={handleRevertOriginalBackground}
@@ -481,8 +586,8 @@ export function EditProductModal({
                 </button>
               </div>
 
-              {/* Upload & Search Bar */}
-              <div className="space-y-2.5 pt-1">
+              {/* Upload File & Store Photos */}
+              <div className="space-y-2.5">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -496,7 +601,7 @@ export function EditProductModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="py-2.5 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+                    className="py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-1.5 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <Upload className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Upload File</span>
@@ -507,7 +612,7 @@ export function EditProductModal({
                     onClick={handleFetchSellerPhotos}
                     disabled={isSearchingPhotos}
                     title="Fetch all high-res studio seller photos from Weidian Thor API & Taobao"
-                    className="py-2.5 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-2 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
+                    className="py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-mono uppercase font-bold flex items-center justify-center gap-1.5 border border-neutral-800 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {isSearchingPhotos ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
@@ -519,8 +624,8 @@ export function EditProductModal({
                 </div>
 
                 {/* Auto Background Removal Switch */}
-                <div className="p-3 bg-neutral-950 border border-neutral-800/90 rounded-xl flex items-center justify-between text-xs font-mono">
-                  <span className="text-neutral-300 flex items-center gap-1.5">
+                <div className="p-2.5 bg-neutral-950 border border-neutral-800/90 rounded-xl flex items-center justify-between text-xs font-mono">
+                  <span className="text-neutral-300 flex items-center gap-1.5 text-[11px]">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Auto-Cutout on Upload / Paste</span>
                   </span>
@@ -574,7 +679,7 @@ export function EditProductModal({
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="/products/cutouts/item.png"
-                    className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500"
+                    className="w-full px-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-lg text-xs font-mono text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-500"
                   />
                 </div>
               </div>
@@ -765,7 +870,7 @@ export function EditProductModal({
 
             <button
               type="submit"
-              disabled={isSaving || isUploading || isCuttingOut}
+              disabled={isSaving || isUploading || isCuttingOut || isGeneratingAi}
               className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-mono uppercase font-black tracking-wider transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
             >
               {isSaving ? (
