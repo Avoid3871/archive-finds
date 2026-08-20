@@ -33,6 +33,10 @@ export interface GeoHotspot {
   id: string;
   name: string;
   countryCode: string;
+  region: "americas" | "europe" | "asia_pacific";
+  city: string;
+  lat: string;
+  lon: string;
   x: number; // SVG X coordinate in percentage (0-100)
   y: number; // SVG Y coordinate in percentage (0-100)
   visitors: number;
@@ -85,6 +89,7 @@ export interface SearchDemandGap {
   inCatalog: boolean;
   matchCount: number;
   lastSearched: string;
+  isLive: boolean;
 }
 
 export interface SlideThemeRoi {
@@ -113,6 +118,7 @@ export interface AnalyticsSummary {
   timeline: TimelinePoint[];
   timeline24h: { hour: string; pageviews: number; clicks: number }[];
   optimalPostTimes: OptimalPostTimeInsight;
+  hasLiveSearches: boolean;
   searchDemandGaps: SearchDemandGap[];
   slideThemeRois: SlideThemeRoi[];
   recentEvents: AnalyticsEvent[];
@@ -442,14 +448,18 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     ];
   }
 
-  // Interactive SVG World Map Hotspots
+  // Precise Geographic Fashion Capitals with accurate SVG coordinate percentages
   const geoHotspots: GeoHotspot[] = [
     {
       id: "us-east",
-      name: "United States (New York / East)",
+      name: "United States (New York)",
       countryCode: "US",
-      x: 29,
-      y: 36,
+      region: "americas",
+      city: "New York",
+      lat: "40.7128° N",
+      lon: "74.0060° W",
+      x: 29.2,
+      y: 35.8,
       visitors: Math.round(totalPageviews * 0.28),
       percentage: 28,
       flag: "🇺🇸",
@@ -457,10 +467,14 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     },
     {
       id: "us-west",
-      name: "United States (Los Angeles / West)",
+      name: "United States (Los Angeles)",
       countryCode: "US",
-      x: 18,
-      y: 38,
+      region: "americas",
+      city: "Los Angeles",
+      lat: "34.0522° N",
+      lon: "118.2437° W",
+      x: 18.5,
+      y: 39.2,
       visitors: Math.round(totalPageviews * 0.17),
       percentage: 17,
       flag: "🇺🇸",
@@ -470,8 +484,12 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       id: "uk-london",
       name: "United Kingdom (London)",
       countryCode: "GB",
-      x: 48,
-      y: 28,
+      region: "europe",
+      city: "London",
+      lat: "51.5074° N",
+      lon: "0.1278° W",
+      x: 48.6,
+      y: 27.2,
       visitors: Math.round(totalPageviews * 0.21),
       percentage: 21,
       flag: "🇬🇧",
@@ -481,8 +499,12 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       id: "de-berlin",
       name: "Germany (Berlin / Frankfurt)",
       countryCode: "DE",
-      x: 53,
-      y: 27,
+      region: "europe",
+      city: "Berlin",
+      lat: "52.5200° N",
+      lon: "13.4050° E",
+      x: 52.8,
+      y: 26.5,
       visitors: Math.round(totalPageviews * 0.15),
       percentage: 15,
       flag: "🇩🇪",
@@ -492,8 +514,12 @@ export function getAnalyticsSummary(): AnalyticsSummary {
       id: "fr-paris",
       name: "France (Paris)",
       countryCode: "FR",
-      x: 49,
-      y: 32,
+      region: "europe",
+      city: "Paris",
+      lat: "48.8566° N",
+      lon: "2.3522° E",
+      x: 49.5,
+      y: 30.5,
       visitors: Math.round(totalPageviews * 0.10),
       percentage: 10,
       flag: "🇫🇷",
@@ -501,13 +527,47 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     },
     {
       id: "ca-toronto",
-      name: "Canada (Toronto / Montreal)",
+      name: "Canada (Toronto)",
       countryCode: "CA",
-      x: 26,
-      y: 30,
+      region: "americas",
+      city: "Toronto",
+      lat: "43.6532° N",
+      lon: "79.3832° W",
+      x: 27.5,
+      y: 32.8,
       visitors: Math.round(totalPageviews * 0.09),
       percentage: 9,
       flag: "🇨🇦",
+      isTop: false,
+    },
+    {
+      id: "jp-tokyo",
+      name: "Japan (Tokyo)",
+      countryCode: "JP",
+      region: "asia_pacific",
+      city: "Tokyo",
+      lat: "35.6762° N",
+      lon: "139.6503° E",
+      x: 84.8,
+      y: 37.5,
+      visitors: Math.round(totalPageviews * 0.06),
+      percentage: 6,
+      flag: "🇯🇵",
+      isTop: false,
+    },
+    {
+      id: "au-sydney",
+      name: "Australia (Sydney)",
+      countryCode: "AU",
+      region: "asia_pacific",
+      city: "Sydney",
+      lat: "33.8688° S",
+      lon: "151.2093° E",
+      x: 88.5,
+      y: 77.2,
+      visitors: Math.round(totalPageviews * 0.04),
+      percentage: 4,
+      flag: "🇦🇺",
       isTop: false,
     },
   ];
@@ -533,8 +593,10 @@ export function getAnalyticsSummary(): AnalyticsSummary {
   }
 
   // 1. Search Demand Gaps Intelligence
+  const hasLiveSearches = searchCountMap.size > 0;
   let searchDemandGaps: SearchDemandGap[] = [];
-  if (searchCountMap.size > 0) {
+
+  if (hasLiveSearches) {
     searchDemandGaps = Array.from(searchCountMap.entries()).map(([query, info]) => {
       const qLower = query.toLowerCase();
       const matchCount = productsList.filter(
@@ -549,12 +611,11 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: matchCount > 0,
         matchCount,
         lastSearched: info.lastTime,
+        isLive: true,
       };
     });
-  }
-
-  // If no organic search events logged yet, provide realistic fashion search demand baseline
-  if (searchDemandGaps.length === 0) {
+  } else {
+    // Curated Fashion Demand Benchmarks
     searchDemandGaps = [
       {
         query: "Maison Margiela German Army Trainers",
@@ -562,6 +623,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: false,
         matchCount: 0,
         lastSearched: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+        isLive: false,
       },
       {
         query: "Chrome Hearts Cemetery Cross Patch Hoodie",
@@ -569,6 +631,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: false,
         matchCount: 0,
         lastSearched: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+        isLive: false,
       },
       {
         query: "Undercover 85 Distressed Denim",
@@ -576,6 +639,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: false,
         matchCount: 0,
         lastSearched: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        isLive: false,
       },
       {
         query: "Rick Owens Bauhaus Cargo Pants",
@@ -583,6 +647,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: true,
         matchCount: 2,
         lastSearched: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+        isLive: false,
       },
       {
         query: "Enfants Riches Déprimés Silk Shirt",
@@ -590,6 +655,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: false,
         matchCount: 0,
         lastSearched: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+        isLive: false,
       },
       {
         query: "Raf Simons Riot Riot Riot Bomber",
@@ -597,6 +663,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         inCatalog: true,
         matchCount: 1,
         lastSearched: new Date(Date.now() - 1000 * 60 * 200).toISOString(),
+        isLive: false,
       },
     ];
   }
@@ -757,6 +824,7 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     timeline,
     timeline24h,
     optimalPostTimes,
+    hasLiveSearches,
     searchDemandGaps,
     slideThemeRois,
     recentEvents: events.slice(-30).reverse(),

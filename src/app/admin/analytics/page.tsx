@@ -340,7 +340,9 @@ export default function AdminAnalyticsPage() {
       {/* 3. SEARCH DEMAND GAPS (WHAT VISITORS ARE SEARCHING) */}
       <SearchDemandGapsCard
         gaps={data?.searchDemandGaps || []}
+        hasLiveSearches={data?.hasLiveSearches}
         lang={lang}
+        onTestSearchLogged={fetchAnalytics}
       />
 
       {/* 4. CONTENT & SLIDE THEME ROI ATTRIBUTION */}
