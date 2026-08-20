@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Users, MapPin, Sparkles, Navigation, Radio, Compass, Server, ArrowRight } from "lucide-react";
+import {
+  Globe,
+  Users,
+  MapPin,
+  Sparkles,
+  Navigation,
+  Radio,
+  Compass,
+  Server,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+} from "lucide-react";
 import { GeoHotspot, GeoItem } from "@/lib/analytics/analyticsStore";
 import { WORLD_MAP_PATH } from "./worldMapData";
 
@@ -18,6 +30,7 @@ export function InteractiveWorldMap({
 }: InteractiveWorldMapProps) {
   const [activeHotspot, setActiveHotspot] = useState<GeoHotspot | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<"all" | "americas" | "europe" | "asia_pacific">("all");
+  const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const isDe = lang === "de";
 
   const hqSpot = hotspots.find((h) => h.isHub) || {
@@ -33,13 +46,21 @@ export function InteractiveWorldMap({
     percentage: 15,
   };
 
-  const nonHqSpots = hotspots.filter((h) => !h.isHub);
-
   const filteredHotspots = selectedRegion === "all"
     ? hotspots
     : hotspots.filter((h) => h.region === selectedRegion || h.isHub);
 
   const activeTelemetry = activeHotspot || hqSpot;
+
+  // ViewBox dynamic calculation for regional focus or zoom
+  let targetViewBox = "0 0 1000 500";
+  if (selectedRegion === "europe") {
+    targetViewBox = "380 40 320 200"; // Focused on Europe
+  } else if (selectedRegion === "americas") {
+    targetViewBox = "60 40 400 300"; // Focused on North & Central America
+  } else if (selectedRegion === "asia_pacific") {
+    targetViewBox = "650 60 350 400"; // Focused on Asia-Pacific
+  }
 
   // Generate smooth incoming Bezier curves directly to Germany HQ (537.2, 104.1)
   const incomingRoutes = [
@@ -97,8 +118,8 @@ export function InteractiveWorldMap({
   return (
     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-6 shadow-2xl relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute -left-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -left-20 -top-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-neutral-800 pb-5">
@@ -118,76 +139,79 @@ export function InteractiveWorldMap({
           </h2>
           <p className="text-xs font-mono text-neutral-400 mt-1">
             {isDe
-              ? "Alle weltweiten Besucherströme aus Nordamerika, Europa & Asien fließen direkt zu deinem Server-Hub in Deutschland."
-              : "All inbound visitor streams across North America, Europe & Asia route directly into your German server hub."}
+              ? "Große Detailansicht aller 177 Länder mit reinen lokalen SVG-Wellen (ohne globale CSS-Effekte)."
+              : "High-definition expanded vector view of all 177 countries with localized SVG wave ripples."}
           </p>
         </div>
 
-        {/* Region Filter Buttons */}
+        {/* Region & Zoom Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSelectedRegion("all")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-              selectedRegion === "all"
-                ? "bg-white text-black shadow-md"
-                : "bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800"
-            }`}
-          >
-            {isDe ? "Alle Regionen" : "All Regions"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedRegion("americas")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-              selectedRegion === "americas"
-                ? "bg-white text-black shadow-md"
-                : "bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800"
-            }`}
-          >
-            🇺🇸 {isDe ? "Amerika" : "Americas"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedRegion("europe")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-              selectedRegion === "europe"
-                ? "bg-white text-black shadow-md"
-                : "bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800"
-            }`}
-          >
-            🇪🇺 {isDe ? "Europa" : "Europe"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedRegion("asia_pacific")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
-              selectedRegion === "asia_pacific"
-                ? "bg-white text-black shadow-md"
-                : "bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-800"
-            }`}
-          >
-            🇯🇵 {isDe ? "Asien-Pazifik" : "Asia-Pacific"}
-          </button>
+          {/* Region Tabs */}
+          <div className="flex items-center bg-neutral-950 border border-neutral-800 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setSelectedRegion("all")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
+                selectedRegion === "all"
+                  ? "bg-white text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              {isDe ? "Global" : "Global"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRegion("americas")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
+                selectedRegion === "americas"
+                  ? "bg-white text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              🇺🇸 {isDe ? "Amerika" : "Americas"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRegion("europe")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
+                selectedRegion === "europe"
+                  ? "bg-white text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              🇪🇺 {isDe ? "Europa" : "Europe"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRegion("asia_pacific")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase transition-all cursor-pointer ${
+                selectedRegion === "asia_pacific"
+                  ? "bg-white text-black shadow-md"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              🇯🇵 {isDe ? "Asien" : "Asia"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ULTRA-HD AUTHENTIC VECTOR WORLD MAP */}
-      <div className="relative w-full aspect-[2/1] min-h-[320px] max-h-[460px] bg-gradient-to-b from-[#030712] via-[#080d1a] to-[#030712] rounded-2xl border border-neutral-800 shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-4">
+      {/* ULTRA-HD AUTHENTIC VECTOR WORLD MAP (EXPANDED LARGE CANVAS) */}
+      <div className="relative w-full aspect-[16/9] min-h-[440px] md:min-h-[520px] lg:min-h-[600px] max-h-[720px] bg-gradient-to-b from-[#030712] via-[#080d1a] to-[#030712] rounded-2xl border border-neutral-800 shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-4">
         {/* Subtle grid pattern background */}
         <div
           className="absolute inset-0 opacity-15 pointer-events-none"
           style={{
             backgroundImage:
               "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.2) 1px, transparent 0)",
-            backgroundSize: "24px 24px",
+            backgroundSize: "28px 28px",
           }}
         />
 
         {/* Global Longitude & Latitude Coordinates lines */}
         <svg
-          viewBox="0 0 1000 500"
-          className="absolute inset-0 w-full h-full pointer-events-none stroke-neutral-800/50"
+          viewBox={targetViewBox}
+          className="absolute inset-0 w-full h-full pointer-events-none stroke-neutral-800/50 transition-all duration-500"
           fill="none"
         >
           {/* Equator & Prime Meridian */}
@@ -205,8 +229,8 @@ export function InteractiveWorldMap({
 
         {/* AUTHENTIC 177-COUNTRY GEOGRAPHIC VECTOR MAP */}
         <svg
-          viewBox="0 0 1000 500"
-          className="w-full h-full select-none"
+          viewBox={targetViewBox}
+          className="w-full h-full select-none transition-all duration-500"
         >
           <defs>
             <linearGradient id="realLandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -215,7 +239,7 @@ export function InteractiveWorldMap({
               <stop offset="100%" stopColor="#0f172a" stopOpacity="0.9" />
             </linearGradient>
             <filter id="vectorGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feGaussianBlur stdDeviation="2" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -225,7 +249,7 @@ export function InteractiveWorldMap({
             d={WORLD_MAP_PATH}
             fill="url(#realLandGradient)"
             stroke="#334155"
-            strokeWidth="0.6"
+            strokeWidth="0.5"
             strokeLinejoin="round"
           />
 
@@ -240,9 +264,9 @@ export function InteractiveWorldMap({
                   d={r.d}
                   fill="none"
                   stroke={r.color}
-                  strokeWidth={isHighlighted ? 3.0 : r.strokeWidth}
+                  strokeWidth={isHighlighted ? 2.8 : r.strokeWidth}
                   strokeDasharray="4 4"
-                  className={isHighlighted ? "animate-pulse" : "opacity-75"}
+                  opacity={isHighlighted ? 1.0 : 0.65}
                   filter={isHighlighted ? "url(#vectorGlow)" : undefined}
                 />
               );
@@ -262,29 +286,59 @@ export function InteractiveWorldMap({
                   onMouseLeave={() => setActiveHotspot(null)}
                   className="cursor-pointer group"
                 >
-                  {/* Multi-Layer Radar Expanding Ping */}
+                  {/* Clean SVG Native Expanding Ripple Ring (100% Locally Centered, Zero CSS Transform Bleed) */}
                   <circle
                     cx={spot.svgX}
                     cy={spot.svgY}
-                    r={isServerHub ? "16" : "12"}
-                    fill={isServerHub ? "rgba(16, 185, 129, 0.25)" : "rgba(56, 189, 248, 0.2)"}
-                    className="animate-ping"
-                  />
+                    r={isServerHub ? "6" : "4"}
+                    fill="none"
+                    stroke={isServerHub ? "#10b981" : "#38bdf8"}
+                    strokeWidth="1.2"
+                  >
+                    <animate
+                      attributeName="r"
+                      values={isServerHub ? "5; 18; 26" : "3.5; 12; 18"}
+                      dur="2.5s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.9; 0.3; 0"
+                      dur="2.5s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
 
-                  {/* Pulsing Core Halo */}
+                  {/* Secondary Inner Ripple */}
                   <circle
                     cx={spot.svgX}
                     cy={spot.svgY}
-                    r={isServerHub ? "9" : "7"}
-                    fill={isServerHub ? "rgba(16, 185, 129, 0.4)" : "rgba(56, 189, 248, 0.3)"}
-                    className="animate-pulse"
-                  />
+                    r={isServerHub ? "4" : "3"}
+                    fill="none"
+                    stroke={isServerHub ? "#34d399" : "#38bdf8"}
+                    strokeWidth="0.8"
+                  >
+                    <animate
+                      attributeName="r"
+                      values={isServerHub ? "4; 10; 15" : "2.5; 7; 11"}
+                      dur="2.5s"
+                      begin="0.8s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.7; 0.2; 0"
+                      dur="2.5s"
+                      begin="0.8s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
 
-                  {/* Pin Dot Center */}
+                  {/* Center Solid Pin Dot */}
                   <circle
                     cx={spot.svgX}
                     cy={spot.svgY}
-                    r={isHovered ? (isServerHub ? "6" : "5") : (isServerHub ? "5" : "3.5")}
+                    r={isHovered ? (isServerHub ? "6" : "5") : (isServerHub ? "4.5" : "3.2")}
                     fill={
                       isHovered
                         ? "#f59e0b"
@@ -295,20 +349,20 @@ export function InteractiveWorldMap({
                         : "#94a3b8"
                     }
                     stroke="#ffffff"
-                    strokeWidth={isServerHub ? "1.5" : "1.0"}
-                    filter="url(#vectorGlow)"
+                    strokeWidth={isServerHub ? "1.5" : "0.8"}
                   />
 
-                  {/* City & Flag SVG Label */}
+                  {/* City Label */}
                   <text
                     x={spot.svgX}
-                    y={spot.svgY - (isServerHub ? 12 : 9)}
+                    y={spot.svgY - (isServerHub ? 10 : 7)}
                     textAnchor="middle"
-                    fill={isServerHub ? "#34d399" : "#e2e8f0"}
-                    fontSize={isServerHub ? "10" : "8"}
+                    fill={isServerHub ? "#34d399" : "#f1f5f9"}
+                    fontSize={isServerHub ? "9.5" : "7.5"}
                     fontFamily="monospace"
                     fontWeight="bold"
-                    className="pointer-events-none select-none drop-shadow"
+                    className="pointer-events-none select-none"
+                    style={{ textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}
                   >
                     {spot.flag} {spot.city}
                   </text>
