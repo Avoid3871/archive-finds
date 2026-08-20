@@ -31,6 +31,9 @@ import { AnalyticsSummary } from "@/lib/analytics/analyticsStore";
 import { InteractiveTimelineChart } from "@/components/admin/analytics/InteractiveTimelineChart";
 import { CategoryBrandMatrix } from "@/components/admin/analytics/CategoryBrandMatrix";
 import { OptimalPostTimesCard } from "@/components/admin/analytics/OptimalPostTimesCard";
+import { SearchDemandGapsCard } from "@/components/admin/analytics/SearchDemandGapsCard";
+import { ContentThemeRoiCard } from "@/components/admin/analytics/ContentThemeRoiCard";
+import { InteractiveWorldMap } from "@/components/admin/analytics/InteractiveWorldMap";
 
 const AGENT_CONFIGS: Record<string, { label: string; color: string; bg: string; border: string }> = {
   sugargoo: { label: "Sugargoo (VIP)", color: "text-orange-400", bg: "bg-orange-500", border: "border-orange-500/30" },
@@ -51,7 +54,6 @@ export default function AdminAnalyticsPage() {
   const [lang, setLang] = useState<"de" | "en">("de");
   const [toastNotice, setToastNotice] = useState<string | null>(null);
 
-  // Load persisted language choice
   useEffect(() => {
     const saved = localStorage.getItem("af_analytics_lang");
     if (saved === "en" || saved === "de") {
@@ -323,10 +325,29 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {/* OPTIMAL POSTING TIMES & VIRALITY HEATMAP CARD */}
+      {/* 1. OPTIMAL POSTING TIMES & VIRALITY HEATMAP CARD */}
       {data?.optimalPostTimes && (
         <OptimalPostTimesCard insights={data.optimalPostTimes} lang={lang} />
       )}
+
+      {/* 2. INTERACTIVE VISITOR WORLD MAP (GLOBAL HOTSPOTS) */}
+      <InteractiveWorldMap
+        hotspots={data?.geoHotspots || []}
+        countries={data?.countries || []}
+        lang={lang}
+      />
+
+      {/* 3. SEARCH DEMAND GAPS (WHAT VISITORS ARE SEARCHING) */}
+      <SearchDemandGapsCard
+        gaps={data?.searchDemandGaps || []}
+        lang={lang}
+      />
+
+      {/* 4. CONTENT & SLIDE THEME ROI ATTRIBUTION */}
+      <ContentThemeRoiCard
+        rois={data?.slideThemeRois || []}
+        lang={lang}
+      />
 
       {/* VIEW MODE 1: VISUAL GRAPHS & INTERACTIVE CHARTS */}
       {viewMode === "graphs" && (

@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { MOCK_PRODUCTS, Product } from "@/lib/products/mockData";
 import { BRANDS } from "@/lib/constants";
+import { trackClientEvent } from "@/lib/analytics/trackEvent";
 import Link from "next/link";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [productsList, setProductsList] = useState<Product[]>(MOCK_PRODUCTS);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -21,6 +23,23 @@ export default function SearchPage() {
       })
       .catch(() => {});
   }, []);
+
+  // Debounced search query tracker for Demand Gap analytics
+  useEffect(() => {
+    const qClean = query.trim();
+    if (qClean.length >= 2) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        trackClientEvent({
+          type: "search",
+          query: qClean,
+        });
+      }, 700);
+    }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
 
   const searchResults = useMemo(() => {
     if (!query.trim()) return [];
@@ -71,7 +90,7 @@ export default function SearchPage() {
                 <button
                   key={term}
                   onClick={() => setQuery(term)}
-                  className="px-3 py-1.5 bg-neutral-100 hover:bg-black hover:text-white border border-neutral-200 text-xs font-mono uppercase tracking-wider transition-colors"
+                  className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-xs font-mono text-neutral-800 transition-colors cursor-pointer"
                 >
                   {term}
                 </button>
@@ -82,20 +101,20 @@ export default function SearchPage() {
       )}
 
       {/* Results Display */}
-      {query && (
+      {query ? (
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-            <p className="text-xs font-mono uppercase tracking-widest text-neutral-600">
-              Found {searchResults.length} {searchResults.length === 1 ? "piece" : "pieces"} for &quot;{query}&quot;
-            </p>
+          <div className="flex items-center justify-between text-xs font-mono border-b border-neutral-200 pb-4">
+            <span className="text-neutral-500">
+              RESULTS FOR &ldquo;<span className="text-black font-bold">{query}</span>&rdquo;
+            </span>
+            <span className="text-neutral-500 font-bold">
+              {searchResults.length} {searchResults.length === 1 ? "ITEM FOUND" : "ITEMS FOUND"}
+            </span>
           </div>
 
-          <ProductGrid
-            products={searchResults}
-            emptyMessage={`No archive pieces found matching "${query}". Try searching for another designer or style.`}
-          />
+          <ProductGrid products={searchResults} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
