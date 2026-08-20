@@ -3653,5 +3653,30 @@
     "isFeatured": true,
     "isRare": false,
     "notes": "1-Click Admin Ingest"
+  },
+  {
+    "id": "147",
+    "title": "Dior Homme Archive Collection Dh Beck Guitar Polo Shirt",
+    "name": "Dior Homme Archive Collection Dh Beck Guitar Polo Shirt",
+    "brand": "Dior",
+    "brandSlug": "dior",
+    "category": "T-Shirts",
+    "categorySlug": "t-shirts",
+    "season": "",
+    "price": 28.0,
+    "sourcePrice": 28.0,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemId=7830354879&vc_cps_track=1459920903_0_0",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemId%3D7830354879%26vc_cps_track%3D1459920903_0_0&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemId%3D7830354879%26vc_cps_track%3D1459920903_0_0&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemId%3D7830354879%26vc_cps_track%3D1459920903_0_0&memberId=1325437696506389977",
+    "imageUrl": "/products/dior-dior-homme-archive-collection-dh-beck-guitar-polo-shirt.png",
+    "localImage": "/products/dior-dior-homme-archive-collection-dh-beck-guitar-polo-shirt.png",
+    "slug": "dior-dior-homme-archive-collection-dh-beck-guitar-polo-shirt",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
