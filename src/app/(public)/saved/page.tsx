@@ -4,24 +4,65 @@ import { useState } from "react";
 import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { Bookmark, Trash2, ArrowLeft, Copy, Check, ExternalLink, Sparkles } from "lucide-react";
+import { getResaleBenchmark } from "@/lib/products/pricingUtils";
+import {
+  Bookmark,
+  Trash2,
+  ArrowLeft,
+  Copy,
+  Check,
+  Share2,
+  Sparkles,
+  TrendingUp,
+  ExternalLink,
+} from "lucide-react";
 
 export default function SavedGrailsPage() {
   const { savedProducts, savedCount, clearWishlist } = useWishlist();
   const [copiedLinks, setCopiedLinks] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  // Calculate haul totals & secondary market savings
+  const totalDirectPrice = savedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+  const totalEstimatedResale = savedProducts.reduce((sum, p) => {
+    const bm = getResaleBenchmark(p.price, p.brand, p.category);
+    return sum + bm.estimatedResale;
+  }, 0);
+  const totalSavings = Math.max(0, totalEstimatedResale - totalDirectPrice);
+  const totalDiscountPercent = totalEstimatedResale > 0 ? Math.round((totalSavings / totalEstimatedResale) * 100) : 0;
 
   const handleCopyAllLinks = () => {
     if (savedProducts.length === 0) return;
     const text = savedProducts
       .map(
         (p, i) =>
-          `${i + 1}. ${p.brand} - ${p.name} ($${p.price.toFixed(2)})\nLink: https://archive-finds.vercel.app/product/${p.slug}\nSugargoo: ${p.affiliateUrl}`
+          `${i + 1}. ${p.brand} - ${p.name} ($${p.price.toFixed(2)})\nLink: https://archive-finds.vercel.app/product/${p.slug}?ref=haul_share\nSugargoo: ${p.affiliateUrl}`
       )
       .join("\n\n");
 
     navigator.clipboard.writeText(text);
     setCopiedLinks(true);
     setTimeout(() => setCopiedLinks(false), 2500);
+  };
+
+  const handleShareHaul = async () => {
+    if (savedProducts.length === 0) return;
+    const shareText = `Check out my curated ${savedProducts.length}x archive grail rotation on Archive Finds ($${totalDirectPrice.toFixed(2)} vs ~~$${totalEstimatedResale.toFixed(2)}~~ market value):\nhttps://archive-finds.vercel.app/saved?ref=share`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "My Archive Finds Haul",
+          text: shareText,
+          url: "https://archive-finds.vercel.app/saved?ref=share",
+        });
+        return;
+      } catch {}
+    }
+
+    navigator.clipboard.writeText(shareText);
+    setShared(true);
+    setTimeout(() => setShared(false), 2500);
   };
 
   return (
@@ -53,10 +94,27 @@ export default function SavedGrailsPage() {
         </div>
 
         {savedCount > 0 && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={handleShareHaul}
+              className="px-3.5 py-2 bg-black hover:bg-neutral-800 text-white font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              {shared ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>HAUL LINK COPIED!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>SHARE HAUL</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={handleCopyAllLinks}
-              className="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               {copiedLinks ? (
                 <>
@@ -73,7 +131,7 @@ export default function SavedGrailsPage() {
 
             <button
               onClick={clearWishlist}
-              className="px-3.5 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>CLEAR ALL</span>
@@ -81,6 +139,44 @@ export default function SavedGrailsPage() {
           </div>
         )}
       </div>
+
+      {/* HAUL VALUE BENCHMARK SUMMARY (When items present) */}
+      {savedCount > 0 && (
+        <div className="p-5 bg-neutral-900 text-white rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">
+              <TrendingUp className="w-4 h-4" />
+              <span>HAUL VALUE SAVINGS BENCHMARK</span>
+            </div>
+            <p className="text-xs text-neutral-400 font-light">
+              Combined secondary market resell comparison for all {savedCount} saved garments.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-4 sm:gap-6 font-mono">
+            <div>
+              <span className="text-[10px] text-neutral-500 uppercase block">Direct Sourcing</span>
+              <span className="text-xl sm:text-2xl font-black text-white">
+                ${totalDirectPrice.toFixed(2)} USD
+              </span>
+            </div>
+
+            <div className="border-l border-neutral-800 pl-4 sm:pl-6">
+              <span className="text-[10px] text-neutral-500 uppercase block">Est. Grailed Market</span>
+              <span className="text-lg text-neutral-400 line-through">
+                ${totalEstimatedResale.toFixed(2)} USD
+              </span>
+            </div>
+
+            <div className="border-l border-neutral-800 pl-4 sm:pl-6">
+              <span className="text-[10px] text-emerald-400 uppercase font-bold block">Total Savings</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-400">
+                -${totalSavings.toFixed(2)} ({totalDiscountPercent}%)
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {savedCount === 0 ? (
@@ -102,7 +198,7 @@ export default function SavedGrailsPage() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-mono text-xs uppercase tracking-widest hover:bg-neutral-800 transition-colors"
             >
               <Sparkles className="w-4 h-4" />
-              <span>EXPLORE 104+ ARCHIVE FINDS</span>
+              <span>EXPLORE ALL ARCHIVE FINDS</span>
             </Link>
           </div>
         </div>

@@ -4,6 +4,7 @@ import fs from "fs";
 import os from "os";
 import sharp from "sharp";
 import { generateAllCaptionVariants, generateRandomViralCaption } from "@/app/api/admin/slides/caption/route";
+import { getAnalyticsSummary } from "@/lib/analytics/analyticsStore";
 
 const PRODUCTS_PATH = path.join(process.cwd(), "src", "lib", "products", "sheetProducts.json");
 
@@ -1029,6 +1030,23 @@ export async function POST(req: NextRequest) {
       const idSet = new Set(customProductIds.map(String));
       candidatePool = allProducts.filter((p) => idSet.has(String(p.id)) || idSet.has(p.slug));
       if (!customTitle) customTitle = `CURATED GRAILS\nVOLUME ${Date.now() % 1000}`;
+    } else if (mode === "trending") {
+      const summary = getAnalyticsSummary();
+      const topSlugs = (summary.topProducts || []).map((tp) => tp.slug);
+      const slugRankMap = new Map<string, number>();
+      topSlugs.forEach((s, idx) => slugRankMap.set(s, idx));
+
+      const trendingProducts = allProducts.filter((p) => slugRankMap.has(p.slug));
+      trendingProducts.sort((a, b) => (slugRankMap.get(a.slug) ?? 99) - (slugRankMap.get(b.slug) ?? 99));
+
+      candidatePool = trendingProducts.length > 0 ? trendingProducts : allProducts.slice(0, 10);
+      const TRENDING_TITLES = [
+        `VIRAL TRENDING GRAILS\nTOP ${productCount} MOST WANTED`,
+        `MOST CLICKED ARCHIVE FINDS\nTHIS WEEK (${productCount} PIECES)`,
+        `HIGH DEMAND GRAILS\nTOP ${productCount} RIGHT NOW`,
+        `THE MOST WANTED GRAILS\n(${productCount} ARCHIVE DROPS)`,
+      ];
+      if (!customTitle) customTitle = TRENDING_TITLES[Math.floor(Math.random() * TRENDING_TITLES.length)];
     } else if (mode === "latest") {
       candidatePool = [...allProducts].reverse();
       const LATEST_TITLES = [

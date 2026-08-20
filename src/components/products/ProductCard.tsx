@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MockProduct } from "@/lib/products/mockData";
-import { formatPrice } from "@/lib/utils";
 import { ProductPrice } from "@/components/products/ProductPrice";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
-import { Bookmark, Heart } from "lucide-react";
+import { getResaleBenchmark } from "@/lib/products/pricingUtils";
+import { Bookmark, Sparkles, TrendingUp } from "lucide-react";
 
 interface ProductCardProps {
   product: MockProduct;
@@ -19,6 +19,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const saved = isSaved(product.id);
   const [imgSrc, setImgSrc] = useState(product.imageUrl || "/placeholder-fashion.svg");
   const [triedCdn, setTriedCdn] = useState(false);
+
+  const benchmark = getResaleBenchmark(product.price, product.brand, product.category);
 
   const handleImageError = () => {
     if (!triedCdn && product.imageUrl && product.imageUrl.startsWith("/products/")) {
@@ -36,7 +38,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative flex flex-col bg-white border border-neutral-200 overflow-hidden transition-all duration-300 hover:border-black hover:shadow-sm">
+    <div className="group relative flex flex-col bg-white border border-neutral-200 overflow-hidden transition-all duration-300 hover:border-black hover:shadow-md">
       {/* Clickable Card Link */}
       <Link
         href={`/product/${product.slug}`}
@@ -61,11 +63,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                 RARE
               </span>
             )}
-            {product.era && (
-              <span className="px-1.5 py-0.5 bg-white/90 backdrop-blur-sm text-black border border-neutral-200 text-[9px] font-mono tracking-wider uppercase font-semibold">
-                {product.era}
-              </span>
-            )}
+            {/* Savings vs Grailed Resale Badge */}
+            <span className="px-1.5 py-0.5 bg-neutral-900/90 backdrop-blur-sm text-emerald-400 border border-neutral-700 text-[9px] font-mono tracking-wider uppercase font-bold">
+              -{benchmark.discountPercent}% RESALE
+            </span>
           </div>
 
           {/* Subtle hover overlay badge */}
@@ -90,11 +91,16 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             </h3>
           </div>
 
-          {/* Price & Category Meta */}
-          <div className="mt-3 pt-2 border-t border-neutral-100 flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-bold font-mono text-black">
-              <ProductPrice price={product.price} />
-            </span>
+          {/* Price & Resale Comparison */}
+          <div className="mt-3 pt-2 border-t border-neutral-100 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs sm:text-sm font-bold font-mono text-black">
+                <ProductPrice price={product.price} />
+              </span>
+              <span className="text-[10px] font-mono text-neutral-600 line-through">
+                ${benchmark.estimatedResale}
+              </span>
+            </div>
             <span className="text-[10px] font-mono text-neutral-600 uppercase">
               {product.categorySlug}
             </span>

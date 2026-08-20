@@ -57,7 +57,9 @@ export const metadata: Metadata = {
   },
 };
 
+import { Suspense } from "react";
 import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
+import { PageviewTracker } from "@/components/analytics/PageviewTracker";
 
 export default function RootLayout({
   children,
@@ -67,6 +69,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white pb-16 md:pb-0">
+        <Suspense fallback={null}>
+          <PageviewTracker />
+        </Suspense>
         <CurrencyProvider>
           <WishlistProvider>
             {children}

@@ -38,7 +38,7 @@ import allProductsData from "@/lib/products/sheetProducts.json";
 import carouselPacks from "@/lib/products/carouselPacks.json";
 
 type SlideStyle = "viral_minimal" | "editorial_dark" | "minimal_dark" | "vintage_moodboard";
-type GeneratorMode = "latest" | "brand" | "category" | "random" | "custom";
+type GeneratorMode = "latest" | "brand" | "category" | "random" | "trending" | "custom";
 type CaptionAngle = "viral_fomo" | "grailed_comparison" | "underground_lore" | "minimal_clean" | "haul_sourcing";
 
 interface GeneratedPack {
@@ -542,6 +542,20 @@ export default function AdminSlidesPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    setGenMode("trending");
+                    handleGeneratePack("trending");
+                  }}
+                  disabled={isGenerating}
+                  className="px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/80 font-mono text-xs uppercase rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                  title="Generate pack from top clicked pieces in Live Analytics"
+                >
+                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                  <span>🔥 Top Trending Grails</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
                     const freshHook = getRandomViralHook(slideItemCount);
                     setCustomTitle(freshHook);
                     handleGeneratePack("random", freshHook);
@@ -561,9 +575,10 @@ export default function AdminSlidesPage() {
               <label className="text-xs font-mono font-bold uppercase text-neutral-300">
                 1. Select Topic / Curation Mode:
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 {[
                   { id: "latest", label: "🔥 Latest Drops", desc: "Most recently cataloged" },
+                  { id: "trending", label: "📈 Top Trending", desc: "Most clicked in Analytics" },
                   { id: "brand", label: "🏷️ Brand Theme", desc: "Single designer focus" },
                   { id: "category", label: "🧥 Category", desc: "Jackets, Pants, Boots..." },
                   { id: "random", label: "🎲 Random Mix", desc: "Fresh deduplicated grails" },
@@ -576,6 +591,8 @@ export default function AdminSlidesPage() {
                       if (m.id === "random") {
                         const freshHook = getRandomViralHook(slideItemCount);
                         setCustomTitle(freshHook);
+                      } else if (m.id === "trending") {
+                        setCustomTitle("");
                       } else if (m.id === "custom" && selectedCustomProductIds.size === 0) {
                         setIsCustomPickerOpen(true);
                       }
