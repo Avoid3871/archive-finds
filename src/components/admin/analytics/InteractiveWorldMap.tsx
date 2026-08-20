@@ -33,7 +33,9 @@ export function InteractiveWorldMap({
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const isDe = lang === "de";
 
-  const hqSpot = hotspots.find((h) => h.isHub) || {
+  const safeHotspots = Array.isArray(hotspots) ? hotspots : [];
+
+  const hqSpot = safeHotspots.find((h) => h.isHub) || {
     id: "de-berlin",
     name: "Germany (Berlin / Server HQ)",
     city: "Berlin (HQ)",
@@ -46,9 +48,11 @@ export function InteractiveWorldMap({
     percentage: 15,
   };
 
+  const nonHqSpots = safeHotspots.filter((h) => !h.isHub);
+
   const filteredHotspots = selectedRegion === "all"
-    ? hotspots
-    : hotspots.filter((h) => h.region === selectedRegion || h.isHub);
+    ? safeHotspots
+    : safeHotspots.filter((h) => h.region === selectedRegion || h.isHub);
 
   const activeTelemetry = activeHotspot || hqSpot;
 
