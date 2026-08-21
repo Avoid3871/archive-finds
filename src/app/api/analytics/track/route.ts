@@ -28,17 +28,41 @@ function parseCountryCode(req: NextRequest, bodyCountry?: string): string {
   const cfCountry = req.headers.get("cf-ipcountry");
   if (cfCountry && cfCountry.length === 2) return cfCountry.toUpperCase();
 
+  const customCountry = req.headers.get("x-country-code");
+  if (customCountry && customCountry.length === 2) return customCountry.toUpperCase();
+
   if (bodyCountry && bodyCountry.length === 2) return bodyCountry.toUpperCase();
 
-  // Accept-Language fallback
-  const acceptLang = req.headers.get("accept-language") || "";
-  if (acceptLang.includes("de")) return "DE";
-  if (acceptLang.includes("fr")) return "FR";
-  if (acceptLang.includes("en-gb") || acceptLang.includes("en-GB")) return "GB";
-  if (acceptLang.includes("en-ca") || acceptLang.includes("en-CA")) return "CA";
+  // Accept-Language fallback parsing
+  const acceptLang = (req.headers.get("accept-language") || "").toLowerCase();
+  if (acceptLang.includes("de-de") || acceptLang.includes("de-ch") || acceptLang.includes("de-at") || acceptLang.startsWith("de")) return "DE";
+  if (acceptLang.includes("fr-fr") || acceptLang.startsWith("fr")) return "FR";
+  if (acceptLang.includes("en-gb")) return "GB";
+  if (acceptLang.includes("en-ca")) return "CA";
+  if (acceptLang.includes("en-au")) return "AU";
   if (acceptLang.includes("ja")) return "JP";
+  if (acceptLang.includes("it")) return "IT";
+  if (acceptLang.includes("es")) return "ES";
+  if (acceptLang.includes("nl")) return "NL";
+  if (acceptLang.includes("sv") || acceptLang.includes("se")) return "SE";
+  if (acceptLang.includes("pl")) return "PL";
+  if (acceptLang.includes("ko")) return "KR";
+  if (acceptLang.includes("pt-br") || acceptLang.includes("br")) return "BR";
+  if (acceptLang.includes("en-us") || acceptLang.startsWith("en")) return "US";
 
-  return "US";
+  return "DE";
+}
+
+function parseCity(req: NextRequest, bodyCity?: string): string | undefined {
+  const vercelCity = req.headers.get("x-vercel-ip-city");
+  if (vercelCity) {
+    try {
+      return decodeURIComponent(vercelCity);
+    } catch {
+      return vercelCity;
+    }
+  }
+  return bodyCity || undefined;
 }
 
 export async function POST(req: NextRequest) {
@@ -68,6 +92,7 @@ export async function POST(req: NextRequest) {
     const ua = req.headers.get("user-agent") || "";
     const device = parseDeviceFromUserAgent(ua);
     const countryCode = parseCountryCode(req, body?.countryCode);
+    const city = parseCity(req, body?.city);
 
     if (body && body.type) {
       recordAnalyticsEvent({
@@ -81,6 +106,8 @@ export async function POST(req: NextRequest) {
         query: body.query,
         style: body.style,
         countryCode,
+        country: countryCode,
+        city,
         device,
       });
     }

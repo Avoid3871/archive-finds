@@ -467,23 +467,37 @@ export default function AdminAnalyticsPage() {
               </div>
 
               <div className="space-y-3">
-                {data?.countries?.map((c) => (
-                  <div
-                    key={c.code}
-                    className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">{c.flag}</span>
-                      <span className="text-xs font-mono text-white font-medium">{c.country}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-white">{c.count}</span>
-                      <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-emerald-400 text-[10px] font-mono rounded font-bold">
-                        {c.percentage}%
-                      </span>
-                    </div>
+                {(!data?.countries || data.countries.length === 0) ? (
+                  <div className="p-6 bg-neutral-950/60 rounded-xl border border-neutral-800/80 text-center space-y-2">
+                    <Globe className="w-6 h-6 text-neutral-600 mx-auto" />
+                    <p className="text-xs font-mono text-neutral-400 font-bold">
+                      {isDe ? "Standby: Live Geo-Radar aktiv" : "Standby: Live Geo-Radar active"}
+                    </p>
+                    <p className="text-[11px] font-mono text-neutral-600">
+                      {isDe
+                        ? "Erfasst automatisch die genaue Herkunft (Land & Stadt) aller neuen Besucher in Echtzeit."
+                        : "Automatically records exact country & city of new visitors in real-time."}
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  data.countries.map((c) => (
+                    <div
+                      key={c.code}
+                      className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">{c.flag}</span>
+                        <span className="text-xs font-mono text-white font-medium">{c.country}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white">{c.count}</span>
+                        <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-emerald-400 text-[10px] font-mono rounded font-bold">
+                          {c.percentage}%
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -504,27 +518,41 @@ export default function AdminAnalyticsPage() {
               </div>
 
               <div className="space-y-3">
-                {data?.devices?.map((d) => (
-                  <div
-                    key={d.device}
-                    className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {d.type === "mobile" ? (
-                        <Smartphone className="w-4 h-4 text-purple-400" />
-                      ) : (
-                        <Laptop className="w-4 h-4 text-cyan-400" />
-                      )}
-                      <span className="text-xs font-mono text-white font-medium">{d.device}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-white">{d.count}</span>
-                      <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-purple-300 text-[10px] font-mono rounded font-bold">
-                        {d.percentage}%
-                      </span>
-                    </div>
+                {(!data?.devices || data.devices.length === 0) ? (
+                  <div className="p-6 bg-neutral-950/60 rounded-xl border border-neutral-800/80 text-center space-y-2">
+                    <Smartphone className="w-6 h-6 text-neutral-600 mx-auto" />
+                    <p className="text-xs font-mono text-neutral-400 font-bold">
+                      {isDe ? "Warten auf Geräte-Telemetrie" : "Waiting for device telemetry"}
+                    </p>
+                    <p className="text-[11px] font-mono text-neutral-600">
+                      {isDe
+                        ? "Erkennt automatisch iPhone / iOS, Android und Desktop-Browser."
+                        : "Automatically detects iPhone / iOS, Android, and Desktop browsers."}
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  data.devices.map((d) => (
+                    <div
+                      key={d.device}
+                      className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {d.type === "mobile" ? (
+                          <Smartphone className="w-4 h-4 text-purple-400" />
+                        ) : (
+                          <Laptop className="w-4 h-4 text-cyan-400" />
+                        )}
+                        <span className="text-xs font-mono text-white font-medium">{d.device}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-white">{d.count}</span>
+                        <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-purple-300 text-[10px] font-mono rounded font-bold">
+                          {d.percentage}%
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

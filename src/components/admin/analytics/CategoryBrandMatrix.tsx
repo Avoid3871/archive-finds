@@ -61,8 +61,13 @@ export function CategoryBrandMatrix(props: CategoryBrandMatrixProps) {
 
       {/* Visual Chart Bars */}
       <div className="space-y-4">
-        {activeView === "brands"
-          ? brandList.map((b, idx) => (
+        {activeView === "brands" ? (
+          brandList.length === 0 ? (
+            <div className="py-8 text-center text-xs font-mono text-neutral-500 bg-neutral-950/50 rounded-xl border border-neutral-800/60">
+              ⚡ Noch keine Designer-Klicks erfasst. Sobald Besucher Stücke anklicken, erscheinen die Top-Brands hier live.
+            </div>
+          ) : (
+            brandList.map((b, idx) => (
               <div key={b.brand || idx} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="font-bold text-white uppercase flex items-center gap-2">
@@ -83,27 +88,34 @@ export function CategoryBrandMatrix(props: CategoryBrandMatrixProps) {
                 </div>
               </div>
             ))
-          : categoryList.map((c, idx) => (
-              <div key={c.category || idx} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="font-bold text-white uppercase flex items-center gap-2">
-                    <span className="w-5 h-5 rounded bg-neutral-950 border border-neutral-800 text-[10px] text-neutral-400 flex items-center justify-center font-mono">
-                      0{idx + 1}
-                    </span>
-                    <span>{c.category}</span>
+          )
+        ) : categoryList.length === 0 ? (
+          <div className="py-8 text-center text-xs font-mono text-neutral-500 bg-neutral-950/50 rounded-xl border border-neutral-800/60">
+            ⚡ Noch keine Kategorie-Klicks erfasst. Sobald Besucher Stücke ansehen, erscheint der Split hier live.
+          </div>
+        ) : (
+          categoryList.map((c, idx) => (
+            <div key={c.category || idx} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="font-bold text-white uppercase flex items-center gap-2">
+                  <span className="w-5 h-5 rounded bg-neutral-950 border border-neutral-800 text-[10px] text-neutral-400 flex items-center justify-center font-mono">
+                    0{idx + 1}
                   </span>
-                  <span className="text-neutral-400">
-                    <strong className="text-white">{c.clicks}</strong> clicks ({c.percentage}%)
-                  </span>
-                </div>
-                <div className="w-full h-2.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
-                  <div
-                    className="h-full bg-cyan-400 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.max(c.percentage, 4)}%` }}
-                  />
-                </div>
+                  <span>{c.category}</span>
+                </span>
+                <span className="text-neutral-400">
+                  <strong className="text-white">{c.clicks}</strong> clicks ({c.percentage}%)
+                </span>
               </div>
-            ))}
+              <div className="w-full h-2.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
+                <div
+                  className="h-full bg-cyan-400 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(c.percentage, 4)}%` }}
+                />
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

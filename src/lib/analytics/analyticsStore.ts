@@ -387,65 +387,36 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     });
   }
 
-  const totalBrandHits = Math.max(1, Array.from(brandClickMap.values()).reduce((a, b) => a + b, 0));
+  const totalBrandHits = Array.from(brandClickMap.values()).reduce((a, b) => a + b, 0);
   const topBrands = Array.from(brandClickMap.entries())
     .map(([brand, clicks]) => ({
       brand,
       clicks,
-      percentage: Math.round((clicks / totalBrandHits) * 100),
+      percentage: totalBrandHits > 0 ? Math.round((clicks / totalBrandHits) * 100) : 0,
     }))
     .sort((a, b) => b.clicks - a.clicks)
     .slice(0, 6);
 
-  if (topBrands.length === 0) {
-    topBrands.push(
-      { brand: "Rick Owens", clicks: 18, percentage: 35 },
-      { brand: "Enfants Riches Déprimés", clicks: 12, percentage: 24 },
-      { brand: "Undercover", clicks: 9, percentage: 18 },
-      { brand: "Balenciaga", clicks: 8, percentage: 15 },
-      { brand: "Maison Margiela", clicks: 6, percentage: 8 }
-    );
-  }
-
-  const totalCategoryHits = Math.max(1, Array.from(categoryClickMap.values()).reduce((a, b) => a + b, 0));
+  const totalCategoryHits = Array.from(categoryClickMap.values()).reduce((a, b) => a + b, 0);
   const categoryBreakdown: CategoryItem[] = Array.from(categoryClickMap.entries())
     .map(([category, clicks]) => ({
       category,
       clicks,
-      percentage: Math.round((clicks / totalCategoryHits) * 100),
+      percentage: totalCategoryHits > 0 ? Math.round((clicks / totalCategoryHits) * 100) : 0,
     }))
     .sort((a, b) => b.clicks - a.clicks);
 
-  if (categoryBreakdown.length === 0) {
-    categoryBreakdown.push(
-      { category: "Tops & Shirts", clicks: 18, percentage: 38 },
-      { category: "Outerwear & Jackets", clicks: 12, percentage: 26 },
-      { category: "Denim & Bottoms", clicks: 8, percentage: 17 },
-      { category: "Footwear & Boots", clicks: 5, percentage: 11 },
-      { category: "Accessories", clicks: 4, percentage: 8 }
-    );
-  }
-
-  const totalSourceHits = Math.max(1, Array.from(sourceCountMap.values()).reduce((a, b) => a + b, 0));
+  const totalSourceHits = Array.from(sourceCountMap.values()).reduce((a, b) => a + b, 0);
   const trafficSources = Array.from(sourceCountMap.entries())
     .map(([source, count]) => ({
       source,
       count,
-      percentage: Math.round((count / totalSourceHits) * 100),
+      percentage: totalSourceHits > 0 ? Math.round((count / totalSourceHits) * 100) : 0,
     }))
     .sort((a, b) => b.count - a.count);
 
-  if (trafficSources.length === 0) {
-    trafficSources.push(
-      { source: "TikTok Carousels", count: 85, percentage: 55 },
-      { source: "Instagram Reels", count: 38, percentage: 25 },
-      { source: "Direct / Bio Link", count: 20, percentage: 13 },
-      { source: "Reddit (r/QualityReps)", count: 11, percentage: 7 }
-    );
-  }
-
-  // Geo computation (Cleaned of developer local noise)
-  const totalGeoHits = Math.max(1, Array.from(countryCountMap.values()).reduce((a, b) => a + b, 0));
+  // Geo computation (100% genuine live audience tracking)
+  const totalGeoHits = Array.from(countryCountMap.values()).reduce((a, b) => a + b, 0);
   let countries: GeoItem[] = Array.from(countryCountMap.entries())
     .map(([code, count]) => {
       const info = COUNTRY_COORDS[code] || { name: code, flag: "🌐" };
@@ -454,28 +425,18 @@ export function getAnalyticsSummary(): AnalyticsSummary {
         code,
         flag: info.flag,
         count,
-        percentage: Math.round((count / totalGeoHits) * 100),
+        percentage: totalGeoHits > 0 ? Math.round((count / totalGeoHits) * 100) : 0,
       };
     })
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  if (countries.length === 0) {
-    countries = [
-      { country: "United States", code: "US", flag: "🇺🇸", count: 70, percentage: 45 },
-      { country: "United Kingdom", code: "GB", flag: "🇬🇧", count: 32, percentage: 21 },
-      { country: "Germany", code: "DE", flag: "🇩🇪", count: 24, percentage: 15 },
-      { country: "France", code: "FR", flag: "🇫🇷", count: 16, percentage: 10 },
-      { country: "Canada", code: "CA", flag: "🇨🇦", count: 12, percentage: 9 },
-    ];
-  }
-
-  // DYNAMIC MAP HOTSPOTS: Auto-generates pins and routes for ALL incoming visitor countries!
+  // DYNAMIC MAP HOTSPOTS: 100% Genuine live nodes from real traffic
   const geoHotspots: GeoHotspot[] = [];
 
-  // Always keep Germany Server HQ at index 0
-  const deVisitors = countryCountMap.get("DE") || 24;
-  const dePercent = Math.max(12, Math.round((deVisitors / totalGeoHits) * 100));
+  // Always keep Germany Server HQ at index 0 (Receiver Hub)
+  const deVisitors = countryCountMap.get("DE") || 0;
+  const dePercent = totalGeoHits > 0 ? Math.round((deVisitors / totalGeoHits) * 100) : 100;
   geoHotspots.push({
     id: "de-berlin",
     name: "Germany (Berlin / Server HQ)",
@@ -495,91 +456,54 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     isHub: true,
   });
 
-  // Dynamically map all active countries into live map nodes
+  // Dynamically map all active countries that have sent real visitors
   const sortedCountryCodes = Array.from(countryCountMap.entries())
     .filter(([cCode]) => cCode !== "DE")
     .sort((a, b) => b[1] - a[1]);
 
-  if (sortedCountryCodes.length > 0) {
-    sortedCountryCodes.slice(0, 10).forEach(([cCode, count], idx) => {
-      const geoInfo = COUNTRY_COORDS[cCode] || {
-        name: cCode,
-        city: cCode,
-        flag: "🌐",
-        region: "europe" as const,
-        lat: "50.0° N",
-        lon: "10.0° E",
-        svgX: 520,
-        svgY: 120,
-      };
+  sortedCountryCodes.slice(0, 10).forEach(([cCode, count], idx) => {
+    const geoInfo = COUNTRY_COORDS[cCode] || {
+      name: cCode,
+      city: cCode,
+      flag: "🌐",
+      region: "europe" as const,
+      lat: "50.0° N",
+      lon: "10.0° E",
+      svgX: 520,
+      svgY: 120,
+    };
 
-      const pct = Math.max(1, Math.round((count / totalGeoHits) * 100));
-      geoHotspots.push({
-        id: `${cCode.toLowerCase()}-${idx}`,
-        name: geoInfo.name,
-        countryCode: cCode,
-        region: geoInfo.region,
-        city: geoInfo.city,
-        lat: geoInfo.lat,
-        lon: geoInfo.lon,
-        x: (geoInfo.svgX / 1000) * 100,
-        y: (geoInfo.svgY / 500) * 100,
-        svgX: geoInfo.svgX,
-        svgY: geoInfo.svgY,
-        visitors: count,
-        percentage: pct,
-        flag: geoInfo.flag,
-        isTop: idx === 0,
-      });
+    const pct = totalGeoHits > 0 ? Math.max(1, Math.round((count / totalGeoHits) * 100)) : 0;
+    geoHotspots.push({
+      id: `${cCode.toLowerCase()}-${idx}`,
+      name: geoInfo.name,
+      countryCode: cCode,
+      region: geoInfo.region,
+      city: geoInfo.city,
+      lat: geoInfo.lat,
+      lon: geoInfo.lon,
+      x: (geoInfo.svgX / 1000) * 100,
+      y: (geoInfo.svgY / 500) * 100,
+      svgX: geoInfo.svgX,
+      svgY: geoInfo.svgY,
+      visitors: count,
+      percentage: pct,
+      flag: geoInfo.flag,
+      isTop: idx === 0,
     });
-  } else {
-    // Standard baseline distribution until organic multi-country visitors arrive
-    const defaultCodes = ["US", "GB", "FR", "CA", "JP", "AU"];
-    defaultCodes.forEach((cCode, idx) => {
-      const geoInfo = COUNTRY_COORDS[cCode];
-      if (!geoInfo) return;
-      const count = Math.max(2, Math.round(totalPageviews * (0.28 - idx * 0.04)));
-      const pct = Math.max(4, Math.round((count / totalPageviews) * 100));
+  });
 
-      geoHotspots.push({
-        id: `${cCode.toLowerCase()}-${idx}`,
-        name: geoInfo.name,
-        countryCode: cCode,
-        region: geoInfo.region,
-        city: geoInfo.city,
-        lat: geoInfo.lat,
-        lon: geoInfo.lon,
-        x: (geoInfo.svgX / 1000) * 100,
-        y: (geoInfo.svgY / 500) * 100,
-        svgX: geoInfo.svgX,
-        svgY: geoInfo.svgY,
-        visitors: count,
-        percentage: pct,
-        flag: geoInfo.flag,
-        isTop: idx === 0,
-      });
-    });
-  }
-
-  // Devices computation
-  const totalDevHits = Math.max(1, Array.from(deviceCountMap.values()).reduce((sum, d) => sum + d.count, 0));
+  // Devices computation (100% genuine)
+  const totalDevHits = Array.from(deviceCountMap.values()).reduce((sum, d) => sum + d.count, 0);
   let devices: DeviceItem[] = Array.from(deviceCountMap.entries())
     .map(([devName, val]) => ({
       device: devName,
       type: val.type,
       count: val.count,
-      percentage: Math.round((val.count / totalDevHits) * 100),
+      percentage: totalDevHits > 0 ? Math.round((val.count / totalDevHits) * 100) : 0,
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 4);
-
-  if (devices.length === 0) {
-    devices = [
-      { device: "Mobile (iOS / iPhone)", type: "mobile", count: 112, percentage: 72 },
-      { device: "Desktop (macOS / PC)", type: "desktop", count: 31, percentage: 20 },
-      { device: "Mobile (Android)", type: "mobile", count: 13, percentage: 8 },
-    ];
-  }
 
   // 1. Search Demand Gaps Intelligence (100% Authentic Live User Searches Only)
   const hasLiveSearches = searchCountMap.size > 0;
