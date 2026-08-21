@@ -4,6 +4,9 @@ import path from "path";
 import { execFile } from "child_process";
 import util from "util";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const execFilePromise = util.promisify(execFile);
 const SHEET_PRODUCTS_PATH = path.join(process.cwd(), "src", "lib", "products", "sheetProducts.json");
 const PRODUCTS_DIR = path.join(process.cwd(), "public");
