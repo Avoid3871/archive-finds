@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Search, Menu, X, ArrowUpRight, Bookmark, BookOpen } from "lucide-react";
+import { Search, Menu, X, ArrowUpRight, Bookmark, BookOpen, Camera, Sparkles } from "lucide-react";
 import { useWishlist } from "@/lib/wishlist/WishlistContext";
-
 import { CurrencySwitcher } from "@/components/currency/CurrencySwitcher";
+import { GrailHunterModal } from "@/components/search/GrailHunterModal";
 
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isGrailHunterOpen, setIsGrailHunterOpen] = useState(false);
   const { savedCount } = useWishlist();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-neutral-200 transition-all">
+      <GrailHunterModal
+        isOpen={isGrailHunterOpen}
+        onClose={() => setIsGrailHunterOpen(false)}
+      />
+
       {/* Top VIP Announcement Bar */}
       <div className="bg-black text-white px-4 py-1.5 text-center text-[10px] sm:text-[11px] font-mono tracking-wider flex items-center justify-center gap-2">
         <span className="hidden xs:inline">NEW TO AGENT SHOPPING?</span>
@@ -70,6 +76,14 @@ export function PublicHeader() {
           >
             OUR MISSION
           </Link>
+          <button
+            type="button"
+            onClick={() => setIsGrailHunterOpen(true)}
+            className="text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+          >
+            <Camera className="w-3.5 h-3.5 text-emerald-600" />
+            <span>GRAIL HUNTER</span>
+          </button>
           <Link
             href="/saved"
             className="text-neutral-600 hover:text-black transition-colors flex items-center gap-1.5"
@@ -101,6 +115,16 @@ export function PublicHeader() {
               /
             </kbd>
           </Link>
+
+          {/* Quick Grail Hunter Camera Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsGrailHunterOpen(true)}
+            title="Open Grail Hunter Visual Search"
+            className="p-2 rounded border border-neutral-200 hover:border-black text-neutral-700 hover:text-black transition-all flex items-center justify-center cursor-pointer"
+          >
+            <Camera className="w-4 h-4 text-emerald-600" />
+          </button>
 
           {/* Quick Saved Vault Button (Mobile/Tablet Header Icon) */}
           <Link
