@@ -3644,5 +3644,30 @@
     "isFeatured": true,
     "isRare": true,
     "notes": "1-Click Admin Ingest | Junya Watanabe 2003ss"
+  },
+  {
+    "id": "146",
+    "title": "Enfants Riches Déprimés Silver Pants Chain",
+    "name": "Enfants Riches Déprimés Silver Pants Chain",
+    "brand": "Enfants Riches Déprimés",
+    "brandSlug": "enfants-riches-d-prim-s",
+    "category": "Jewelry",
+    "categorySlug": "jewelry",
+    "season": "",
+    "price": 42.0,
+    "sourcePrice": 42.0,
+    "estimatedRetail": 650.0,
+    "directStoreLink": "https://weidian.com/item.html?itemID=6833564098",
+    "sugargooUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6833564098&memberId=1325437696506389977",
+    "affiliateLink": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6833564098&memberId=1325437696506389977",
+    "affiliateUrl": "https://www.sugargoo.com/products?productLink=https%3A%2F%2Fweidian.com%2Fitem.html%3FitemID%3D6833564098&memberId=1325437696506389977",
+    "imageUrl": "/products/enfants-riches-d-prim-s-enfants-riches-d-prim-s-silver-pants.png",
+    "localImage": "/products/enfants-riches-d-prim-s-enfants-riches-d-prim-s-silver-pants.png",
+    "slug": "enfants-riches-d-prim-s-enfants-riches-d-prim-s-silver-pants",
+    "status": "APPROVED",
+    "verified": true,
+    "isFeatured": true,
+    "isRare": false,
+    "notes": "1-Click Admin Ingest"
   }
 ]
